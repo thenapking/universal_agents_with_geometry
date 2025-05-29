@@ -217,8 +217,10 @@ class Polygon {
       next = next_juncture;
       //Note that checking presence of next_juncture prevents an infinite loop
       while(next_juncture !== current  && next_juncture) { 
-        // console.log("Looping")
+        console.log("Looping")
+        console.log("Before ", result)
         next_juncture = polyline.walk(next_juncture, result);
+        console.log("After ", result)
         if(next_juncture !== current ) {
           next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
         }
@@ -228,6 +230,8 @@ class Polygon {
     }
 
     let new_polygons = [];
+    console.log("Final2", results);
+
     for(let result of results) {
       let new_polygon = new Polygon(result);
       new_polygons.push(new_polygon);
@@ -237,18 +241,19 @@ class Polygon {
   }
 
   walk_polygon_forwards(juncture, result, junctures) {
-    // console.log("juncture", juncture)
+    console.log("juncture", juncture)
     let next = juncture.polygon;
-    // console.log("next polygonal edge", next)
-
+    // circle(juncture.point.x, juncture.point.y, 10);
+    // circle(next.start.x, next.start.y, 10);
     if (next.junctures.length > 1) {
       return this.walk_multiple_junctures(next, juncture, result);
     }
 
-    // console.log("only one juncture")
+    console.log("only one juncture")
     return this.walk_to_end_of_edge(next, juncture, result);
   }
 
+  // something is up here
   walk_multiple_junctures(edge, juncture, result) {
     const last = next.junctures[next.junctures.length - 1];
     if (last !== juncture) {
