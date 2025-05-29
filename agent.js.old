@@ -1,0 +1,246 @@
+class Agent {
+  constructor(position, direction, a, b, boundary, options) {
+    this.position = position.copy();
+    this.acceleration = createVector(0, 0);
+    this.velocity = createVector(0, 0);
+
+    this.boundary = boundary;
+
+    this.direction = direction; // an angle in radians, not a vector
+    this.max_direction_change = PI/2;
+    
+    this.ratio = a / b;
+    this.a = a; // width
+    this.b = b; // height
+    this.start_a = a;
+    this.start_b = b;
+    
+    this.noiseScale = options.noiseScale;
+    this.minSize = options.minAgentSize;
+    this.maxSize = options.maxAgentSize;
+    this.maxForce = 0.25;
+    this.maxSpeed = 2;
+    this.initialize();
+    this.active = true;
+    this.outside = false;
+    this.visible = false;
+    this.intersecting = false;
+    this.spawned = 0;
+    this.connected_agents = [];  
+  }
+
+  initialize(){
+    this.resize();
+  }
+
+  applyForce(force, m = 1) {
+    force.mult(m);
+    this.acceleration.add(force);
+  }
+
+  applyAlignment(delta) {
+    if(delta == 0) { return }
+    let new_direction = this.direction + delta;
+    
+    this.direction = new_direction;
+  }
+  
+  update() {
+    this.edges();
+    this.velocity.add(this.acceleration);
+    this.velocity.limit(this.maxSpeed);
+    this.position.add(this.velocity);
+    this.acceleration.mult(0);
+    this.velocity.mult(0.95);
+    if (this.velocity.mag() < 0.001) {
+      this.active = false;
+      this.velocity.mult(0);
+    }
+  }
+
+  edges(){
+    if (this.position.x < this.radius + BORDER_MARGIN) { this.outside = true }
+    if (this.position.x > W - this.radius - BORDER_MARGIN) { this.outside = true  }
+    if (this.position.y < this.radius + BORDER_MARGIN) { this.outside = true  }
+    if (this.position.y > H - this.radius - BORDER_MARGIN) { this.outside = true  }
+  }
+
+  resize() {
+    let nz = noise(this.position.x * this.noiseScale, this.position.y * this.noiseScale);
+    this.radius = lerp(this.minSize, this.maxSize, nz);
+    this.a = this.radius * this.ratio;
+    this.b = this.radius / this.ratio;
+  }
+
+  separation(agents) {
+    let steer = createVector(0, 0);
+    let count = 0;
+    for (let other of agents) {
+      if (other !== this) {
+        let d = p5.Vector.dist(this.position, other.position);
+        
+        if (d < (this.radius/2 + other.radius/2 + MARGIN)) { 
+          let diff = p5.Vector.sub(this.position, other.position);
+          diff.normalize();
+          diff.div(d);
+          steer.add(diff);
+          count++;
+        }
+      }
+    }
+    if (count > 0) {
+      steer.div(count);
+      steer.setMag(this.maxSpeed);
+      steer.sub(this.velocity);
+      steer.limit(this.maxForce);
+      return steer;
+    } else {
+      let stop = this.velocity.copy().mult(-1);
+      stop.limit(this.maxForce);
+      return stop;
+    }
+  }
+
+  alignment(agents) {
+    let sumAngle = 0;
+    let count = 0;
+    for (let other of agents) {
+      if (other !== this) {
+        let d = p5.Vector.dist(this.position, other.position);
+        if (d < 25 + MARGIN) {
+          sumAngle += other.direction
+          count++;
+        }
+      }
+    }
+    if (count > 0) {
+      let desired = sumAngle / count;
+      let dAngle = desired - this.direction;
+      return dAngle;
+    }
+    return 0;
+  }
+
+
+  avoid(items){
+    let steer = createVector(0, 0);
+    let count = 0;
+
+    for (let item of items) {
+      let d = p5.Vector.dist(this.position, item.position);
+      if (d < OBSTACLE_DESTRUCTION_DISTANCE) { 
+        let diff = p5.Vector.sub(this.position, item.position);
+        diff.normalize();
+        diff.div(d);
+        steer.add(diff);
+        count++;
+      }
+    }
+    if (count > 0) {
+      steer.div(count);
+      steer.setMag(this.maxSpeed);
+      steer.sub(this.velocity);
+      steer.limit(this.maxForce);
+      return steer;
+    } else {
+      let stop = this.velocity.copy().mult(-1);
+      stop.limit(this.maxForce);
+      return stop;
+    }
+  }
+
+
+  spawn() {
+    if(this.spawned > 4) { return }
+    let new_direction = this.direction + random(-this.max_direction_change, this.max_direction_change);
+    let xd = (this.a + MARGIN * 1.25) * cos(new_direction) + 1;
+    let yd = (this.b + MARGIN * 1.25) * sin(new_direction) + 1;
+    let x = this.position.x;
+    let y = this.position.y;
+    
+    let new_agent;
+    switch (this.spawned) {
+      case 0:
+        new_agent = new Agent(createVector(x + xd, y + yd), new_direction, this.start_a, this.start_b, OPTIONS);
+        break;
+      case 1:
+        new_agent = new Agent(createVector(x + xd, y - yd), new_direction, this.start_a, this.start_b, OPTIONS);
+        break;
+      case 2:
+        new_agent = new Agent(createVector(x - xd, y + yd), new_direction, this.start_a, this.start_b, OPTIONS);
+        break;
+      case 3:
+        new_agent = new Agent(createVector(x - xd, y - yd), new_direction, this.start_a, this.start_b, OPTIONS);
+        break;
+    }
+
+    this.connected_agents.push(new_agent);
+    potential_agents.push(new_agent);
+    this.spawned++;
+
+  } 
+
+
+
+  draw(){
+    if(this.outside) { return }
+    if(!this.visible) { return }
+
+    push();
+
+      translate(this.position.x, this.position.y);
+      rotate(this.direction);
+      ellipse(0, 0, this.a * 0.8, this.b * 0.8);
+      
+    pop();
+  }
+
+}
+
+let potential_agents = [];  
+const OPTIONS = { noiseScale: 0.05, minAgentSize: 3, maxAgentSize: 20 }
+
+function create_agents(boundary) {
+  let num_agents = 10;
+  let agents = []
+  for (let i = 0; i < num_agents; i++) {
+    let x = boundary.centroid().x + random(-10, 10);
+    let y = boundary.centroid().y + random(-10, 10);
+    let direction = random(TWO_PI);
+    let agent = new Agent(createVector(x, y), direction, 5, 6, boundary, OPTIONS)
+    agent.visible = true;
+    agents.push(agent);
+  }
+  return agents;
+}
+
+function add_agents(n){
+  n = constrain(n, 0, potential_agents.length -1);
+  let agents_added = 0;
+  for (let i = 0; i < n; i++) {
+    let agent;
+    
+    agent = potential_agents.shift();
+    if(!agent) { break }
+    agent.edges();
+    if(agent.outside) { continue }
+    agent.radius = agent.radius * SF;
+    let intersecting = false;
+    for(let other of agents){
+      if(agent.position.dist(other.position) < agent.radius/2 + other.radius/2 + MARGIN){
+        intersecting = true;
+        break
+      }
+    }
+    if(!intersecting){
+      agent.visible = true;
+      agents.push(agent);
+      agents_added++;
+      continue;
+    }
+  }
+  return agents_added;
+
+}
+
+
