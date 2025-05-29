@@ -12,7 +12,7 @@ let SF = 0.9
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = true;
+let exporting = false;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
@@ -20,7 +20,7 @@ let test_polyline, test_poly;
 let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
 let seconds = []
 let results = [];
-let directions = ['horizontal', 'vertical'];
+let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
 
 let groups = [];
 
@@ -47,10 +47,10 @@ function setup(){
 }
 
 function draw(){
-  
-
-  
   let active = update_groups();
+
+  draw_scene();
+
 
   if(active > 0){
     translate(BW, BW);
@@ -77,15 +77,8 @@ function draw(){
 }
 
 function do_it(group){
-  let results = []
-  let resulting_polys = create_polys_from_group(group)
-  for(let poly of resulting_polys){
-    let test = group.boundaries[0].intersection(poly);
-    if(test){
-      results.push(test);
-    }
-  }
-
+  let results = group.create_polygons();
+  
   for(let poly of results){
     poly.draw();
   }
@@ -103,12 +96,21 @@ function draw_groups(){
 
 }
 
+let active_group_id = 0;
 function update_groups(){
-  let active = 0;
-  for (let group of groups) {
-    active += group.update();
+  let active_group = groups[active_group_id];
+  let active = active_group.update();
+
+  if(!active_group.active) {
+    active_group_id++;
+    if(active_group_id >= groups.length) {
+      return 0;
+    } else {
+      active_group = groups[active_group_id];
+    }
   }
-  return active;
+  
+  return 1
 }
     
 function create_scene(){
@@ -127,7 +129,8 @@ function create_scene(){
 
 }
 
-let FILL_TYPES = ['blank', 'hatching', 'hatching', 'circles'];
+let FILL_TYPES = ['blank', 'hatching', 'hatching', 'circles', 'pips', 'ellipses'];
+// FILL_TYPES = ['blank', 'pips']
 
 function set_scene(polygons){
   let results = [];  
@@ -151,17 +154,15 @@ function set_scene(polygons){
     }
 
     if(fill_type === 'circles') {
-      const [minX, minY, maxX, maxY] = polygon.bounds();
-      let wd = maxX - minX;
-      let hd = maxY - minY;
-      let area = wd * hd;
-      let minSize = int(random(2, 20))
-      let maxSize = minSize*4
-      let avgSize = (minSize + maxSize) / 2;
-      let numCircles = 2 * floor(area / (avgSize * avgSize));
-      console.log("---------------------")
-      console.log(numCircles, area, avgSize, minSize, maxSize);
-      createCircularGroup(polygon, numCircles, minSize, maxSize);
+      createCircularGroup(polygon);
+    }
+
+    if(fill_type === 'pips') {
+      createPipGroup(polygon);
+    }
+
+    if(fill_type === 'ellipses') {
+      createEllipseGroups(polygon);
     }
 
     results.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});

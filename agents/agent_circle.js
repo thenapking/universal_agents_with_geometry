@@ -15,6 +15,8 @@ class CircularGroup extends Group {
   }
 
   update(){
+    if (!this.active) return 0;
+
     let active = 0;
     for (let agent of this.agents) {
       let sep = agent.separation(this.agents);
@@ -22,6 +24,10 @@ class CircularGroup extends Group {
       agent.applyForce(sep);
       agent.update();
       if (agent.active) active++;
+    }
+
+    if (active < 1) {
+      this.active = false; 
     }
     return active;
   }
@@ -35,6 +41,8 @@ class CircularAgent extends Agent {
   set_size() {
     let nz = noise(this.pos.x * this.group.noiseScale, this.pos.y * this.group.noiseScale);
     this.size = lerp(this.group.minSize, this.group.maxSize, nz);
+    this.w = this.size;
+    this.h = this.size;
   }
 
   draw() {
@@ -42,18 +50,33 @@ class CircularAgent extends Agent {
   }
 }
 
-let circular_group;
 
-function createCircularGroup(boundary, n = 800, minSize = 5, maxSize = 20) {
-  let boundaries = [boundary];
-  let center = boundary.centroid();
+function createCircularGroup(polygon) {
+  let boundaries = [polygon];
+
+  const [minX, minY, maxX, maxY] = polygon.bounds();
+
+  let wd = maxX - minX;
+  let hd = maxY - minY;
+  let center = createVector(
+    minX + wd / 2,
+    minY + hd / 2
+  );
+  let area = wd * hd;
+  let minSize = int(random(2, 20))
+  let maxSize = minSize*4
+  let avgSize = (minSize + maxSize) / 2;
+  let n = 2.5 * floor(area / (avgSize * avgSize));
+
   const OPTIONS = {
     noiseScale: 0.01,
     minSize: minSize,
     maxSize: maxSize
   };
-  let circular_group = new CircularGroup(n, center, 100, boundaries, OPTIONS) // new CircularGroup(10, center, 0, []);
-  circular_group.initialize();
-  groups.push(circular_group);
+  // TO DO remove radius = 100
+  let group = new CircularGroup(n, center, 100, boundaries, OPTIONS) // new CircularGroup(10, center, 0, []);
+  group.initialize();
+  groups.push(group);
 }
+
 
