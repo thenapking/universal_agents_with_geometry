@@ -63,7 +63,9 @@ function createCircularGroup(polygon) {
     minY + hd / 2
   );
   let area = wd * hd;
-  let minSize = int(random(2, 20))
+  let min_minSize = map(area, 0, 60000, 2, 5);
+  let max_maxSize = map(area, 0, 60000, 5, 15);
+  let minSize = int(random(min_minSize, max_maxSize))
   let maxSize = minSize*4
   let avgSize = (minSize + maxSize) / 2;
   let n = 2.5 * floor(area / (avgSize * avgSize));

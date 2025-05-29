@@ -23,7 +23,7 @@ class Housing {
   goldenDivide(x, y, w, h, vertical, count = 0) {
     PHI = (1 + Math.sqrt(5)) / 2; // WHY THIS CAN'T GET DEFINED IN SETUP I DON'T KNOW
 
-    if (min(w, h) < 30 || count > 2) {
+    if ((min(w, h) < 40 || count > 10 || random(1) < 0.5) && count > 1) {
       this.drawHouses(x, y, w, h);
       return;
     }
@@ -85,11 +85,8 @@ class Housing {
   }
 
   draw() {
-    console.log("Drawing houses");
-    console.log(this.houses)
     for (let house of this.houses) {
       house.draw();
     }
-    
   }
 }

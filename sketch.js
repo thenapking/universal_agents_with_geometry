@@ -14,7 +14,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = false;
+let exporting = true;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
@@ -101,7 +101,7 @@ let active_group_id = 0;
 function update_groups(){
   if(groups.length === 0) { return 0; }
   let active_group = groups[active_group_id];
-  let active = active_group.update();
+  active_group.update();
 
   if(!active_group.active) {
     active_group_id++;
@@ -131,12 +131,28 @@ function create_scene(){
 
 }
 
-let FILL_TYPES = ['blank', 'hatching', 'hatching', 'circles', 'pips', 'ellipses'];
-FILL_TYPES = ['blank', 'houses']
+let LARGE = ['blank', 'housing'];
+let SMALL = ['hatching', 'pips', 'pips', 'pips', 'circles'];
+let MEDIUM = ['hatching', 'housing', 'circles'];
 
 function set_scene(polygons){
   let results = [];  
   for(let polygon of polygons){
+    const [minX, minY, maxX, maxY] = polygon.bounds();
+    let W = maxX - minX;
+    let H = maxY - minY;
+    let area = W * H;
+
+    let FILL_TYPES = LARGE;
+    let area_type = 'large';
+    if(area < 6000) {
+      area_type = 'small';
+      FILL_TYPES = SMALL;
+    } else if(area < 21000) {
+      area_type = 'medium';
+      FILL_TYPES = MEDIUM;
+    }
+
     let fill_type = random(FILL_TYPES);
     let colour = random(colours)
 
@@ -146,13 +162,10 @@ function set_scene(polygons){
     let prob = exp(-0.5 * pow(dst / stD, 2));
     if(random(1) < prob){ fill_type = 'blank'; }
     
+    console.log(fill_type, area_type, colour, area)
     
     let fill_object;
-    if(polygons.indexOf(polygon) === 0){
-      fill_type = 'houses';
-    } else {
-      fill_type = random(['blank', 'hatching'])
-    }
+    
 
     if(fill_type === 'hatching') {
       let d = random(directions);
@@ -173,7 +186,7 @@ function set_scene(polygons){
       createEllipseGroups(polygon);
     }
 
-    if(fill_type === 'houses') {
+    if(fill_type === 'housing') {
       fill_object = new Housing(polygon);
       fill_object.construct();
     }

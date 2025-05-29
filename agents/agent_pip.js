@@ -78,7 +78,7 @@ function createPipGroup(polygon) {
   let minSize = 3
   let maxSize = 6
   let avgSize = (minSize + maxSize) / 2;
-  let n = floor(area / (avgSize * avgSize));
+  let n = 2*floor(area / (avgSize * avgSize));
   n = constrain(n, 400, 1000);
 
   const OPTIONS = {
