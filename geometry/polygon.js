@@ -187,7 +187,7 @@ class Polygon {
   // TODO - in progress, needs to be tested
   split(polyline) {
     let junctures = this.intersect_polyline(polyline);
-    console.log("junctures found:", junctures);
+    // console.log("junctures found:", junctures);
     if (junctures.length === 0) return [this];
 
     let first_polygon_start;
@@ -208,7 +208,7 @@ class Polygon {
       counter++;
       current.visits++;
 
-      console.log("current juncture", current.point.x, current.point.y, "visits:", current.visits);
+      // console.log("current juncture", current.point.x, current.point.y, "visits:", current.visits);
 
       let result = [];
       results.push(result);
@@ -217,7 +217,7 @@ class Polygon {
       next = next_juncture;
       //Note that checking presence of next_juncture prevents an infinite loop
       while(next_juncture !== current  && next_juncture) { 
-        console.log("Looping")
+        // console.log("Looping")
         next_juncture = polyline.walk(next_juncture, result);
         if(next_juncture !== current ) {
           next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
@@ -237,15 +237,15 @@ class Polygon {
   }
 
   walk_polygon_forwards(juncture, result, junctures) {
-    console.log("juncture", juncture)
+    // console.log("juncture", juncture)
     let next = juncture.polygon;
-    console.log("next polygonal edge", next)
+    // console.log("next polygonal edge", next)
 
     if (next.junctures.length > 1) {
       return this.walk_multiple_junctures(next, juncture, result);
     }
 
-    console.log("only one juncture")
+    // console.log("only one juncture")
     return this.walk_to_end_of_edge(next, juncture, result);
   }
 
@@ -264,17 +264,17 @@ class Polygon {
     let counter = 0;
     while (edge && counter < 1000) {
       counter++;
-      console.log("edge end", edge.end.x, edge.end.y);
+      // console.log("edge end", edge.end.x, edge.end.y);
       result.push(edge.end);  
-      console.log("results are", result);
+      // console.log("results are", result);
       edge = edge.next;  
-      console.log("next edge", edge);
+      // console.log("next edge", edge);
 
       if (!edge) { return juncture;}  
 
       
       if (edge.junctures.length > 0) {
-        console.log("found juncture on edge", edge.junctures[0]);
+        // console.log("found juncture on edge", edge.junctures[0]);
         const next_juncture = edge.junctures[0];
         next_juncture.increment();  
         result.push(next_juncture.point);  

@@ -1,9 +1,6 @@
 class Oblong extends Polygon {
   constructor(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
+    
 
     let top_left = createVector(x, y);
     let top_right = createVector(x + width, y);
@@ -11,6 +8,10 @@ class Oblong extends Polygon {
     let bottom_left = createVector(x, y + height);
     
     super([top_left, top_right, bottom_right, bottom_left]);
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
   }
 
   divide_vertically(){

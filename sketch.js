@@ -9,6 +9,8 @@ let MARGIN = 1;
 let BORDER_MARGIN = 5;
 let SF = 0.9
 
+let PHI;
+
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
@@ -30,6 +32,8 @@ function setup(){
   create_polygons();
 
   create_scene();
+
+  
 
   
 
@@ -66,24 +70,21 @@ function draw(){
     stroke(0,0,0);
 
     draw_scene();
-    for(group of groups){
-      do_it(group);
-    }
+    
+    final_draw();
     noLoop();
     if(exporting){ endRecordSVG(this); }
-
   }
-
 }
 
-function do_it(group){
-  let results = group.create_polygons();
-  
-  for(let poly of results){
-    poly.draw();
+function final_draw(group){
+  for(group of groups){
+    let results = group.create_polygons();
+    
+    for(let poly of results){
+      poly.draw();
+    }
   }
-  return results;
-  
 }
 
 
@@ -98,6 +99,7 @@ function draw_groups(){
 
 let active_group_id = 0;
 function update_groups(){
+  if(groups.length === 0) { return 0; }
   let active_group = groups[active_group_id];
   let active = active_group.update();
 
@@ -130,7 +132,7 @@ function create_scene(){
 }
 
 let FILL_TYPES = ['blank', 'hatching', 'hatching', 'circles', 'pips', 'ellipses'];
-// FILL_TYPES = ['blank', 'pips']
+FILL_TYPES = ['blank', 'houses']
 
 function set_scene(polygons){
   let results = [];  
@@ -146,6 +148,12 @@ function set_scene(polygons){
     
     
     let fill_object;
+    if(polygons.indexOf(polygon) === 0){
+      fill_type = 'houses';
+    } else {
+      fill_type = random(['blank', 'hatching'])
+    }
+
     if(fill_type === 'hatching') {
       let d = random(directions);
 
@@ -163,6 +171,11 @@ function set_scene(polygons){
 
     if(fill_type === 'ellipses') {
       createEllipseGroups(polygon);
+    }
+
+    if(fill_type === 'houses') {
+      fill_object = new Housing(polygon);
+      fill_object.construct();
     }
 
     results.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});

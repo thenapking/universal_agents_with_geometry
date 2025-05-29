@@ -45,7 +45,7 @@ class Polyline {
   }
 
   walk(juncture, result) {
-    console.log("Walking polyline from juncture:", juncture);
+    // console.log("Walking polyline from juncture:", juncture);
     let next = juncture.polyline;
 
     if (next.junctures.length > 1) {
@@ -56,24 +56,24 @@ class Polyline {
   }
 
   walk_multiple_junctures(edge, juncture, result) {    
-    console.log("Walking polyline with multiple junctures:", edge.junctures);
+    // console.log("Walking polyline with multiple junctures:", edge.junctures);
     const last = edge.junctures[edge.junctures.length - 1];
 
     // TO DO - do we ever walk forwards?
     if (last !== juncture) {
-      console.log("Walking forwards");
+      // console.log("Walking forwards");
       let idx = edge.junctures.findIndex(j => j === juncture);
       let next_juncture = edge.junctures[idx + 1];
-      console.log("Next juncture:", next_juncture);
+      // console.log("Next juncture:", next_juncture);
       result.push(next_juncture.point);
       next_juncture.increment();
       return next_juncture;
     } else {
       // we are at the last juncture and should walk backwards
-      console.log("Walking backwards")
+      // console.log("Walking backwards")
       let idx = edge.junctures.findIndex(j => j === juncture);
       let next_juncture = edge.junctures[idx - 1];
-      console.log("Next juncture:", next_juncture);
+      // console.log("Next juncture:", next_juncture);
       result.push(next_juncture.point);
       next_juncture.increment();
       return next_juncture;

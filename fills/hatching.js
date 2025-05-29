@@ -47,11 +47,11 @@ class Hatching {
   }
 
   find_junctures() {  
-    console.log('Finding junctures');
+    // console.log('Finding junctures');
     for(let polyline of this.polylines){
       let junctures = this.polygon.intersect_polyline(polyline);
 
-      console.log(junctures);
+      // console.log(junctures);
       if(junctures.length < 2) continue;
       let jn = floor(junctures.length/2) * 2
       for(let i = 0; i < jn; i++) {
