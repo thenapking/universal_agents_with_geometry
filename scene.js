@@ -1,43 +1,49 @@
 ////////////////////////////////////////////////////////////////
 // Set the fill type of each polygon based on its area
 let LARGE = ['blank', 'housing'];
-let SMALL = ['hatching', 'pips', 'pips', 'pips', 'circles'];
-let MEDIUM = ['hatching', 'housing', 'circles'];
+let SMALL = ['hatching', 'hatching', 'hatching', 'hatching', 'pips', 'circles'];
+let MEDIUM = ['hatching', 'hatching', 'housing', 'housing', 'housing', 'housing', 'circles'];
+
+let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
+let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
 
 function set_scene(polygons){
   let results = [];  
+
   for(let polygon of polygons){
     const [minX, minY, maxX, maxY] = polygon.bounds();
     let W = maxX - minX;
     let H = maxY - minY;
     let area = W * H;
 
-    let FILL_TYPES = LARGE;
-    let area_type = 'large';
+    let fill_type = 'blank';
     if(area <  200){
       area_type = 'tiny';
-      FILL_TYPES = ['blank'];
     } else if(area < 6000) {
       area_type = 'small';
-      FILL_TYPES = SMALL;
+      shuffle(SMALL);
+      fill_type = SMALL.pop();
     } else if(area < 21000) {
       area_type = 'medium';
-      FILL_TYPES = MEDIUM;
+      shuffle(MEDIUM);
+      fill_type = MEDIUM.pop();
+    } else {
+      area_type = 'large';
+      shuffle(LARGE);
+      fill_type = LARGE.pop();
     }
 
-    let fill_type = random(FILL_TYPES);
     let colour = random(colours)
 
     let pc = polygon.centroid();
     let stD = W/5
     let dst = dist(pc.x, pc.y, W/2, H/2);
     let prob = exp(-0.5 * pow(dst / stD, 2));
+
     if(random(1) < prob){ fill_type = 'blank'; }
     
-    console.log(fill_type, area_type, colour, area)
     
     let fill_object;
-    
 
     if(fill_type === 'hatching') {
       let d = random(directions);
@@ -63,6 +69,8 @@ function set_scene(polygons){
       fill_object.construct();
     }
 
+    console.log(fill_type, area_type, colour, area)
+
     results.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});
   }
   return results;
@@ -78,17 +86,24 @@ function draw_scene(){
       result.fill.draw();
     }
   }
+
 }
 
 // For each group, create the polygons and draw them
-function final_draw(group){
+function final_draw(){
+  push();
   for(group of groups){
     let results = group.create_polygons();
-    
-    for(let poly of results){
-      poly.draw();
-    }
+    push();
+      group.boundaries[0].draw();
+      push();
+      for(let poly of results){
+        poly.draw();
+      }
+      pop();
+    pop();
   }
+  pop();
 }
 
 ////////////////////////////////////////////////////////////////

@@ -4,7 +4,7 @@ class Agent {
     this.vel = p5.Vector.random2D();
     this.acc = createVector(0, 0);
     this.maxSpeed = 1;
-    this.maxForce = 0.025;
+    this.maxForce = 0.0125;
     this.active = true;
     this.size = 0;
     this.group = group;

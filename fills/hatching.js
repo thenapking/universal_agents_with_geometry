@@ -110,10 +110,12 @@ class Hatching {
       }
     }
 
+    push();
     for(let j = 0; j < this.junctures.length; j+=2){
       let start = this.junctures[j].point;
       let end = this.junctures[j + 1].point;
       line(start.x, start.y, end.x, end.y);
     }
+    pop();
   }
 }

@@ -1,5 +1,5 @@
 const isoStep = 0.015;       // Contour step (0–1 scale)
-const noiseScale = 0.0005;    // Perlin noise scale (detail level)
+const noiseScale = 0.0009;    // Perlin noise scale (detail level)
 const resolution = 12;        // Grid cell size in pixels
 const simplifyTolerance = 0.1; // Tolerance for simplify-js (higher = smoother)
 const hatchingMult = 4

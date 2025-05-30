@@ -255,6 +255,7 @@ class Polygon {
 
   // something is up here
   walk_multiple_junctures(edge, juncture, result) {
+    if(!next) { return  }
     const last = next.junctures[next.junctures.length - 1];
     if (last !== juncture) {
       let idx = next.junctures.findIndex(j => j === juncture);
@@ -317,12 +318,14 @@ class Polygon {
 
   draw(){
     if (this.count() < 3) return;
-    noFill();
-    beginShape();
-    for(let v of this.points){
-      vertex(v.x, v.y);
-    }
-    endShape(CLOSE);
+    push();
+      noFill();
+      beginShape();
+      for(let v of this.points){
+        vertex(v.x, v.y);
+      }
+      endShape(CLOSE);
+    pop();
   }
 }
 

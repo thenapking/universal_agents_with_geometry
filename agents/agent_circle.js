@@ -68,12 +68,12 @@ function createCircularGroup(polygon) {
   let minSize = int(random(min_minSize, max_maxSize))
   let maxSize = minSize*4
   let avgSize = (minSize + maxSize) / 2;
-  let n = 2.5 * floor(area / (avgSize * avgSize));
+  let n = 4.5*floor(area / (avgSize * avgSize));
 
   const OPTIONS = {
     noiseScale: 0.01,
     minSize: minSize,
-    maxSize: maxSize
+    maxSize: maxSize,
   };
   // TO DO remove radius = 100
   let group = new CircularGroup(n, center, 100, boundaries, OPTIONS) // new CircularGroup(10, center, 0, []);

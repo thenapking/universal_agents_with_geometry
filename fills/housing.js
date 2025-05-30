@@ -23,8 +23,14 @@ class Housing {
   goldenDivide(x, y, w, h, vertical, count = 0) {
     PHI = (1 + Math.sqrt(5)) / 2; // WHY THIS CAN'T GET DEFINED IN SETUP I DON'T KNOW
 
+    const PADDING = 1;
+    x += PADDING;
+    y += PADDING;
+    w -= 2 * PADDING;
+    h -= 2 * PADDING;
+
     if ((min(w, h) < 40 || count > 10 || random(1) < 0.5) && count > 1) {
-      this.drawHouses(x, y, w, h);
+      this.add_houses(x, y, w, h);
       return;
     }
   
@@ -43,7 +49,7 @@ class Housing {
     }
   }
 
-  drawHouses(x, y, w, h) {
+  add_houses(x, y, w, h) {
     let cols, rows;
     let padding = 2
   
@@ -85,8 +91,10 @@ class Housing {
   }
 
   draw() {
+    push()
     for (let house of this.houses) {
       house.draw();
     }
+    pop();
   }
 }

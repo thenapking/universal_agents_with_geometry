@@ -1,7 +1,7 @@
 let DPI= 96;
 let wi = 7;
 let hi = 7;
-let bwi = 0.5;
+let bwi = 0.25;
 let W = wi * DPI;
 let H = hi * DPI;
 let BW = bwi * DPI;
@@ -14,27 +14,29 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = false;
+let exporting = true;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
 
-let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
-let seconds = []
 let results = [];
-let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
+
 
 let groups = [];
 let active_group_id = 0;
 
 let road, road_points, reverse_points;
-
+let seed; 
 function setup(){
   createCanvas(W + 2* BW, H + 2 * BW);
 
-  let seed = Math.floor(Math.random() * 1000000);
+  seed = Math.floor(Math.random() * 1000000);
   // seed = 814009
   // Noise seed: 672470
+  // seed =  71751
+  // seed =  476141
+  // seed =  867664
+  // seed =  630821
   console.log("seed = ", seed);
   randomSeed(seed);
   noiseSeed(seed);
@@ -62,11 +64,14 @@ function draw(){
     draw_scene();
     draw_groups();
   } else {
-    if(exporting){ beginRecordSVG(this, 'output.svg'); }
+    let file_name = `output_${seed}.svg`;
+    if(exporting){ beginRecordSVG(this, file_name); }
     default_setup()
 
     draw_scene();
     final_draw();
+
+    
     noLoop();
     if(exporting){ endRecordSVG(this); }
   }
