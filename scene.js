@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////
 // Set the fill type of each polygon based on its area
-let LARGE = ['blank', 'housing'];
-let SMALL = ['hatching', 'hatching', 'hatching', 'hatching', 'pips', 'circles'];
+let LARGE = ['blank', 'housing', 'housing', 'housing'];
+let SMALL = ['hatching', 'hatching', 'hatching', 'hatching', 'pips', 'circles', 'circles'];
 let MEDIUM = ['hatching', 'hatching', 'housing', 'housing', 'housing', 'housing', 'circles'];
 
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
@@ -113,7 +113,7 @@ function create_scene(){
   // results is globablly defined
   let road_points = get_contour(WATER_LEVEL);
   let road = new Polyline(road_points);
-  results = polyInnerA.split(road);
+  results = polyCircle.split(road);
 
 
   for(let i = 0; i < polylines.length; i++){
