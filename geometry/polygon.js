@@ -150,7 +150,8 @@ class Polygon {
         // console.log("intersection points found", points);
   
         for (let point of points) {
-          let juncture = new Juncture(point, polyline_edge, polygon_edge);
+          let direction = orient2d(polygon_edge.start, polygon_edge.end, polyline_edge.start);
+          let juncture = new Juncture(point, polyline_edge, polygon_edge, direction > 0);
          
 
           
@@ -329,5 +330,11 @@ class Polygon {
   }
 }
 
+function orient2d(a, b, c) {
+  const x1 = a.x, y1 = a.y;
+  const x2 = b.x, y2 = b.y;
+  const x3 = c.x, y3 = c.y;
+  return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
+}
 
 

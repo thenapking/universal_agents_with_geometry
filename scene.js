@@ -111,33 +111,18 @@ function final_draw(){
 // Create the scene by splitting the polygons with the polylines
 function create_scene(){
   // results is globablly defined
-  results = temporary_road();
+  let road_points = get_contour(WATER_LEVEL);
+  let road = new Polyline(road_points);
+  results = polyInnerA.split(road);
 
 
   for(let i = 0; i < polylines.length; i++){
     results = split_polys(results, polylines[i]);
   }
 
-  // for(let i = 0; i < results.length; i++){
-  //   results[i].draw();
-  // }
-
   results = set_scene(results);
 }
 
-function temporary_road(){
-  let road_points = get_contour(WATER_LEVEL);
-  let reverse_points = road_points.slice().reverse();
-  
-  let road_a = new Polyline(road_points);
-  let road_b = new Polyline(reverse_points);
-
-  let A = polyInnerA.split(road_a);
-  let B = polyInnerB.split(road_b);
-
-
-  return [A[1], B[1]];
-}
 
 let polylines = []
 

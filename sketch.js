@@ -14,7 +14,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = true;
+let exporting = false;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;

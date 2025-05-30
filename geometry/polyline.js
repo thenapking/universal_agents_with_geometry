@@ -71,7 +71,7 @@ class Polyline {
 
     // TO DO - do we ever walk forwards?
     if (last !== juncture) {
-      // console.log("Walking forwards");
+      console.log("Walking forwards");
       let idx = edge.junctures.findIndex(j => j === juncture);
       let next_juncture = edge.junctures[idx + 1];
       // console.log("Next juncture:", next_juncture);
@@ -80,7 +80,7 @@ class Polyline {
       return next_juncture;
     } else {
       // we are at the last juncture and should walk backwards
-      // console.log("Walking backwards")
+      console.log("Walking backwards")
       let idx = edge.junctures.findIndex(j => j === juncture);
       let next_juncture = edge.junctures[idx - 1];
       // console.log("Next juncture:", next_juncture);
@@ -99,7 +99,11 @@ class Polyline {
       result.push(edge.end); 
       // console.log("Current result:", result);
       // circle(edge.end.x, edge.end.y, 5); 
-      edge = edge.next;  
+      if(juncture.direction){
+        edge = edge.next;  
+      } else {
+        edge = edge.previous;
+      }
 
       if (!edge) { return juncture; }
 
