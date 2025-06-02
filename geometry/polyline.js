@@ -1,21 +1,19 @@
+const TOLERANCE = 0.0625;
 class Polyline {
-  constructor(points) {
+  constructor(points, tolerance = TOLERANCE) {
     this.points = points;
-    this.clean();
+    this.clean(tolerance);
     this.edges = [];
     this.find_edges();
   }
 
-  clean() {
-    let points = [];
-    for(let i = 0; i < this.points.length - 1; i++){
-      const p = this.points[i];
-      const q = this.points[(i + 1)];
-      if (p.x == q.x && p.y == q.y) { continue }
-      points.push(p);
-    }
-    points.push(this.points[this.points.length - 1]); 
-    this.points = points;
+  clean(tolerance = 0.001) {
+    this.points = simplify(this.points, tolerance, false);
+  }
+
+  simplify(tolerance) {
+    let points = simplify(this.points, tolerance, false);
+    return new Polyline(points);
   }
 
   to_a(){

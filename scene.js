@@ -116,6 +116,7 @@ function create_scene(){
   // results is globablly defined
   let road_points = get_contour(WATER_LEVEL);
   let road = new Polyline(road_points);
+  road = road.simplify(0.1);
   poly_road = road.to_polygon(20);
   results = polyCircle.difference(poly_road)
 
