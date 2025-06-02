@@ -3,7 +3,9 @@
 let LARGE = ['blank', 'housing', 'housing', 'housing'];
 let SMALL = ['hatching', 'hatching', 'hatching', 'hatching', 'pips', 'circles', 'circles'];
 let MEDIUM = ['hatching', 'hatching', 'housing', 'housing', 'housing', 'housing', 'circles'];
-
+SMALL = []
+MEDIUM = []
+LARGE = []  
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
 let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
 
@@ -106,6 +108,7 @@ function final_draw(){
   pop();
 }
 
+let poly_road;
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 // Create the scene by splitting the polygons with the polylines
@@ -113,8 +116,8 @@ function create_scene(){
   // results is globablly defined
   let road_points = get_contour(WATER_LEVEL);
   let road = new Polyline(road_points);
-  results = polyCircle.split(road);
-
+  poly_road = road.to_polygon(20);
+  results = polyCircle.difference(poly_road)
 
   for(let i = 0; i < polylines.length; i++){
     results = split_polys(results, polylines[i]);

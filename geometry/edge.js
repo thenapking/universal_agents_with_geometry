@@ -30,7 +30,18 @@ class Edge {
     return [minX, minY, maxX, maxY];
   }
 
- 
+  to_v(){
+    return p5.Vector.sub(this.end, this.start);
+  }
+
+  normal() {
+    const v = this.to_v();
+    return createVector(-v.y, v.x).normalize();
+  }
+
+  length() {  
+    return this.start.dist(this.end);
+  }
 
   intersection(other, endpoints_touch) {
     const va = this.end.copy().sub(this.start);  
@@ -105,7 +116,6 @@ class Edge {
       return distanceA - distanceB;
     });
   }
-
 }
 
 

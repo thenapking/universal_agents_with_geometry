@@ -1,8 +1,21 @@
 class Polyline {
   constructor(points) {
     this.points = points;
+    this.clean();
     this.edges = [];
     this.find_edges();
+  }
+
+  clean() {
+    let points = [];
+    for(let i = 0; i < this.points.length - 1; i++){
+      const p = this.points[i];
+      const q = this.points[(i + 1)];
+      if (p.x == q.x && p.y == q.y) { continue }
+      points.push(p);
+    }
+    points.push(this.points[this.points.length - 1]); 
+    this.points = points;
   }
 
   to_a(){
@@ -50,6 +63,33 @@ class Polyline {
       previous = edge
     }
   }
+
+  to_polygon(stroke_width) {
+    let sw = stroke_width/2
+    let tops = [];
+    let bottoms = [];
+
+    for(let edge of this.edges){
+      let normal = edge.normal().mult(sw);
+      let top = edge.start.copy().add(normal);
+      let bottom = edge.start.copy().sub(normal);
+
+      tops.push(top);
+      bottoms.push(bottom);
+    }
+
+    let last_edge = this.edges[this.edges.length - 1];
+    let last_normal = last_edge.normal().mult(sw);
+    let last_top = last_edge.end.copy().add(last_normal);
+    let last_bottom = last_edge.end.copy().sub(last_normal);
+    tops.push(last_top);
+    bottoms.push(last_bottom);
+
+
+    let points = tops.concat(bottoms.reverse());
+    return new Polygon(points);
+  }
+
 
   walk(juncture, result) {
     console.log("Walking polyline from juncture:", juncture);

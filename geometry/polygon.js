@@ -119,8 +119,13 @@ class Polygon {
     let this_points = this.to_a();
     let other_points = other.to_a();
     let result = greinerHormann.diff(this_points, other_points);
+    console.log(result)
     if(result === null) return;
-    return new Polygon(result[0]);
+    let results = [];
+    for(let p of result){
+      results.push(new Polygon(p));
+    }
+    return results;
   }
 
   // Intersections methods

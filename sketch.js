@@ -14,7 +14,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = true;
+let exporting = false;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
@@ -37,7 +37,8 @@ function setup(){
   // seed =  476141
   // seed =  867664
   // seed =  630821
-  seed =  613094
+  // seed =  613094
+  seed = 938214
   console.log("seed = ", seed);
   randomSeed(seed);
   noiseSeed(seed);
