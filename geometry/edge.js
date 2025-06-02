@@ -8,7 +8,7 @@ function cross(a, b) {
 }
 
 
-class Edge {
+class Segment {
   constructor(start, end, index) {
     this.start = start;
     this.end = end

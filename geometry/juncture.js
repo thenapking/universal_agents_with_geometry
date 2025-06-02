@@ -1,8 +1,8 @@
 class Juncture {
-  constructor(point, polyline, polygon, direction) {
+  constructor(point, polyline_segment, polygon_segment, direction) {
     this.point = point;
-    this.polyline = polyline; // these are both edges
-    this.polygon = polygon;
+    this.polyline = polyline_segment; 
+    this.polygon = polygon_segment;
     this.direction = direction; 
 
     this.visits = 0;

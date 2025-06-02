@@ -3,8 +3,8 @@ class Polyline {
   constructor(points, tolerance = TOLERANCE) {
     this.points = points;
     this.clean(tolerance);
-    this.edges = [];
-    this.find_edges();
+    this.segments = [];
+    this.find_segments();
   }
 
   clean(tolerance = 0.001) {
@@ -45,20 +45,20 @@ class Polyline {
     return [minX, minY, maxX, maxY];
   }
 
-  find_edges() {
+  find_segments() {
     let previous;
     for (let i = 0; i < this.points.length - 1; i++) {
       const start = this.points[i];
       const end = this.points[i + 1];
 
-      const edge = new Edge(start, end, i, null);
-      this.edges.push(edge);
+      const segment = new Segment(start, end, i, null);
+      this.segments.push(segment);
 
       if(previous) { 
-        previous.next = edge; 
-        edge.previous = previous;
+        previous.next = segment; 
+        segment.previous = previous;
       }
-      previous = edge
+      previous = segment
     }
   }
 
@@ -67,19 +67,19 @@ class Polyline {
     let tops = [];
     let bottoms = [];
 
-    for(let edge of this.edges){
-      let normal = edge.normal().mult(sw);
-      let top = edge.start.copy().add(normal);
-      let bottom = edge.start.copy().sub(normal);
+    for(let segment of this.segments){
+      let normal = segment.normal().mult(sw);
+      let top = segment.start.copy().add(normal);
+      let bottom = segment.start.copy().sub(normal);
 
       tops.push(top);
       bottoms.push(bottom);
     }
 
-    let last_edge = this.edges[this.edges.length - 1];
-    let last_normal = last_edge.normal().mult(sw);
-    let last_top = last_edge.end.copy().add(last_normal);
-    let last_bottom = last_edge.end.copy().sub(last_normal);
+    let last_segment = this.segments[this.segments.length - 1];
+    let last_normal = last_segment.normal().mult(sw);
+    let last_top = last_segment.end.copy().add(last_normal);
+    let last_bottom = last_segment.end.copy().sub(last_normal);
     tops.push(last_top);
     bottoms.push(last_bottom);
 
@@ -103,15 +103,15 @@ class Polyline {
     return r
   }
 
-  walk_multiple_junctures(edge, juncture, result) {    
-    console.log("Walking polyline with multiple junctures:", edge.junctures);
-    const last = edge.junctures[edge.junctures.length - 1];
+  walk_multiple_junctures(segment, juncture, result) {    
+    console.log("Walking polyline with multiple junctures:", segment.junctures);
+    const last = segment.junctures[segment.junctures.length - 1];
 
     // TO DO - do we ever walk forwards?
     if (last !== juncture) {
       console.log("Walking forwards");
-      let idx = edge.junctures.findIndex(j => j === juncture);
-      let next_juncture = edge.junctures[idx + 1];
+      let idx = segment.junctures.findIndex(j => j === juncture);
+      let next_juncture = segment.junctures[idx + 1];
       // console.log("Next juncture:", next_juncture);
       result.push(next_juncture.point);
       next_juncture.increment();
@@ -119,8 +119,8 @@ class Polyline {
     } else {
       // we are at the last juncture and should walk backwards
       console.log("Walking backwards")
-      let idx = edge.junctures.findIndex(j => j === juncture);
-      let next_juncture = edge.junctures[idx - 1];
+      let idx = segment.junctures.findIndex(j => j === juncture);
+      let next_juncture = segment.junctures[idx - 1];
       // console.log("Next juncture:", next_juncture);
       result.push(next_juncture.point);
       next_juncture.increment();
@@ -129,25 +129,25 @@ class Polyline {
     }
   }
 
-  walk_to_end_of_edge(edge, juncture, result) {
-    console.log("Walking to end of edge:", edge);
+  walk_to_end_of_edge(segment, juncture, result) {
+    console.log("Walking to end of segment:", segment);
     let counter = 0;
-    while (edge && counter < 1000) {
+    while (segment && counter < 1000) {
       counter++;
-      result.push(edge.end); 
+      result.push(segment.end); 
       // console.log("Current result:", result);
-      // circle(edge.end.x, edge.end.y, 5); 
+      // circle(segment.end.x, segment.end.y, 5); 
       if(juncture.direction){
-        edge = edge.next;  
+        segment = segment.next;  
       } else {
-        edge = edge.previous;
+        segment = segment.previous;
       }
 
-      if (!edge) { return juncture; }
+      if (!segment) { return juncture; }
 
       // If we find an intersection, stop and return the juncture
-      if (edge.junctures.length > 0) {
-        let next_juncture = edge.junctures[0];
+      if (segment.junctures.length > 0) {
+        let next_juncture = segment.junctures[0];
         next_juncture.increment();  
         result.push(next_juncture.point);
         return next_juncture;  

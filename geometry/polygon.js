@@ -13,8 +13,8 @@ class Polygon {
 
     this.order();
 
-    this.edges = [];
-    this.find_edges();
+    this.segments = [];
+    this.find_segments();
   }
 
   count() {
@@ -69,32 +69,32 @@ class Polygon {
     return [minX, minY, maxX, maxY];
   }
 
-  find_edges() {
+  find_segments() {
     let previous;
     for (let i = 0; i < this.count() - 1; i++) {
       const start = this.points[i];
       const end = this.points[i + 1];
 
-      const edge = new Edge(start, end, i, null);
-      this.edges.push(edge);
+      const segment = new Segment(start, end, i, null);
+      this.segments.push(segment);
 
       if(previous) { 
-        previous.next = edge; 
-        edge.previous = previous;
+        previous.next = segment; 
+        segment.previous = previous;
       }
-      previous = edge;
+      previous = segment;
     }
 
-    // Create the final edge connecting the last vertex to the first
+    // Create the final segment connecting the last vertex to the first
     const start = this.points[this.count() - 1];
     const end = this.points[0];  
-    const edge = new Edge(start, end, this.count(), null);
-    this.edges.push(edge);
-    const first = this.edges[0];
-    first.previous = edge;
-    edge.next = first;
-    previous.next = edge;
-    edge.previous = previous;
+    const segment = new Segment(start, end, this.count(), null);
+    this.segments.push(segment);
+    const first = this.segments[0];
+    first.previous = segment;
+    segment.next = first;
+    previous.next = segment;
+    segment.previous = previous;
   }
 
   // Boolean operations using Greiner-Hormann algorithm
@@ -134,18 +134,18 @@ class Polygon {
     const polyline_bounds = polyline.bounds();
     // console.log("polyline bounds", polyline_bounds);
     // console.log("polygon bounds", this.bounds());
-    for (let polyline_edge of polyline.edges) {
-      // console.log("polyline edge", polyline_edge);
-      for (let polygon_edge of this.edges) {
+    for (let polyline_segment of polyline.segments) {
+      // console.log("polyline segment", polyline_segment);
+      for (let polygon_segment of this.segments) {
         // console.log("---------------")
-        // console.log("polygon edge", polygon_edge.start.x, polygon_edge.start.y, polygon_edge.end.x, polygon_edge.end.y);  
+        // console.log("polygon segment", polygon_segment.start.x, polygon_segment.start.y, polygon_segment.end.x, polygon_segment.end.y);  
 
-        if (!polygon_edge.intersects(polyline_bounds)) { 
-          // console.log("polygon edge does not intersect polyline bounds");
+        if (!polygon_segment.intersects(polyline_bounds)) { 
+          // console.log("polygon segment does not intersect polyline bounds");
           continue 
         };
   
-        const points = polyline_edge.intersection(polygon_edge, true); 
+        const points = polyline_segment.intersection(polygon_segment, true); 
   
         if (points.length < 1) { 
           // console.log("no intersection points found");
@@ -155,8 +155,8 @@ class Polygon {
         // console.log("intersection points found", points);
   
         for (let point of points) {
-          let direction = orient2d(polygon_edge.start, polygon_edge.end, polyline_edge.start);
-          let juncture = new Juncture(point, polyline_edge, polygon_edge, direction > 0);
+          let direction = orient2d(polygon_segment.start, polygon_segment.end, polyline_segment.start);
+          let juncture = new Juncture(point, polyline_segment, polygon_segment, direction > 0);
          
 
           
@@ -171,21 +171,21 @@ class Polygon {
           if (duplicate) continue;
           
           // console.log("found juncture at", juncture.point.x, juncture.point.y);
-          polygon_edge.junctures.push(juncture);
-          polyline_edge.junctures.push(juncture);
+          polygon_segment.junctures.push(juncture);
+          polyline_segment.junctures.push(juncture);
           junctures.push(juncture);
 
         }
       }
     }
-    // console.log(("polyline_edge start", polyline.edges[0].start.x, polyline.edges[0].start.y));
+    // console.log(("polyline_segment start", polyline.segments[0].start.x, polyline.segments[0].start.y));
 
     let sorted_junctures = []
-    for(let polyline_edge of polyline.edges) { 
-      polyline_edge.sort();
-      sorted_junctures.push(...polyline_edge.junctures);
+    for(let polyline_segment of polyline.segments) { 
+      polyline_segment.sort();
+      sorted_junctures.push(...polyline_segment.junctures);
     }
-    for(let polygon_edge of this.edges) { polygon_edge.sort(); }
+    for(let polygon_segment of this.segments) { polygon_segment.sort(); }
     
     return sorted_junctures;
   }
@@ -197,9 +197,9 @@ class Polygon {
     if (junctures.length === 0) return [this];
 
     let first_polygon_start;
-    for(let polyline_edge of polyline.edges) {
-      if (polyline_edge.junctures.length > 0) {
-        first_polygon_start = polyline_edge.junctures[0];
+    for(let polyline_segment of polyline.segments) {
+      if (polyline_segment.junctures.length > 0) {
+        first_polygon_start = polyline_segment.junctures[0];
         break;
       }
     }
@@ -260,7 +260,7 @@ class Polygon {
   }
 
   // something is up here
-  walk_multiple_junctures(edge, juncture, result) {
+  walk_multiple_junctures(segment, juncture, result) {
     if(!next) { return  }
     const last = next.junctures[next.junctures.length - 1];
     if (last !== juncture) {
@@ -272,22 +272,22 @@ class Polygon {
     }
   }
 
-  walk_to_end_of_edge(edge, juncture, result) {
+  walk_to_end_of_edge(segment, juncture, result) {
     let counter = 0;
-    while (edge && counter < 1000) {
+    while (segment && counter < 1000) {
       counter++;
-      // console.log("edge end", edge.end.x, edge.end.y);
-      result.push(edge.end);  
+      // console.log("segment end", segment.end.x, segment.end.y);
+      result.push(segment.end);  
       // console.log("results are", result);
-      edge = edge.next;  
-      // console.log("next edge", edge);
+      segment = segment.next;  
+      // console.log("next segment", segment);
 
-      if (!edge) { return juncture;}  
+      if (!segment) { return juncture;}  
 
       
-      if (edge.junctures.length > 0) {
-        // console.log("found juncture on edge", edge.junctures[0]);
-        const next_juncture = edge.junctures[0];
+      if (segment.junctures.length > 0) {
+        // console.log("found juncture on segment", segment.junctures[0]);
+        const next_juncture = segment.junctures[0];
         next_juncture.increment();  
         result.push(next_juncture.point);  
         return next_juncture;  
