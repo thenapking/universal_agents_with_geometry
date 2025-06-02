@@ -1,4 +1,6 @@
 const ERROR_THRESHOLD = 0.001
+const ANGLE_THRESHOLD = 3.141/24;
+const AREA_THRESHOLD = 100;
 class Polygon {
   constructor(points) {
     this.points = points;
@@ -13,8 +15,8 @@ class Polygon {
 
     this.order();
 
-    this.segments = [];
     this.find_segments();
+    this.find_edges();
   }
 
   count() {
@@ -39,6 +41,18 @@ class Polygon {
       arr.push([v.x, v.y]);
     }
     return arr;
+  }
+
+  area() {
+    let n = this.count();
+    if (n < 3) return 0;
+
+    let A = 0;
+    for (let i = 0; i < n; i++) {
+      let j = (i + 1) % n;
+      A += this.points[i].x * this.points[j].y - this.points[j].x * this.points[i].y;
+    }
+    return Math.abs(A * 0.5);
   }
 
   centroid(){
@@ -70,6 +84,8 @@ class Polygon {
   }
 
   find_segments() {
+    this.segments = [];
+
     let previous;
     for (let i = 0; i < this.count() - 1; i++) {
       const start = this.points[i];
@@ -91,10 +107,45 @@ class Polygon {
     const segment = new Segment(start, end, this.count(), null);
     this.segments.push(segment);
     const first = this.segments[0];
+
     first.previous = segment;
     segment.next = first;
     previous.next = segment;
     segment.previous = previous;
+  }
+
+  find_edges(){
+    this.edges = [];
+    let current = [this.segments[0]];
+
+    for(let i = 1; i < this.segments.length; i++){
+      const segment = this.segments[i];
+      const next_segment = segment.next.to_v();
+      let angle = segment.to_v().angleBetween(next_segment);
+
+      if(Math.abs(angle) < ANGLE_THRESHOLD){
+        current.push(segment);
+      } else {
+        this.edges.push(current);
+        current = [segment];
+      }
+    }
+  }
+
+  find_longest_edge() {
+    let longest;
+    let max_length = 0;
+    for(let edge of this.edges){
+      let length = 0
+      for(let segment of edge){
+        length += segment.length();
+      }
+      if(length > max_length){
+        max_length = length;
+        longest = edge;
+      }
+    }
+    return longest;
   }
 
   // Boolean operations using Greiner-Hormann algorithm
@@ -119,13 +170,58 @@ class Polygon {
     let this_points = this.to_a();
     let other_points = other.to_a();
     let result = greinerHormann.diff(this_points, other_points);
-    console.log(result)
     if(result === null) return;
     let results = [];
     for(let p of result){
       results.push(new Polygon(p));
     }
     return results;
+  }
+
+
+  subdivide(stroke_width) {
+    if (this.area() < AREA_THRESHOLD) {
+      return [this];
+    }
+
+    let edge = this.find_longest_edge();
+    if (!edge) {
+      return [this];
+    }
+
+    let p1 = edge[0].start
+    let p2 = edge[edge.length - 1].end;
+    let midpoint = p5.Vector.add(p1, p2).mult(0.5);
+
+    // Compute the unit‐vector direction of the longest edge,
+    // then rotate by 90° to get a perpendicular direction
+    let parallel = p5.Vector.sub(p2, p1).normalize();
+    // Rotating (x,y) → (−y, x) is a 90° CCW rotation:
+    let perpendicular = createVector(-parallel.y, parallel.x);
+
+    const [minX, minY, maxX, maxY] = this.bounds();
+    let w = maxX - minX;
+    let h = maxY - minY;
+    let diagonal = 2 * Math.sqrt(w * w + h * h);
+
+    // 5) Build two endpoints A, B for our infinite (sampled) cutting line:
+    let A = p5.Vector.add(midpoint, p5.Vector.mult(perpendicular, diagonal));
+    let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
+
+    let new_line = new Polyline([A, B]);
+    let new_street = new_line.to_polygon(stroke_width);
+    let pieces = this.difference(new_street);
+    console.log("pieces", pieces);  
+
+    // 8) Recursively subdivide each piece:
+    let result = [];
+    for (let piece of pieces) {
+      let pieces = piece.subdivide(stroke_width);
+      console.log("pieces after subdivide", pieces);
+      result.push(...pieces);
+    }
+    console.log("result after subdivide", result);
+    return result;
   }
 
   // Intersections methods

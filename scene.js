@@ -75,6 +75,10 @@ function set_scene(polygons){
 
     results.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});
   }
+
+  let r = results[0]
+  let pieces = r.polygon.subdivide(10); 
+  results.concat(pieces);
   return results;
 }
 

@@ -3,7 +3,6 @@ class Polyline {
   constructor(points, tolerance = TOLERANCE) {
     this.points = points;
     this.clean(tolerance);
-    this.segments = [];
     this.find_segments();
   }
 
@@ -46,6 +45,8 @@ class Polyline {
   }
 
   find_segments() {
+    this.segments = [];
+
     let previous;
     for (let i = 0; i < this.points.length - 1; i++) {
       const start = this.points[i];
