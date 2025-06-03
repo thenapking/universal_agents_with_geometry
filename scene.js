@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////
 // Set the fill type of each polygon based on its area
-let SMALL = ['hatching', 'pips', 'pips', 'circles', 'circles']
-let MEDIUM = ['housing', 'housing', 'circles']
+let SMALL = ['hatching', 'circles', 'circles']
+let MEDIUM = ['housing', 'housing', ]
 let LARGE = ['housing', 'housing', 'housing', 'housing', 'housing', 'blank',  'hatching', 'hatching'];  
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
 let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
@@ -69,11 +69,16 @@ function set_scene(polygons){
     }
 
     if(fill_type === 'housing') {
-      let pieces = polygon.subdivide(100)
+      let pieces = polygon.subdivide(random(100, 300))
       for(let piece of pieces){
-        let fill_object = new Hatching(piece, 5, 'upwards');
-        fill_object.hatch('upwards');
-        results.push({polygon: piece, fill_type: fill_type, colour: colour, fill: fill_object});
+        if(piece.area() > 1000){
+          createCircularGroup(piece);
+
+        } else {
+          let fill_object = new Hatching(piece, 5, 'upwards');
+          fill_object.hatch('upwards');
+          results.push({polygon: piece, fill_type: fill_type, colour: colour, fill: fill_object});
+        }
       }
      
     }

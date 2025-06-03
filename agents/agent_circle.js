@@ -14,28 +14,69 @@ class CircularGroup extends Group {
     }
   }
 
+  add_agents(n){
+    n = constrain(n, 0, potential_agents.length -1);
+    let agents_added = 0;
+    for (let i = 0; i < n; i++) {
+      let agent = potential_agents.shift();
+      if(!agent) { break }
+      
+      let outside = !this.boundaries[0].contains(agent.pos)
+      if(outside) { continue; }
+      console.log("size before", agent.size)
+      agent.set_size();
+      console.log("size after", agent.size)
+
+      let intersecting = false;
+      for(let other of this.agents){
+        if(agent.pos.dist(other.pos) < agent.size/2 + other.size/2){
+          intersecting = true;
+          break
+        }
+      }
+
+      if(!intersecting){
+        this.agents.push(agent);
+        agents_added++;
+        continue;
+      }
+    }
+    return agents_added;
+  
+  }
+  
+
   update(){
     if (!this.active) return 0;
+    this.add_agents(100, this.agents);
 
     let active = 0;
     for (let agent of this.agents) {
-      let sep = agent.separation(this.agents);
+      if (agent.spawned > 5) {
+        agent.active = false;
+      }
+
       agent.set_size();
-      agent.applyForce(sep);
-      agent.update();
+      agent.spawn();
+     
       if (agent.active) active++;
     }
+
 
     if (active < 1) {
       this.active = false; 
     }
+    console.log("Active agents in group: ", active);
     return active;
   }
+
+  
 }
 
 class CircularAgent extends Agent {
   constructor(pos, group) {
     super(pos, group);
+    this.spawned = 0;
   }
 
   set_size() {
@@ -45,10 +86,30 @@ class CircularAgent extends Agent {
     this.h = this.size;
   }
 
+  spawn() {
+    if(this.spawned > 5) {  return; }
+
+
+    for(let i = 0; i < 6; i++){
+      let angle = i*PI/3 + random(-0.1, 0.1);
+      let r = this.size*1.04;
+      let x = this.pos.x + r * cos(angle);
+      let y = this.pos.y + r * sin(angle);
+      let new_agent = new CircularAgent(createVector(x, y), this.group);
+
+      potential_agents.push(new_agent);
+      this.spawned++;
+    }
+
+
+  } 
+
   draw() {
     ellipse(this.pos.x, this.pos.y, this.size, this.size);
   }
 }
+
+let potential_agents = [];
 
 
 function createCircularGroup(polygon) {
@@ -67,8 +128,6 @@ function createCircularGroup(polygon) {
   let max_maxSize = map(area, 0, 60000, 5, 15);
   let minSize = int(random(min_minSize, max_maxSize))
   let maxSize = minSize*4
-  let avgSize = (minSize + maxSize) / 2;
-  let n = 4.5*floor(area / (avgSize * avgSize));
 
   const OPTIONS = {
     noiseScale: 0.01,
@@ -76,7 +135,7 @@ function createCircularGroup(polygon) {
     maxSize: maxSize,
   };
   // TO DO remove radius = 100
-  let group = new CircularGroup(n, center, 100, boundaries, OPTIONS) // new CircularGroup(10, center, 0, []);
+  let group = new CircularGroup(1, center, 100, boundaries, OPTIONS) 
   group.initialize();
   groups.push(group);
 }

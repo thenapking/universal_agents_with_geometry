@@ -14,7 +14,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = false;
+let exporting = true;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
@@ -66,6 +66,7 @@ function draw(){
     draw_groups();
   } else {
     let file_name = `output_${seed}.svg`;
+    console.log("Exporting to: ", file_name);
     if(exporting){ beginRecordSVG(this, file_name); }
     default_setup()
 
