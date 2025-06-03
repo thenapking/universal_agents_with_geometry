@@ -56,7 +56,6 @@ function setup(){
 }
 
 function draw(){
-
   let active = update_groups();
 
 

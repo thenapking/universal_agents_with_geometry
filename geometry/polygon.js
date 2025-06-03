@@ -1,6 +1,10 @@
 const ERROR_THRESHOLD = 0.001
 const ANGLE_THRESHOLD = 3.141/24;
-const AREA_THRESHOLD = 100;
+const AREA_THRESHOLD = 200;
+
+const LARGE_SW = 10;
+const MEDIUM_SW = 8;
+const SMALL_SW = 4;
 class Polygon {
   constructor(points) {
     this.points = points;
@@ -179,10 +183,17 @@ class Polygon {
   }
 
 
-  subdivide(stroke_width) {
-    if (this.area() < AREA_THRESHOLD) {
+  subdivide(threshold = AREA_THRESHOLD, counter = 0) {
+    if (this.area() < threshold) {
       return [this];
     }
+
+    if(this.area() > 500 && random(1) < 0.0625){
+      // make a park or hatched area
+      return [this]
+    }
+
+    let stroke_width = counter > 0 ? SMALL_SW : MEDIUM_SW;
 
     let edge = this.find_longest_edge();
     if (!edge) {
@@ -216,7 +227,7 @@ class Polygon {
     // 8) Recursively subdivide each piece:
     let result = [];
     for (let piece of pieces) {
-      let pieces = piece.subdivide(stroke_width);
+      let pieces = piece.subdivide(threshold, counter++);
       console.log("pieces after subdivide", pieces);
       result.push(...pieces);
     }

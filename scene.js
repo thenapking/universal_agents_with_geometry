@@ -1,11 +1,8 @@
 ////////////////////////////////////////////////////////////////
 // Set the fill type of each polygon based on its area
-let LARGE = ['blank', 'housing', 'housing', 'housing'];
-let SMALL = ['hatching', 'hatching', 'hatching', 'hatching', 'pips', 'circles', 'circles'];
-let MEDIUM = ['hatching', 'hatching', 'housing', 'housing', 'housing', 'housing', 'circles'];
-SMALL = []
-MEDIUM = []
-LARGE = []  
+let SMALL = ['hatching', 'pips', 'pips', 'circles', 'circles']
+let MEDIUM = ['housing', 'housing', 'circles']
+let LARGE = ['housing', 'housing', 'housing', 'housing', 'housing', 'blank',  'hatching', 'hatching'];  
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
 let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
 
@@ -66,19 +63,25 @@ function set_scene(polygons){
       createEllipseGroups(polygon);
     }
 
+    if(fill_type !== 'housing') {
+      results.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});
+      continue;
+    }
+
     if(fill_type === 'housing') {
-      fill_object = new Housing(polygon);
-      fill_object.construct();
+      let pieces = polygon.subdivide(100)
+      for(let piece of pieces){
+        let fill_object = new Hatching(piece, 5, 'upwards');
+        fill_object.hatch('upwards');
+        results.push({polygon: piece, fill_type: fill_type, colour: colour, fill: fill_object});
+      }
+     
     }
 
     console.log(fill_type, area_type, colour, area)
 
-    results.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});
   }
 
-  let r = results[0]
-  let pieces = r.polygon.subdivide(10); 
-  results.concat(pieces);
   return results;
 }
 
@@ -124,11 +127,26 @@ function create_scene(){
   poly_road = road.to_polygon(20);
   results = polyCircle.difference(poly_road)
 
-  for(let i = 0; i < polylines.length; i++){
-    results = split_polys(results, polylines[i]);
+  let poly_roads = [polylines[1], polylines[2], polylines[3], polylines[4]];
+  
+
+  for(let pr of poly_roads){
+    let pieces = []
+    pr = pr.to_polygon(LARGE_SW); 
+    for(let r of results){
+      let p = r.difference(pr);
+      for(let pp of p){
+        pieces.push(pp);
+      }
+    }
+    results = pieces;
   }
 
+
+  
+
   results = set_scene(results);
+
 }
 
 
@@ -207,13 +225,13 @@ function create_polygons(){
 
 }
 
-function split_polys(input, input_line){
+function split_polys(input, input_line, sw = 0){
   if(!input_line.points) { return }
   let results =  []
   for(let polygon of input){
     if(results.length > 100) { break; }
     let polyline = new Polyline(input_line.points);
-
+    
     let second = polygon.split(polyline);
     for(let s of second){
       results.push(s);
