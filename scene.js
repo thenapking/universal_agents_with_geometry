@@ -32,23 +32,8 @@ let poly_road;
 let polylines = []
 
 
-let coffers = [];
-let temp = []
-function create_coffers(){
-  let road_points = get_contour(WATER_LEVEL);
-  let poly_roads = [polylines[2], polylines[3], polylines[4]];
-  let potential_coffers = disjoint([polyCircleA, polyCircleB, polyCircleC, polyCircleD]);
-  for(let shape of potential_coffers){
-    let coffer = new Coffer(shape);
-    coffer.split_by_poly_roads([road_points], 20)
-    coffer.split_by_poly_roads(poly_roads);
-    coffer.fill();
-    coffer.draw();
-    coffers.push(coffer);
-  }
 
 
-}
 
 
 function create_polygons(){
@@ -90,8 +75,8 @@ function create_polygons(){
   );
 
   polyCircleD = new RegularPolygon(
-    3*W/4, H/4,
-    W/5, W/5, 100
+    0.6*W, 0.7*H,
+    W/6, W/6, 100
   );
 
 

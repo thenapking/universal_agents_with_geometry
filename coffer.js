@@ -1,12 +1,13 @@
 // PLAN
 // 1. One coffer, replicating existing code / 
 // 2. Two non-intersecting coffers /
-// 3. Two intersecting coffers
-// 4. Three intersecting coffers, plus smaller coffers which may be complete contained within a larger coffer
-// 5. Street fill randomness relative to distance from centre
-// 6. Outer polygon
-// 7. Removing edges? Joining them to the country?
-// 8. Data from slime mould
+// 3. Multiple intersecting coffers /
+// 4. Street fill randomness relative to distance from centre
+// 5. Adjacent polygons must not have the same fill type or colour
+// 6. Adjacent polygons can be unioned
+// 7. Three intersecting coffers, plus smaller coffers which may be complete contained within a larger coffer
+// 8. Outer polygon
+// 9. Data from slime mould
 
 // IMPROVEMENTS / BUG FIXES
 // Spawning does not tessellate fully
@@ -18,8 +19,8 @@
 
 // Set the fill type of each polygon based on its area
 let SMALL = ['hatching', 'circles', 'circles']
-let MEDIUM = ['housing', 'housing', ]
-let LARGE = ['housing', 'housing', 'housing', 'housing', 'housing', 'blank',  'hatching', 'hatching'];  
+let MEDIUM = ['housing', 'housing', 'housing' ]
+let LARGE = ['housing', 'housing', 'housing', 'housing', 'housing'] //, 'blank',  'hatching', 'hatching'];  
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
 let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
 
@@ -146,6 +147,10 @@ class Coffer {
       
       
       let fill_object;
+      
+      console.log("FILL TYPE", fill_type, "AREA TYPE", area_type, "COLOUR", colour);
+      fill_type = 'housing'; // force housing for now
+      console.log("FILL TYPE", fill_type);
   
       if(fill_type === 'hatching') {
         let d = random(directions);
@@ -171,21 +176,21 @@ class Coffer {
         continue;
       }
   
-      // if(fill_type === 'housing') {
-      //   let pieces = polygon.subdivide(random(100, 300))
-      //   for(let piece of pieces){
-      //     let area = piece.area();
-      //     if(area > PARK){
-      //       createCircularGroup(piece);
-      //     } else {
-      //       let direction = area > CIVIC ? 'downwards' : 'upwards';
-      //       let sw = area > CIVIC ? 6 : 4;
-      //       let fill_object = new Hatching(piece, sw, direction);
-      //       fill_object.hatch(direction);
-      //       this.add_piece(piece, fill_type, fill_object, colour);
-      //     }
-      //   }
-      // }
+      if(fill_type === 'housing') {
+        let pieces = polygon.subdivide(random(100, 300))
+        for(let piece of pieces){
+          let area = piece.area();
+          if(area > PARK){
+            createCircularGroup(piece);
+          } else {
+            let direction = area > CIVIC ? 'downwards' : 'upwards';
+            let sw = area > CIVIC ? 6 : 4;
+            let fill_object = new Hatching(piece, sw, direction);
+            fill_object.hatch(direction);
+            this.add_piece(piece, fill_type, fill_object, colour);
+          }
+        }
+      }
   
   
     }
@@ -202,5 +207,23 @@ class Coffer {
     }
   }
 }
+
+let coffers = [];
+function create_coffers(){
+  let road_points = get_contour(WATER_LEVEL);
+  let poly_roads = [polylines[2]];
+  let potential_coffers = disjoint([polyCircleC, polyCircleA, polyCircleB]);
+  for(let shape of potential_coffers){
+    let coffer = new Coffer(shape);
+    coffer.split_by_poly_roads([road_points], 20)
+    coffer.split_by_poly_roads(poly_roads);
+    coffer.fill();
+    coffer.draw();
+    coffers.push(coffer);
+  }
+
+
+}
+
 
 

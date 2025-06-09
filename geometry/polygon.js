@@ -164,14 +164,21 @@ class Polygon {
     if (!result?.[0]?.[0]?.length) {
       return;
     }
-    return new Polygon(result[0][0]);
+    return new Polygon(result.flat(1).flat(1));
+  }
+
+  xor(other){
+    let this_points = [this.to_a()];
+    let other_points = [other.to_a()];
+    let result = martinez.xor(this_points, other_points);
+    return new Polygon(result.flat(1).flat(1));
   }
 
   union(other){
     let this_points = [this.to_a()];
     let other_points = [other.to_a()];
     let result = martinez.union(this_points, other_points);
-    return new Polygon(result[0][0]);
+    return new Polygon(result.flat(1).flat(1));
   }
 
   difference(other){
@@ -185,22 +192,24 @@ class Polygon {
     console.log("DIFF", result)
     let results = [];
     for(let r of result){
-      // console.log(r)
-      if(r.length > 0){
-        let rr = new Polygon(r[0])
-        // console.log("DIFF POLYGON", rr);
-        results.push(rr);
-      }
+      results.push(new Polygon(r.flat(1)));
     }
     return results
   }
 
-  xor(other){
-    let this_points = [this.to_a()];
-    let other_points = [other.to_a()];
-    let result = martinez.xor(this_points, other_points);
-    return new Polygon(result[0][0]);
+  // Housing fill works well with this, but not martinez difference
+  difference_greiner(other){
+    let this_points = this.to_a();
+    let other_points = other.to_a();
+    let result = greinerHormann.diff(this_points, other_points);
+    if(result === null) return;
+    let results = [];
+    for(let r of result){
+      results.push(new Polygon(r));
+    }
+    return results;
   }
+
 
 
 
@@ -225,6 +234,7 @@ class Polygon {
     console.log(stroke_width)
     let edge = this.find_longest_edge();
     if (!edge) {
+      console.warn("No edges found for subdivision");
       return [this];
     }
 
@@ -249,8 +259,8 @@ class Polygon {
 
     let new_line = new Polyline([A, B]);
     let new_street = new_line.to_polygon(stroke_width);
-    let pieces = this.difference(new_street);
-    console.log("pieces", pieces);  
+    let pieces = this.difference_greiner(new_street);
+    console.log("pieces after DIFF", pieces);  
 
     // 8) Recursively subdivide each piece:
     let result = [];
