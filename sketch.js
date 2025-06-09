@@ -61,27 +61,27 @@ function setup(){
 }
 
 function draw(){
-  // let active = update_groups();
+  let active = update_groups();
 
 
-  // if(active > 0){
-  //   default_setup()
+  if(active > 0){
+    default_setup()
 
-  //   draw_scene();
-  //   draw_groups();
-  // } else {
-  //   let file_name = `output_${seed}.svg`;
-  //   console.log("Exporting to: ", file_name);
-  //   if(exporting){ beginRecordSVG(this, file_name); }
-  //   default_setup()
+    draw_scene();
+    draw_groups();
+  } else {
+    let file_name = `output_${seed}.svg`;
+    console.log("Exporting to: ", file_name);
+    if(exporting){ beginRecordSVG(this, file_name); }
+    default_setup()
 
-  //   draw_scene();
-  //   final_draw();
+    draw_scene();
+    final_draw();
 
     
-  //   noLoop();
-  //   if(exporting){ endRecordSVG(this); }
-  // }
+    noLoop();
+    if(exporting){ endRecordSVG(this); }
+  }
 }
 
 function draw_scene(){

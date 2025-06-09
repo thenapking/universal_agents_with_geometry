@@ -155,34 +155,53 @@ class Polygon {
     return longest;
   }
 
-  // Boolean operations using Greiner-Hormann algorithm
+  // Boolean operations using Martinez algorithm
   intersection(other){
-    let this_points = this.to_a();
-    let other_points = other.to_a();
-    let result = greinerHormann.intersection(this_points, other_points);
-    if(result === null) return;
-    return new Polygon(result[0]);
+    let this_points = [this.to_a()];
+    let other_points = [other.to_a()];
+
+    let result = martinez.intersection(this_points, other_points);
+    if (!result?.[0]?.[0]?.length) {
+      return;
+    }
+    return new Polygon(result[0][0]);
   }
 
   union(other){
-    let this_points = this.to_a();
-    let other_points = other.to_a();
-    let result = greinerHormann.union(this_points, other_points);
-    if(result === null) return;
-    return new Polygon(result[0]);
+    let this_points = [this.to_a()];
+    let other_points = [other.to_a()];
+    let result = martinez.union(this_points, other_points);
+    return new Polygon(result[0][0]);
   }
 
   difference(other){
-    let this_points = this.to_a();
-    let other_points = other.to_a();
-    let result = greinerHormann.diff(this_points, other_points);
-    if(result === null) return;
-    let results = [];
-    for(let p of result){
-      results.push(new Polygon(p));
+    let this_points = [this.to_a()];
+    let other_points = [other.to_a()];
+
+    let result = martinez.diff(this_points, other_points);
+    if (!result?.[0]?.[0]?.length) {
+      return 
     }
-    return results;
+    console.log("DIFF", result)
+    let results = [];
+    for(let r of result){
+      // console.log(r)
+      if(r.length > 0){
+        let rr = new Polygon(r[0])
+        // console.log("DIFF POLYGON", rr);
+        results.push(rr);
+      }
+    }
+    return results
   }
+
+  xor(other){
+    let this_points = [this.to_a()];
+    let other_points = [other.to_a()];
+    let result = martinez.xor(this_points, other_points);
+    return new Polygon(result[0][0]);
+  }
+
 
 
   subdivide(threshold = AREA, counter = 0) {
@@ -442,7 +461,6 @@ class Polygon {
     if (this.count() < 3) return;
     push();
       noFill();
-      fill(255,0,0);
       beginShape();
       for(let v of this.points){
         vertex(v.x, v.y);
@@ -457,6 +475,38 @@ function orient2d(a, b, c) {
   const x2 = b.x, y2 = b.y;
   const x3 = c.x, y3 = c.y;
   return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
+}
+
+
+function disjoint(polygons) {
+  let n = polygons.length;
+  let pieces = [];
+
+  for (let i = 1; i < (1 << n); i++) {
+    // bitmask representing which polygons are included in this combination
+    let included = [];
+    let excluded = [];
+
+    for (let j = 0; j < n; j++) {
+      if (i & (1 << j)) included.push(polygons[j]);
+      else excluded.push(polygons[j]);
+    }
+
+
+    // compute the piece
+    let piece = included.reduce((acc, poly) => acc.intersection(poly));
+    if (piece) {
+      for (let poly of excluded) {
+        piece = piece.difference(poly);
+        if (!piece) break; // empty piece
+        // difference will return two pieces.  We can discard anything but the first.
+        piece = piece[0]
+      }
+      if (piece) pieces.push(piece);
+    }
+  }
+
+  return pieces;
 }
 
 

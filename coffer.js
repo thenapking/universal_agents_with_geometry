@@ -75,11 +75,13 @@ class Coffer {
 
       for(let polygon of this.polygons){
         let results = polygon.difference(road);
-
+        console.log("results", results);
         for(let result of results){
           new_pieces.push(result);
         }
+        console.log(new_pieces)
       }
+      console.log("NEW PIECES", new_pieces.length, new_pieces);
       this.polygons = new_pieces;
       console.log("POLYGONS AFTER SPLIT", this.polygons.length, this.polygons);
     }
