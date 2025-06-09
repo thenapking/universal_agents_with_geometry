@@ -31,6 +31,66 @@ let poly_road;
 
 let polylines = []
 
+
+let coffers = [];
+let temp = []
+function create_coffers(){
+  let road_points = get_contour(WATER_LEVEL);
+  let poly_roads = [polylines[1], polylines[3], polylines[4]] //, polylines[3], polylines[4]];
+  let potential_coffers = [polyCircleA, polyCircleB, polyCircleC];
+
+  for(let new_coffer of potential_coffers){
+    for(let other_coffer of potential_coffers){
+      let pa = new_coffer.difference(other_coffer);
+      new_coffer = pa[0];
+    }
+
+    let coffer = new Coffer(new_coffer);
+    // coffer.fill();
+    // coffer.draw();
+    coffers.push(coffer);  
+  }
+
+  
+  let a = polyCircleA;
+  let b = polyCircleB;
+  let c = polyCircleC;
+
+  let buc = b.union(c);
+  let auc = a.union(c);
+  let aub = a.union(b);
+
+  console.log("BUC", buc);
+  console.log("AUC", auc);
+  console.log("AUB", aub);
+
+  // auc.draw();
+
+  let pb = b.difference(auc);
+console.log("PB", pb, b);
+  let pa = a.difference(buc);
+  let pc = c.difference(aub);
+    
+  pa[0].draw()
+  // pb.draw();
+  pb[0].draw();
+  pc[0].draw();
+
+  // let coffera = new Coffer(pa[0])
+  // let cofferb = new Coffer(pb[0]);
+
+  
+  // coffer.split_by_polygons(potential_coffers)
+  // coffer.split_by_poly_roads([road_points], 20)
+  // coffer.split_by_poly_roads(poly_roads);
+  // coffera.fill();
+  // cofferb.fill();
+  
+  // coffers.push(coffera);
+  // coffers.push(cofferb);
+}
+
+
 function create_polygons(){
   polyOuter = new Polygon([
     createVector(0, 0),
@@ -55,13 +115,23 @@ function create_polygons(){
 
  
   polyCircleA = new RegularPolygon(
-    W/4, H/2,
+    W/4, H/4,
     W/4, W/4, 100
   );
 
   polyCircleB = new RegularPolygon(
-    3*W/4, H/2,
-    W/4, W/4, 100
+    3*W/4, 3*H/4,
+    W/2, W/2, 200
+  );
+
+  polyCircleC = new RegularPolygon(
+    W/4, H/2,
+    W/5, W/5, 100
+  );
+
+  polyCircleD = new RegularPolygon(
+    3*W/4, H/4,
+    W/5, W/5, 100
   );
 
 

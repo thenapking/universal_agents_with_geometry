@@ -40,6 +40,30 @@ class Coffer {
   // (c) poly_roads /
   // (d) roads
 
+  split_by_polygons(polygons){
+    if(polygons.length === 0) { return; }
+    for(let polygon of polygons){
+      console.log("SPLITTING BY POLYGON", polygon);
+      
+      let new_pieces = [];
+      
+      for(let piece of this.polygons){
+        let results = piece.difference(polygon);
+        console.log("DIFFERENCES", results);
+
+        // let intersection = piece.intersection(polygon);
+        // results.push(intersection);
+        // console.log("INTERSECTIONS", intersection);
+
+        for(let result of results){
+          new_pieces.push(result);
+        }
+      }
+      this.polygons = new_pieces;
+    }
+    console.log("POLYGONS AFTER SPLITTING BY POLYGONS", this.polygons.length, this.polygons);
+  }
+
   split_by_poly_roads(point_arrays, road_width = LARGE_SW, detail = 0.1) {
     for(let points of point_arrays){
       console.log("SPLITTING BY POLY ROADS", points);
@@ -145,21 +169,21 @@ class Coffer {
         continue;
       }
   
-      if(fill_type === 'housing') {
-        let pieces = polygon.subdivide(random(100, 300))
-        for(let piece of pieces){
-          let area = piece.area();
-          if(area > PARK){
-            createCircularGroup(piece);
-          } else {
-            let direction = area > CIVIC ? 'downwards' : 'upwards';
-            let sw = area > CIVIC ? 6 : 4;
-            let fill_object = new Hatching(piece, sw, direction);
-            fill_object.hatch(direction);
-            this.add_piece(piece, fill_type, fill_object, colour);
-          }
-        }
-      }
+      // if(fill_type === 'housing') {
+      //   let pieces = polygon.subdivide(random(100, 300))
+      //   for(let piece of pieces){
+      //     let area = piece.area();
+      //     if(area > PARK){
+      //       createCircularGroup(piece);
+      //     } else {
+      //       let direction = area > CIVIC ? 'downwards' : 'upwards';
+      //       let sw = area > CIVIC ? 6 : 4;
+      //       let fill_object = new Hatching(piece, sw, direction);
+      //       fill_object.hatch(direction);
+      //       this.add_piece(piece, fill_type, fill_object, colour);
+      //     }
+      //   }
+      // }
   
   
     }
@@ -177,19 +201,4 @@ class Coffer {
   }
 }
 
-let coffers = [];
 
-function create_coffers(){
-  let road_points = get_contour(WATER_LEVEL);
-  let poly_roads = [polylines[1], polylines[2], polylines[3], polylines[4]];
-  
-  let potential_coffers = [polyCircleA, polyCircleB]
-  for(let polygon of potential_coffers){
-    let coffer = new Coffer(polygon)
-    coffer.split_by_poly_roads([road_points], 20)
-    coffer.split_by_poly_roads(poly_roads);
-    coffer.fill();
-    
-    coffers.push(coffer);
-  }
-}

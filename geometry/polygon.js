@@ -442,6 +442,7 @@ class Polygon {
     if (this.count() < 3) return;
     push();
       noFill();
+      fill(255,0,0);
       beginShape();
       for(let v of this.points){
         vertex(v.x, v.y);
