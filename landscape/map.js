@@ -12,8 +12,10 @@ let max_threshold = 0.0; // Maximum threshold for noise values
 let WATER_LEVEL;
 
 function create_noise_field(){
-  cols = floor(width / (resolution))+3;
-  rows = floor(height / (resolution));
+
+  // TO DO need to back shift this 
+  cols = floor(2 * width / (resolution));
+  rows = floor(2 * height / (resolution));
 
   for (let i = 0; i < cols; i++) {
     values[i] = [];

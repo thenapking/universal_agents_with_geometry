@@ -15,14 +15,16 @@
 // Hatching missing lines bug
 // Hatching spacing
 // Minimum area
+// River crazyness
+// Vertical line crazyness
 
 
 // Set the fill type of each polygon based on its area
-let SMALL = ['hatching', 'circles', 'circles']
-let MEDIUM = ['housing', 'housing', 'housing' ]
-let LARGE = ['housing', 'housing', 'housing', 'housing', 'housing'] //, 'blank',  'hatching', 'hatching'];  
+let SMALL = ['hatching', 'circles', 'pips']
+let MEDIUM = ['housing', 'hatching', 'blank' ]
+let LARGE = ['housing',  'hatching', 'blank'];  
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
-let colours = ['blue', 'red', 'green', 'black', 'purple', 'orange'];
+let colours = ['blue', 'red', 'green', 'purple', 'orange', 'brown', 'pink', 'black', 'grey', 'cyan', 'magenta'];
 
 class Coffer {
   constructor(polygon) {
@@ -31,8 +33,8 @@ class Coffer {
     this.polygons = [polygon];
   }
 
-  add_piece(polygon, fill_type, fill_object, colour) {
-    this.pieces.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object});
+  add_piece(polygon, fill_type, fill_object, colour, direction) {
+    this.pieces.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object, direction: direction});
   }
 
   // TODO: add methods to divide it by
@@ -41,29 +43,6 @@ class Coffer {
   // (c) poly_roads /
   // (d) roads
 
-  split_by_polygons(polygons){
-    if(polygons.length === 0) { return; }
-    for(let polygon of polygons){
-      console.log("SPLITTING BY POLYGON", polygon);
-      
-      let new_pieces = [];
-      
-      for(let piece of this.polygons){
-        let results = piece.difference(polygon);
-        console.log("DIFFERENCES", results);
-
-        // let intersection = piece.intersection(polygon);
-        // results.push(intersection);
-        // console.log("INTERSECTIONS", intersection);
-
-        for(let result of results){
-          new_pieces.push(result);
-        }
-      }
-      this.polygons = new_pieces;
-    }
-    console.log("POLYGONS AFTER SPLITTING BY POLYGONS", this.polygons.length, this.polygons);
-  }
 
   split_by_poly_roads(point_arrays, road_width = LARGE_SW, detail = 0.1) {
     for(let points of point_arrays){
@@ -113,30 +92,62 @@ class Coffer {
 
   fill(){
     for(let polygon of this.polygons){
+      console.log("FILLING POLYGON", polygon);
       const [minX, minY, maxX, maxY] = polygon.bounds();
       let W = maxX - minX;
       let H = maxY - minY;
       let area = W * H;
   
       let fill_type = 'blank';
+      let fill_types = []
       let area_type;
+
       if(area <  200){
         area_type = 'tiny';
+        fill_types = ['blank']
       } else if(area < 6000) {
         area_type = 'small';
-        shuffle(SMALL);
-        fill_type = SMALL.pop();
+        fill_types = shuffle(SMALL).slice();
       } else if(area < 21000) {
         area_type = 'medium';
-        shuffle(MEDIUM);
-        fill_type = MEDIUM.pop();
+        fill_types = shuffle(MEDIUM).slice();
       } else {
         area_type = 'large';
-        shuffle(LARGE);
-        fill_type = LARGE.pop();
+        fill_types = shuffle(LARGE).slice();
       }
-  
-      let colour = random(colours)
+      
+      let available_colours = colours.slice()
+      let available_directions = directions.slice();
+
+      for(let other_coffer of coffers){
+        for(let other of other_coffer.pieces) {
+          if(other.polygon.adjacent(polygon)) {
+            if(other.fill_type === 'blank') { continue; }
+
+            let index = fill_types.indexOf(other.fill_type);
+            let direction_index = available_directions.indexOf(other.direction);
+            if(other.fill_type === 'hatching' ) {
+              if(direction_index > -1) {
+              console.log("REMOVING DIRECTION", other.direction, "FROM AVAILABLE DIRECTIONS", available_directions);
+              available_directions.splice(direction_index, 1);
+              }
+              if(available_directions.length === 0) {
+                console.log("NO DIRECTIONS LEFT, REMOVING FILL TYPE", other.fill_type, "FROM AVAILABLE FILL TYPES", fill_types);
+                fill_types.splice(index, 1);
+              }
+
+            } else if(index > -1) {
+              console.log("REMOVING FILL TYPE", other.fill_type, "FROM AVAILABLE FILL TYPES", fill_types);
+
+              fill_types.splice(index, 1);
+            }
+          }
+        }
+      }
+
+      let colour = available_colours.length > 0 ? random(available_colours) : 'black'
+      fill_type = fill_types.length > 0 ? random(fill_types) : 'blank';
+
   
       let pc = polygon.centroid();
       let stD = W/5
@@ -147,16 +158,13 @@ class Coffer {
       
       
       let fill_object;
-      
-      console.log("FILL TYPE", fill_type, "AREA TYPE", area_type, "COLOUR", colour);
-      fill_type = 'housing'; // force housing for now
-      console.log("FILL TYPE", fill_type);
-  
+      let direction;
+
       if(fill_type === 'hatching') {
-        let d = random(directions);
+        direction = random(available_directions);
   
-        fill_object = new Hatching(polygon, 5, d);
-        fill_object.hatch(d);
+        fill_object = new Hatching(polygon, 5, direction);
+        fill_object.hatch(direction);
       }
   
       if(fill_type === 'circles') {
@@ -172,7 +180,7 @@ class Coffer {
       }
   
       if(fill_type !== 'housing') {
-        this.add_piece(polygon, fill_type, fill_object, colour);
+        this.add_piece(polygon, fill_type, fill_object, colour, direction);
         continue;
       }
   
@@ -187,19 +195,17 @@ class Coffer {
             let sw = area > CIVIC ? 6 : 4;
             let fill_object = new Hatching(piece, sw, direction);
             fill_object.hatch(direction);
-            this.add_piece(piece, fill_type, fill_object, colour);
+            this.add_piece(piece, fill_type, fill_object, colour, direction);
           }
         }
       }
-  
-  
     }
-  
   }
 
   draw(){
     for(let piece of this.pieces) {
-      stroke(piece.colour);
+      stroke(0,0,0,50);
+      strokeWeight(1);
       piece.polygon.draw();
       if(piece.fill) {
         piece.fill.draw();
@@ -211,15 +217,14 @@ class Coffer {
 let coffers = [];
 function create_coffers(){
   let road_points = get_contour(WATER_LEVEL);
-  let poly_roads = [polylines[2]];
-  let potential_coffers = disjoint([polyCircleC, polyCircleA, polyCircleB]);
+  let poly_roads = [polylines[2], polylines[3], polylines[4], polylines[0]];
+  let potential_coffers = disjoint([polyCircleB, polyCircleA, polyCircleC]);
   for(let shape of potential_coffers){
     let coffer = new Coffer(shape);
     coffer.split_by_poly_roads([road_points], 20)
     coffer.split_by_poly_roads(poly_roads);
-    coffer.fill();
-    coffer.draw();
     coffers.push(coffer);
+    coffer.fill();
   }
 
 

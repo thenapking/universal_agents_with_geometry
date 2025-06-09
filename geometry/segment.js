@@ -109,12 +109,45 @@ class Segment {
              edgeBounds[3] < minY || edgeBounds[1] > maxY);
   }
 
+  adjacent(other) {
+    const tolerance = 1e-6
+    let d1 = p5.Vector.sub(this.end, this.start);
+    let d2 = p5.Vector.sub(other.end, other.start);
+
+    if (Math.abs(cross(d1, d2)) > tolerance) return false;
+
+    let axis = Math.abs(d1.x) > Math.abs(d1.y) ? 'x' : 'y';
+
+    let a_start = this.start[axis];
+    let a_end = this.end[axis];
+    let b_start = other.start[axis];
+    let b_end = other.end[axis];
+
+    let rangeA = [a_start, a_end].sort((a, b) => a - b);
+    let rangeB = [b_start, b_end].sort((a, b) => a - b);
+
+    let check = rangeA[1] >= rangeB[0] - tolerance && rangeB[1] >= rangeA[0] - tolerance;
+    if (!check) return false;
+    // console.log("Adjacent segments found:", this, other);
+    let cr = random(colours)
+    strokeWeight(2);  
+    this.draw(cr);
+    other.draw(cr);
+
+    return true
+  }
+
   sort() {
     this.junctures.sort((a, b) => {
       const distanceA = p5.Vector.dist(a.point, this.start);
       const distanceB = p5.Vector.dist(b.point, this.start);
       return distanceA - distanceB;
     });
+  }
+
+  draw(colour) {
+    stroke(colour);
+    line(this.start.x, this.start.y, this.end.x, this.end.y);
   }
 }
 

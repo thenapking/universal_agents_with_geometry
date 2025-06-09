@@ -121,6 +121,8 @@ class Polygon {
     segment.previous = previous;
   }
 
+  
+
   find_edges(){
     this.edges = [];
     let current = [this.segments[0]];
@@ -154,6 +156,19 @@ class Polygon {
     }
     return longest;
   }
+
+
+  // Adjacency
+  adjacent(other) {
+    for(let segment of this.segments) {
+      for(let other_segment of other.segments) {
+        if(segment.adjacent(other_segment)) {
+          return true;
+        }
+      }
+    }
+  }
+
 
   // Boolean operations using Martinez algorithm
   intersection(other){
@@ -189,7 +204,7 @@ class Polygon {
     if (!result?.[0]?.[0]?.length) {
       return 
     }
-    console.log("DIFF", result)
+    // console.log("DIFF", result)
     let results = [];
     for(let r of result){
       results.push(new Polygon(r.flat(1)));
@@ -231,7 +246,7 @@ class Polygon {
 
     let stroke_width = area > BLOCK ? MEDIUM_SW : SMALL_SW;
 
-    console.log(stroke_width)
+    // console.log(stroke_width)
     let edge = this.find_longest_edge();
     if (!edge) {
       console.warn("No edges found for subdivision");
@@ -260,16 +275,16 @@ class Polygon {
     let new_line = new Polyline([A, B]);
     let new_street = new_line.to_polygon(stroke_width);
     let pieces = this.difference_greiner(new_street);
-    console.log("pieces after DIFF", pieces);  
+    // console.log("pieces after DIFF", pieces);  
 
     // 8) Recursively subdivide each piece:
     let result = [];
     for (let piece of pieces) {
       let pieces = piece.subdivide(threshold, counter++);
-      console.log("pieces after subdivide", pieces);
+      // console.log("pieces after subdivide", pieces);
       result.push(...pieces);
     }
-    console.log("result after subdivide", result);
+    // console.log("result after subdivide", result);
     return result;
   }
 
@@ -368,10 +383,10 @@ class Polygon {
       next = next_juncture;
       //Note that checking presence of next_juncture prevents an infinite loop
       while(next_juncture !== current  && next_juncture) { 
-        console.log("Looping")
-        console.log("Before ", result)
+        // console.log("Looping")
+        // console.log("Before ", result)
         next_juncture = polyline.walk(next_juncture, result);
-        console.log("After ", result)
+        // console.log("After ", result)
         if(next_juncture !== current ) {
           next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
         }
@@ -381,7 +396,7 @@ class Polygon {
     }
 
     let new_polygons = [];
-    console.log("Final2", results);
+    // console.log("Final2", results);
 
     for(let result of results) {
       let new_polygon = new Polygon(result);
@@ -392,7 +407,7 @@ class Polygon {
   }
 
   walk_polygon_forwards(juncture, result, junctures) {
-    console.log("juncture", juncture)
+    // console.log("juncture", juncture)
     let next = juncture.polygon;
     // circle(juncture.point.x, juncture.point.y, 10);
     // circle(next.start.x, next.start.y, 10);
@@ -400,7 +415,7 @@ class Polygon {
       return this.walk_multiple_junctures(next, juncture, result);
     }
 
-    console.log("only one juncture")
+    // console.log("only one juncture")
     return this.walk_to_end_of_edge(next, juncture, result);
   }
 

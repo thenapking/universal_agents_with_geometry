@@ -43,7 +43,8 @@ function setup(){
   // seed =  289768
   // seed =  124826
   // seed =  690352
-  seed =  210054
+  // seed =  210054
+  seed =  46391
   console.log("seed = ", seed);
   randomSeed(seed);
   noiseSeed(seed);
@@ -61,6 +62,10 @@ function setup(){
 }
 
 function draw(){
+  // for(let coffer of coffers){
+  //   coffer.draw();
+  // }
+  // noLoop()
   let active = update_groups();
 
 

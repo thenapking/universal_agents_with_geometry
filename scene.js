@@ -82,31 +82,31 @@ function create_polygons(){
 
 
   polylineA = [
-    createVector(W/2, 0),
-    createVector(W/2, H)
+    createVector(W/2 + 60, 0),
+    createVector(W/2 + 20, H)
   ]
 
   
   polylineB = [
     createVector(0, 0),
-    createVector(W, W)
+    createVector(-W, 2*W)
   ]
 
   polylineBr = [
-    createVector(W, W),
+    createVector(-W, 2*W),
     createVector(0, 0),
   ]
 
   polylineC = [
-    createVector(3*W/4, 0),
-    createVector(3*W/4, H)
+    createVector(3*W/4, -H),
+    createVector(3*W/4, 2*H)
   ]
 
 
 
   polylineF = [
-    createVector(0, 3*H/4),
-    createVector(W, 3*H/4)
+    createVector(-W, 3*H/4),
+    createVector(2*W, 3*H/4)
   ]
 
   polylines.push(polylineA);
