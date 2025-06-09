@@ -57,7 +57,7 @@ function setup(){
  
 
   create_polygons();
-  create_scene();
+  create_coffers();
 }
 
 function draw(){
@@ -81,6 +81,12 @@ function draw(){
     
     noLoop();
     if(exporting){ endRecordSVG(this); }
+  }
+}
+
+function draw_scene(){
+  for(let coffer of coffers){
+    coffer.draw();
   }
 }
 

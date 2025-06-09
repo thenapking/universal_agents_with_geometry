@@ -64,7 +64,7 @@ class CircularGroup extends Group {
     if (active < 1) {
       this.active = false; 
     }
-    console.log("Active agents in group: ", active);
+
     return active;
   }
 
