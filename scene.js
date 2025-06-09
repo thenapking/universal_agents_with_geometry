@@ -71,12 +71,14 @@ function set_scene(polygons){
     if(fill_type === 'housing') {
       let pieces = polygon.subdivide(random(100, 300))
       for(let piece of pieces){
-        if(piece.area() > 1000){
+        let area = piece.area();
+        if(area > PARK){
           createCircularGroup(piece);
-
         } else {
-          let fill_object = new Hatching(piece, 5, 'upwards');
-          fill_object.hatch('upwards');
+          let direction = area > CIVIC ? 'downwards' : 'upwards';
+          let sw = area > CIVIC ? 6 : 4;
+          let fill_object = new Hatching(piece, sw, direction);
+          fill_object.hatch(direction);
           results.push({polygon: piece, fill_type: fill_type, colour: colour, fill: fill_object});
         }
       }

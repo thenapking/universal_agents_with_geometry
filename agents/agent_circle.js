@@ -23,9 +23,7 @@ class CircularGroup extends Group {
       
       let outside = !this.boundaries[0].contains(agent.pos)
       if(outside) { continue; }
-      console.log("size before", agent.size)
       agent.set_size();
-      console.log("size after", agent.size)
 
       let intersecting = false;
       for(let other of this.agents){

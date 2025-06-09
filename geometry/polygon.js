@@ -1,10 +1,13 @@
-const ERROR_THRESHOLD = 0.001
-const ANGLE_THRESHOLD = 3.141/24;
-const AREA_THRESHOLD = 200;
+const ERROR = 0.001
+const ANGLE = 3.141/24;
+const AREA = 200;
+const PARK = 3000;
+const CIVIC = 1000;
+const BLOCK = 2000;
 
 const LARGE_SW = 10;
 const MEDIUM_SW = 8;
-const SMALL_SW = 4;
+const SMALL_SW = 3;
 class Polygon {
   constructor(points) {
     this.points = points;
@@ -127,7 +130,7 @@ class Polygon {
       const next_segment = segment.next.to_v();
       let angle = segment.to_v().angleBetween(next_segment);
 
-      if(Math.abs(angle) < ANGLE_THRESHOLD){
+      if(Math.abs(angle) < ANGLE){
         current.push(segment);
       } else {
         this.edges.push(current);
@@ -153,7 +156,6 @@ class Polygon {
   }
 
   // Boolean operations using Greiner-Hormann algorithm
-
   intersection(other){
     let this_points = this.to_a();
     let other_points = other.to_a();
@@ -183,18 +185,25 @@ class Polygon {
   }
 
 
-  subdivide(threshold = AREA_THRESHOLD, counter = 0) {
-    if (this.area() < threshold) {
+  subdivide(threshold = AREA, counter = 0) {
+    let area = this.area();
+    if (area < threshold) {
       return [this];
     }
 
-    if(this.area() > 500 && random(1) < 0.0625){
-      // make a park or hatched area
+    if(area > PARK && random(1) < 0.03){
+      // make a park 
       return [this]
     }
 
-    let stroke_width = counter > 0 ? SMALL_SW : MEDIUM_SW;
+    if(area > CIVIC && random(1) < 0.07){
+      // make a hatched area
+      return [this]
+    }
 
+    let stroke_width = area > BLOCK ? MEDIUM_SW : SMALL_SW;
+
+    console.log(stroke_width)
     let edge = this.find_longest_edge();
     if (!edge) {
       return [this];
@@ -271,7 +280,7 @@ class Polygon {
           for(let other of junctures) {
             let dx = Math.abs(other.point.x - juncture.point.x);
             let dy = Math.abs(other.point.y - juncture.point.y);
-            if (dx <= ERROR_THRESHOLD && dy <= ERROR_THRESHOLD) {
+            if (dx <= ERROR && dy <= ERROR) {
               duplicate = true;
             }
           }
