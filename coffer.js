@@ -1,6 +1,6 @@
 // PLAN
-// 1. One coffer, replicating existing code
-// 2. Two non-intersecting coffers
+// 1. One coffer, replicating existing code / 
+// 2. Two non-intersecting coffers /
 // 3. Two intersecting coffers
 // 4. Three intersecting coffers, plus smaller coffers which may be complete contained within a larger coffer
 // 5. Street fill randomness relative to distance from centre
@@ -183,10 +183,13 @@ function create_coffers(){
   let road_points = get_contour(WATER_LEVEL);
   let poly_roads = [polylines[1], polylines[2], polylines[3], polylines[4]];
   
-  let coffer = new Coffer(polyCircle)
-  coffer.split_by_poly_roads([road_points], 20)
-  coffer.split_by_poly_roads(poly_roads);
-  coffer.fill();
-  
-  coffers.push(coffer);
+  let potential_coffers = [polyCircleA, polyCircleB]
+  for(let polygon of potential_coffers){
+    let coffer = new Coffer(polygon)
+    coffer.split_by_poly_roads([road_points], 20)
+    coffer.split_by_poly_roads(poly_roads);
+    coffer.fill();
+    
+    coffers.push(coffer);
+  }
 }

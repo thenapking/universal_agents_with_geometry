@@ -54,10 +54,16 @@ function create_polygons(){
   ]);
 
  
-  polyCircle = new RegularPolygon(
-    W/2, H/2,
-    W/2, W/2, 100
+  polyCircleA = new RegularPolygon(
+    W/4, H/2,
+    W/4, W/4, 100
   );
+
+  polyCircleB = new RegularPolygon(
+    3*W/4, H/2,
+    W/4, W/4, 100
+  );
+
 
 
   polylineA = [
