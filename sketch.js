@@ -14,7 +14,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = true;
+let exporting = false;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
@@ -44,8 +44,13 @@ function setup(){
   // seed =  124826
   // seed =  690352
   // seed =  210054
-  seed =  46391
+  // seed =  46391
   // seed =  566617
+  // seed =  644768
+  // seed =  645494
+  // seed =  276226
+
+  // seed =  590184
   console.log("seed = ", seed);
   randomSeed(seed);
   noiseSeed(seed);
@@ -63,6 +68,9 @@ function setup(){
 }
 
 function draw(){
+ 
+  // noLoop();
+  
   let active = update_groups();
 
 
@@ -92,6 +100,14 @@ function draw(){
     noLoop();
     if(exporting){ endRecordSVG(this); }
   }
+
+  // let road_points = get_contour(WATER_LEVEL);
+  // road = new Polyline(road_points);
+  // let rp = road.to_polygon(20);
+  // // road.draw();
+  // translate(BW, BW);  
+  // stroke(0, 0, 0, 50);
+  // rp.draw();
 }
 
 function draw_borders(){

@@ -14,9 +14,11 @@
 // Find min-hatching size for pens
 // Hatching missing lines bug
 // Hatching spacing
+// Subdivide spacing
 // Minimum area
-// River crazyness
-// Vertical line crazyness
+// River crazyness DONE
+// Multi intersection Craziness DONE
+// Fix resolution based intersection issues
 
 
 // Set the fill type of each polygon based on its area
@@ -46,7 +48,7 @@ class Coffer {
 
   split_by_poly_roads(point_arrays, road_width = LARGE_SW, detail = 0.1) {
     for(let points of point_arrays){
-      console.log("SPLITTING BY POLY ROADS", points);
+      // console.log("SPLITTING BY POLY ROADS", points);
       let new_pieces = []
 
       let polyline = new Polyline(points);
@@ -55,15 +57,15 @@ class Coffer {
 
       for(let polygon of this.polygons){
         let results = polygon.difference(road);
-        console.log("results", results);
+        // console.log("results", results);
         for(let result of results){
           new_pieces.push(result);
         }
         console.log(new_pieces)
       }
-      console.log("NEW PIECES", new_pieces.length, new_pieces);
+      // console.log("NEW PIECES", new_pieces.length, new_pieces);
       this.polygons = new_pieces;
-      console.log("POLYGONS AFTER SPLIT", this.polygons.length, this.polygons);
+      // console.log("POLYGONS AFTER SPLIT", this.polygons.length, this.polygons);
     }
   }
 
@@ -252,14 +254,20 @@ class Coffer {
     }
 
     push();
-    for(let piece of this.pieces) {
-      if(piece.fill_type != 'housing') { continue }
-      piece.polygon.draw();
-      if(piece.fill) {
-        piece.fill.draw();
+      for(let piece of this.pieces) {
+        if(piece.fill_type != 'housing') { continue }
+        piece.polygon.draw();
+        if(piece.fill) {
+          piece.fill.draw();
+        }
+      }
+    pop();
+
+    if(this.pieces.length === 0) {
+      for(let polygon of this.polygons) {
+        polygon.draw();
       }
     }
-    pop();
   }
 }
 
@@ -267,6 +275,7 @@ let coffers = [];
 function create_coffers(){
   let road_points = get_contour(WATER_LEVEL);
   let poly_roads = [polylines[2], polylines[3], polylines[4], polylines[0]];
+
   let potential_coffers = disjoint([polyCircleB, polyCircleC, polyCircleD, polyCircleE, polyCircleF, polyCircleG]);
   for(let shape of potential_coffers){
     let coffer = new Coffer(shape);
@@ -276,7 +285,7 @@ function create_coffers(){
   }
 
   for(let coffer of coffers){
-    coffer.unsplit();
+    // coffer.unsplit();
   }
 
   for(let coffer of coffers){
