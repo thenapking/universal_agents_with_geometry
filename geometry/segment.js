@@ -130,11 +130,27 @@ class Segment {
     if (!check) return false;
     // console.log("Adjacent segments found:", this, other);
     let cr = random(colours)
-    strokeWeight(2);  
-    this.draw(cr);
-    other.draw(cr);
+    // strokeWeight(2);  
+    // this.draw(cr);
+    // other.draw(cr);
 
     return true
+  }
+
+  distance(point) {
+    const v = p5.Vector.sub(this.end, this.start);
+    const w = p5.Vector.sub(point, this.start);
+
+    const c1 = w.dot(v);
+    if (c1 <= 0) return p5.Vector.dist(point, this.start);
+
+    const c2 = v.dot(v);
+    if (c2 <= c1) return p5.Vector.dist(point, this.end);
+
+    const b = c1 / c2;
+    const pb = this.start.copy().add(v.copy().mult(b));
+
+    return p5.Vector.dist(point, pb);
   }
 
   sort() {

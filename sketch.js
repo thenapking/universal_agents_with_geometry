@@ -1,7 +1,7 @@
 let DPI= 96;
 let wi = 7;
 let hi = 7;
-let bwi = 0;
+let bwi = 0.25;
 let W = wi * DPI;
 let H = hi * DPI;
 let BW = bwi * DPI;
@@ -14,7 +14,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = false;
+let exporting = true;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;
@@ -45,6 +45,7 @@ function setup(){
   // seed =  690352
   // seed =  210054
   seed =  46391
+  // seed =  566617
   console.log("seed = ", seed);
   randomSeed(seed);
   noiseSeed(seed);
@@ -62,31 +63,46 @@ function setup(){
 }
 
 function draw(){
-  // for(let coffer of coffers){
-  //   coffer.draw();
-  // }
-  // noLoop()
   let active = update_groups();
 
 
   if(active > 0){
+    push()
     default_setup()
 
     draw_scene();
     draw_groups();
+    pop()
+
+
+    draw_borders();
+
   } else {
     let file_name = `output_${seed}.svg`;
     console.log("Exporting to: ", file_name);
     if(exporting){ beginRecordSVG(this, file_name); }
-    default_setup()
+    push()
+      default_setup()
 
-    draw_scene();
-    final_draw();
-
+      draw_scene();
+      final_draw();
+    pop()
+    draw_borders();
     
     noLoop();
     if(exporting){ endRecordSVG(this); }
   }
+}
+
+function draw_borders(){
+  push();
+    noStroke();
+    fill(240);
+    rect(0, 0, width, BW);
+    rect(0, 0, BW, height);
+    rect(width - BW, 0, BW, height);
+    rect(0, height - BW, width, BW);
+  pop();
 }
 
 function draw_scene(){

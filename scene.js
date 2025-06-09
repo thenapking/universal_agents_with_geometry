@@ -75,9 +75,29 @@ function create_polygons(){
   );
 
   polyCircleD = new RegularPolygon(
-    0.6*W, 0.7*H,
+    0.25*W, 0.2*H,
     W/6, W/6, 100
   );
+
+  polyCircleE = new RegularPolygon(
+    0.75*W, 0.3*H,
+    W/6, W/6, 100
+  );
+
+  polyCircleF = new RegularPolygon(
+    0.45*W, 0.267*H,
+    W/6, W/6, 100
+  );
+
+  polyCircleG = new RegularPolygon(
+    0.3*W, 0.8*H,
+    W/5, W/5, 100
+  );
+
+  // polyCircleE = new RegularPolygon(
+  //   0.25*W, 0.7*H,
+  //   W/7, W/7, 150
+  // );
 
 
 

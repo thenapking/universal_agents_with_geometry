@@ -157,18 +157,23 @@ class Polygon {
     return longest;
   }
 
-
   // Adjacency
   adjacent(other) {
-    for(let segment of this.segments) {
-      for(let other_segment of other.segments) {
-        if(segment.adjacent(other_segment)) {
-          return true;
-        }
+    let tolerance = 1e-6;
+    for (let segment of this.segments) {
+      for (let point of other.points) {
+        if (segment.distance(point) < tolerance) return true;
       }
     }
-  }
 
+    for (let segment of other.segments) {
+      for (let point of this.points) {
+        if (segment.distance(point) < tolerance) return true;
+      }
+    }
+
+    return false
+  }
 
   // Boolean operations using Martinez algorithm
   intersection(other){
@@ -519,7 +524,10 @@ function disjoint(polygons) {
 
 
     // compute the piece
-    let piece = included.reduce((acc, poly) => acc.intersection(poly));
+    let piece = included[0];
+    for (let i = 1; i < included.length && piece; i++) {
+      piece = piece.intersection(included[i]);
+    }
     if (piece) {
       for (let poly of excluded) {
         piece = piece.difference(poly);
