@@ -104,67 +104,22 @@ class Polyline {
     return r
   }
 
-  // refactor this and check against original
-  walk_backwards(juncture, result) {
-    console.log("Walking polyline backwards from juncture:", juncture);
-    let current_segment = juncture.polyline;
-  
-    if (current_segment.junctures.length > 1) {
-      let idx = current_segment.junctures.findIndex(j => j === juncture);
-  
-      if (idx > 0) {
-        let next_juncture = current_segment.junctures[idx - 1];
-        result.push(next_juncture.point);
-        console.log("Incrementing juncture (Backwards I):", next_juncture.visits, next_juncture);
-        next_juncture.increment();
-        return next_juncture;
-      }
-    }
-  
-    // Otherwise, walk backward along segments
-    let counter = 0;
-    let segment = current_segment.previous;
-  
-    while (segment && counter < 1000) {
-      counter++;
-      result.push(segment.end);  // We're going backwards, so this is the *start* of the visual path
-  
-      if (segment.junctures.length > 0) {
-        let next_juncture = segment.junctures[segment.junctures.length - 1];
-        console.log("Incrementing juncture (Backwards II):", next_juncture.visits, next_juncture);
-        next_juncture.increment();
-        result.push(next_juncture.point);
-        return next_juncture;
-      }
-  
-      segment = segment.previous;
-    }
-  
-    // If we reach here, something failed — fallback to current
-    return juncture;
-  }
 
   walk_multiple_junctures(segment, juncture, result) {    
     console.log("Walking polyline with multiple junctures:", segment.junctures);
     const last = segment.junctures[segment.junctures.length - 1];
 
-    // TO DO - do we ever walk forwards?
     if (last !== juncture) {
       console.log("Walking forwards");
       let idx = segment.junctures.findIndex(j => j === juncture);
       let next_juncture = segment.junctures[idx + 1];
-      // console.log("Next juncture:", next_juncture);
       result.push(next_juncture.point);
-      console.log("Incrementing juncture Multiple I:", next_juncture.visits, next_juncture);
       next_juncture.increment();
       return next_juncture;
     } else {
-      // we are at the last juncture and should walk backwards
       console.log("Walking backwards")
       let idx = segment.junctures.findIndex(j => j === juncture);
       let next_juncture = segment.junctures[idx - 1];
-      // console.log("Next juncture:", next_juncture);
-      console.log("Incrementing juncture Multiple II:", next_juncture.visits, next_juncture);
       result.push(next_juncture.point);
       next_juncture.increment();
       return next_juncture;
@@ -178,8 +133,6 @@ class Polyline {
     while (segment && counter < 1000) {
       counter++;
       result.push(segment.end); 
-      // console.log("Current result:", result);
-      // circle(segment.end.x, segment.end.y, 5); 
       if(juncture.direction){
         segment = segment.next;  
       } else {
@@ -191,7 +144,6 @@ class Polyline {
       // If we find an intersection, stop and return the juncture
       if (segment.junctures.length > 0) {
         let next_juncture = segment.junctures[0];
-        console.log("Incrementing juncture (End of edge):", next_juncture.visits, next_juncture);
         next_juncture.increment();  
         result.push(next_juncture.point);
         return next_juncture;  
@@ -199,6 +151,17 @@ class Polyline {
     }
 
     return juncture;
+  }
+
+  first(){
+    let found;
+    for(let segment of this.segments){
+      if (segment.junctures.length > 0) {
+        found = segment.junctures[0];
+        break;
+      }
+    }
+    return found;
   }
 
   draw(){

@@ -341,31 +341,23 @@ class Polygon {
   }
 
   // TODO - in progress, needs to be tested
-  split(polyline) {
+  split(input_polyline) {
     console.log("--------------")
-    console.log("Splitting polygon with polyline:", polyline);
+
+    // Duplicate the polyline to avoid double counting junctures
+    let polyline = new Polyline(input_polyline.points);
+    // Find the junctures
     let junctures = this.intersect_polyline(polyline);
-    console.log("junctures found:", junctures);
     if (junctures.length === 0) return [this];
 
-    let first_polygon_start;
-    for(let polyline_segment of polyline.segments) {
-      if (polyline_segment.junctures.length > 0) {
-        first_polygon_start = polyline_segment.junctures[0];
-        break;
-      }
-    }
-
+    let first = polyline.first();
     let results = [];
-    let current = first_polygon_start;
+    let current = first;
     let next = { visits: 1};
 
-    let counter = 0;
-
-    while(next !== first_polygon_start && counter <= junctures.length * 2) {
-      console.log(counter, current.visits)
-      counter++;
-      current.visits++;
+    // Traverse the junctures
+    for(let i = 0; i < junctures.length * 2; i++) {
+      current.visits++; // not used
 
       let result = [];
       results.push(result);
@@ -379,6 +371,8 @@ class Polygon {
           next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
         }
       }
+
+      if(next == first) { break; }
 
       current = next;
     }
@@ -394,19 +388,14 @@ class Polygon {
   }
 
   walk_polygon_forwards(juncture, result, junctures) {
-    // console.log("juncture", juncture)
     let next = juncture.polygon;
-    // circle(juncture.point.x, juncture.point.y, 10);
-    // circle(next.start.x, next.start.y, 10);
     if (next.junctures.length > 1) {
       return this.walk_multiple_junctures(next, juncture, result);
     }
 
-    // console.log("only one juncture")
     return this.walk_to_end_of_edge(next, juncture, result);
   }
 
-  // something is up here
   walk_multiple_junctures(next_segment, juncture, result) {
     if(!next_segment) { return  }
     const last = next_segment.junctures[next_segment.junctures.length - 1];
@@ -414,7 +403,6 @@ class Polygon {
       let idx = next_segment.junctures.findIndex(j => j === juncture);
       let next_juncture = next_segment.junctures[idx + 1];
       result.push(next_juncture.point);
-      console.log("Incrementing juncture as part of multiple", next_juncture.visits, next_juncture);
       next_juncture.increment();
       return next_juncture;
     }
@@ -424,17 +412,12 @@ class Polygon {
     let counter = 0;
     while (segment && counter < 1000) {
       counter++;
-      // console.log("segment end", segment.end.x, segment.end.y);
       result.push(segment.end);  
-      // console.log("results are", result);
       segment = segment.next;  
-      // console.log("next segment", segment);
 
-      if (!segment) { return juncture;}  
+      if (!segment) { return juncture;}  // TODO is this guard required?
 
-      
       if (segment.junctures.length > 0) {
-        // console.log("found juncture on segment", segment.junctures[0]);
         const next_juncture = segment.junctures[0];
         console.log("Incrementing juncture by walking to end of edge", next_juncture.visits, next_juncture);
         next_juncture.increment();  
