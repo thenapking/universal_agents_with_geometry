@@ -32,7 +32,7 @@ class Group {
     for (let agent of this.agents) {
       let polygon = new RegularPolygon(
         agent.pos.x, agent.pos.y,
-        agent.w/2, agent.h/2, 100, //=detail
+        agent.w/2, agent.h/2, POLYGONAL_DETAIL, 
         agent.angle
       );
       polygons.push(polygon);

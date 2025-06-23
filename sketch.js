@@ -1,3 +1,23 @@
+// TODO:
+
+// fix circle filling
+// eliminate vertical / horizontal fill?
+// fix diagonal shading
+// Intersection - is it just resolution / circle vertices?
+// fix + identify bugs
+
+// new:
+// add dashed lines
+// add grid lines
+// add network lines
+
+// fills:
+// test filling logic
+// countour fill
+// dots/lines parallel to roads
+// dahsed lines for paths
+
+
 let DPI= 96;
 let wi = 7;
 let hi = 7;
@@ -7,6 +27,7 @@ let H = hi * DPI;
 let BW = bwi * DPI;
 let MARGIN = 1;
 let BORDER_MARGIN = 5;
+let POLYGONAL_DETAIL = 360;
 let SF = 0.9
 
 let PHI;
@@ -63,22 +84,34 @@ function setup(){
   create_noise_field()
  
 
-  create_polygons();
-  create_coffers();
+  // create_polygons();
+  // create_coffers();
+  create_test_polygons();
 }
 
 function draw(){
- 
-  // noLoop();
+  default_setup()
+  noLoop();
   
-  let active = update_groups();
+  polylineA.draw();
+  polylineD.draw();
+  piecesB[0].draw();
+  piecesB[1].draw();
 
+  piecesC[0].draw();
+  piecesC[1].draw();
+
+
+}
+
+function draw_scene(){
+  let active = update_groups();
 
   if(active > 0){
     push()
     default_setup()
 
-    draw_scene();
+    draw_coffers();
     draw_groups();
     pop()
 
@@ -92,7 +125,7 @@ function draw(){
     push()
       default_setup()
 
-      draw_scene();
+      draw_coffers();
       final_draw();
     pop()
     draw_borders();
@@ -100,38 +133,14 @@ function draw(){
     noLoop();
     if(exporting){ endRecordSVG(this); }
   }
-
-  // let road_points = get_contour(WATER_LEVEL);
-  // road = new Polyline(road_points);
-  // let rp = road.to_polygon(20);
-  // // road.draw();
-  // translate(BW, BW);  
-  // stroke(0, 0, 0, 50);
-  // rp.draw();
 }
 
-function draw_borders(){
-  push();
-    noStroke();
-    fill(240);
-    rect(0, 0, width, BW);
-    rect(0, 0, BW, height);
-    rect(width - BW, 0, BW, height);
-    rect(0, height - BW, width, BW);
-  pop();
-}
-
-function draw_scene(){
+function draw_coffers(){
   for(let coffer of coffers){
     coffer.draw();
   }
 }
 
-function default_setup(){
-  translate(BW, BW);
-  background(240);
-  stroke(0,0,0);
-}
 
 function draw_groups(){
   push();
@@ -157,4 +166,20 @@ function update_groups(){
   
   return 1
 }
+
+function default_setup(){
+  translate(BW, BW);
+  background(240);
+  stroke(0,0,0);
+}
     
+function draw_borders(){
+  push();
+    noStroke();
+    fill(240);
+    rect(0, 0, width, BW);
+    rect(0, 0, BW, height);
+    rect(width - BW, 0, BW, height);
+    rect(0, height - BW, width, BW);
+  pop();
+}

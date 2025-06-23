@@ -297,33 +297,20 @@ class Polygon {
   intersect_polyline(polyline) {
     let junctures = [];
     const polyline_bounds = polyline.bounds();
-    // console.log("polyline bounds", polyline_bounds);
-    // console.log("polygon bounds", this.bounds());
     for (let polyline_segment of polyline.segments) {
-      // console.log("polyline segment", polyline_segment);
       for (let polygon_segment of this.segments) {
-        // console.log("---------------")
-        // console.log("polygon segment", polygon_segment.start.x, polygon_segment.start.y, polygon_segment.end.x, polygon_segment.end.y);  
-
         if (!polygon_segment.intersects(polyline_bounds)) { 
-          // console.log("polygon segment does not intersect polyline bounds");
           continue 
         };
   
         const points = polyline_segment.intersection(polygon_segment, true); 
   
         if (points.length < 1) { 
-          // console.log("no intersection points found");
           continue 
         }
-
-        // console.log("intersection points found", points);
   
         for (let point of points) {
-          let direction = orient2d(polygon_segment.start, polygon_segment.end, polyline_segment.start);
-          let juncture = new Juncture(point, polyline_segment, polygon_segment, direction > 0);
-         
-
+          let juncture = new Juncture(point, polyline_segment, polygon_segment);
           
           let duplicate = false;
           for(let other of junctures) {
@@ -335,7 +322,6 @@ class Polygon {
           }
           if (duplicate) continue;
           
-          // console.log("found juncture at", juncture.point.x, juncture.point.y);
           polygon_segment.junctures.push(juncture);
           polyline_segment.junctures.push(juncture);
           junctures.push(juncture);
@@ -343,7 +329,6 @@ class Polygon {
         }
       }
     }
-    // console.log(("polyline_segment start", polyline.segments[0].start.x, polyline.segments[0].start.y));
 
     let sorted_junctures = []
     for(let polyline_segment of polyline.segments) { 
@@ -357,8 +342,10 @@ class Polygon {
 
   // TODO - in progress, needs to be tested
   split(polyline) {
+    console.log("--------------")
+    console.log("Splitting polygon with polyline:", polyline);
     let junctures = this.intersect_polyline(polyline);
-    // console.log("junctures found:", junctures);
+    console.log("junctures found:", junctures);
     if (junctures.length === 0) return [this];
 
     let first_polygon_start;
@@ -375,23 +362,19 @@ class Polygon {
 
     let counter = 0;
 
-    while(next !== first_polygon_start && counter < junctures.length * 2) {
+    while(next !== first_polygon_start && counter <= junctures.length * 2) {
+      console.log(counter, current.visits)
       counter++;
       current.visits++;
-
-      // console.log("current juncture", current.point.x, current.point.y, "visits:", current.visits);
 
       let result = [];
       results.push(result);
 
       let next_juncture = this.walk_polygon_forwards(current, result, junctures)
       next = next_juncture;
-      //Note that checking presence of next_juncture prevents an infinite loop
-      while(next_juncture !== current  && next_juncture) { 
-        // console.log("Looping")
-        // console.log("Before ", result)
-        next_juncture = polyline.walk(next_juncture, result);
-        // console.log("After ", result)
+      
+      while(next_juncture !== current && next_juncture) { 
+        next_juncture = polyline.walk_forwards(next_juncture, result) 
         if(next_juncture !== current ) {
           next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
         }
@@ -401,7 +384,6 @@ class Polygon {
     }
 
     let new_polygons = [];
-    // console.log("Final2", results);
 
     for(let result of results) {
       let new_polygon = new Polygon(result);
@@ -425,13 +407,14 @@ class Polygon {
   }
 
   // something is up here
-  walk_multiple_junctures(segment, juncture, result) {
-    if(!next) { return  }
-    const last = next.junctures[next.junctures.length - 1];
+  walk_multiple_junctures(next_segment, juncture, result) {
+    if(!next_segment) { return  }
+    const last = next_segment.junctures[next_segment.junctures.length - 1];
     if (last !== juncture) {
-      let idx = next.junctures.findIndex(j => j === juncture);
-      let next_juncture = next.junctures[idx + 1];
+      let idx = next_segment.junctures.findIndex(j => j === juncture);
+      let next_juncture = next_segment.junctures[idx + 1];
       result.push(next_juncture.point);
+      console.log("Incrementing juncture as part of multiple", next_juncture.visits, next_juncture);
       next_juncture.increment();
       return next_juncture;
     }
@@ -453,6 +436,7 @@ class Polygon {
       if (segment.junctures.length > 0) {
         // console.log("found juncture on segment", segment.junctures[0]);
         const next_juncture = segment.junctures[0];
+        console.log("Incrementing juncture by walking to end of edge", next_juncture.visits, next_juncture);
         next_juncture.increment();  
         result.push(next_juncture.point);  
         return next_juncture;  
@@ -500,12 +484,7 @@ class Polygon {
   }
 }
 
-function orient2d(a, b, c) {
-  const x1 = a.x, y1 = a.y;
-  const x2 = b.x, y2 = b.y;
-  const x3 = c.x, y3 = c.y;
-  return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
-}
+
 
 
 function disjoint(polygons) {
