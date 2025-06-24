@@ -98,12 +98,16 @@ function draw(){
   
 
 
-  let ring = piecesE[0]
-  // ring.draw();
-  piecesF = piecesE[0].split(polylineE)
+ 
+  // piecesF = piecesE[0].split(polylineE)
 
-  piecesF[0].draw();
-  piecesF[1].draw();
+  piecesH[0].draw();
+  piecesH[1].draw();
+
+  // let ring = piecesE
+  // ring.draw();
+
+  // piecesF[1].draw();
 
 
 }

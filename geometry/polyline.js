@@ -102,8 +102,6 @@ class Polyline {
       console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
       let next_juncture = current_segment.junctures[next_idx];
       if(direction === 'against') { fill('yellow'); } else { fill('orange'); }  
-      bc++
-      circle(next_juncture.point.x, next_juncture.point.y, bc*2 + 10);
       result.push(next_juncture.point);
       next_juncture.increment();
       return next_juncture;

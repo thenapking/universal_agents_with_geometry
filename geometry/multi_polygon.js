@@ -335,19 +335,13 @@ class MultiPolygon {
   // TODO - in progress, needs to be tested
   split(input_polyline) {
     console.log("--------------")
-
     // Duplicate the polyline to avoid double counting junctures
     let polyline = new Polyline(input_polyline.points);
     // Find the junctures
     let junctures = this.intersect_polyline(polyline);
     if (junctures.length === 0) return [this];
 
-    let junctures_counter = [];
-    for(let juncture of junctures) {
-      let contour_id = juncture.contour_id;
-      let counter = junctures_counter[contour_id] || 0;
-      junctures_counter[contour_id] = counter + 1;
-    }
+
 
     let first = polyline.first();
     let results = [];
@@ -356,11 +350,9 @@ class MultiPolygon {
 
    
     // Traverse the junctures
-    for(let i = 0; i < 2; i++) {
+    for(let i = 0; i < junctures.length * 2; i++) {
       console.log("-------NEW PIECE-----")
       current.increment() // not used
-      fill('green')
-      circle(current.point.x, current.point.y, 30);
       let result = [];
       results.push(result);
 
@@ -368,14 +360,13 @@ class MultiPolygon {
       next = next_juncture;
       console.log("Juncture contour ", next_juncture.contour_id, "visits:", next_juncture.visits);
 
-      while(next_juncture && next_juncture !== current && next_juncture.visits < 4) { 
+      while(next_juncture && next_juncture !== current && next_juncture.visits < 1000) { 
+        // I am not sure why this works... really
+        // Well we've split it one way, then we need to go back down the line the other way....
         let direction = i % 2 === 1 ? 'with' : 'against';
         next_juncture = polyline.walk(next_juncture, result, direction) 
         if(next_juncture !== current ) {
           next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
-          console.log("Next juncture:", next_juncture);
-          console.log("I walked forward. I am on contour: ", next_juncture.contour_id, "visits:", next_juncture.visits);
-          // clockwise = next_juncture.contour_id === 0;
         }
       }
 
@@ -385,11 +376,39 @@ class MultiPolygon {
     }
 
 
-    let new_polygons = [];
+    // Now add back in any holes which weren't intersected
+    let junctures_counter = [];
+    for(let i = 0; i < this.contours.length; i++) {
+      junctures_counter[i] = 0;
+    }
 
+    for(let juncture of junctures) {
+      let contour_id = juncture.contour_id;
+      junctures_counter[contour_id]++;
+    }
+
+    let missing_contours = [];
+    for(let i = 0; i < this.contours.length; i++) {
+      if(junctures_counter[i] === 0) {
+        missing_contours.push(new Polygon(this.contours[i]));
+      }
+    }
+
+    let new_polygons = [];
     for(let result of results) {
+      
       let new_polygon = new MultiPolygon([result]);
-      new_polygons.push(new_polygon);
+      let final = [result]
+      for(let missing of missing_contours) {
+        let centroid = missing.centroid();
+        if(new_polygon.contains(centroid)) {
+          final.push(missing.points)
+          
+        } 
+
+      }
+      let final_polygon = new MultiPolygon(final);
+      new_polygons.push(final_polygon);
     }
 
     return new_polygons;
@@ -413,8 +432,6 @@ class MultiPolygon {
       result.push(next_juncture.point);
       next_juncture.increment();
       console.log("Multiple on contour. Contour: ", next_juncture.countour_id, "visits:", next_juncture.visits);
-      fill('red')
-      circle(next_juncture.point.x, next_juncture.point.y, 10);
       return next_juncture;
     }
   }
@@ -432,9 +449,6 @@ class MultiPolygon {
         const next_juncture = segment.junctures[0];
         console.log("!--BLUE Incrementing juncture by walking to end of edge. Contour: ", next_juncture.contour_id, "visits:", next_juncture.visits);
         next_juncture.increment();  
-        fill('blue')
-        bc++;
-        circle(next_juncture.point.x, next_juncture.point.y, bc * 2);
         result.push(next_juncture.point);  
         return next_juncture;  
       }

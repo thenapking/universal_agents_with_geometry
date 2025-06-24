@@ -1,6 +1,6 @@
 // Test filling with reference to A Mashiro
 
-let piecesA, piecesB, piecesAC, piecesCA, piecesC, piecesD, piecesE, piecesF, piecesG;
+let piecesA, piecesB, piecesAC, piecesCA, piecesC, piecesD, piecesE, piecesF, piecesG, piecesH;
 let polygonD, adjacency_map, colour_map, shared_map, final;
 function init_test(){
   // create_test_polygons();
@@ -33,8 +33,13 @@ function create_concentric_circles(){
   );
 
   polyCircleD = new RegularPolygon(
-    2*W/3 - off, H/2,
-    W/6, W/6, 200
+    2*W/3 - off + 60, H/2,
+    W/12, W/12, 200
+  );
+
+  polyCircleE = new RegularPolygon(
+    W/2 - off, H/2,
+    W/20, W/20, 200
   );
 
   let pE = [  
@@ -48,9 +53,12 @@ function create_concentric_circles(){
   piecesB = new MultiPolygon([polyCircleB.points]);
   piecesC = new MultiPolygon([polyCircleC.points])
   piecesD = new MultiPolygon([polyCircleD.points])
-
+  piecesE = new MultiPolygon([polyCircleE.points])
   
-  piecesE = piecesC.difference(piecesD);  
+  piecesF = piecesC.difference(piecesD);  
+  piecesG = piecesF[0].difference(piecesE);
+
+  piecesH = piecesG[0].split(polylineE);
 
 }
 
