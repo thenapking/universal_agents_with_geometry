@@ -19,6 +19,8 @@ class Juncture {
     const x3 = c.x, y3 = c.y;
     return (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
   }
+
+  
 }
 
 

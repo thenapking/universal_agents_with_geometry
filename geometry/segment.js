@@ -9,7 +9,7 @@ function cross(a, b) {
 
 
 class Segment {
-  constructor(start, end, index) {
+  constructor(start, end, index, contour_id) {
     this.start = start;
     this.end = end
 
@@ -18,6 +18,7 @@ class Segment {
     this.previous = null;
 
     this.junctures = [];
+    this.contour_id = contour_id || 0;
   }
 
   bounds() {

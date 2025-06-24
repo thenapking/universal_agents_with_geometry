@@ -10,6 +10,16 @@ class MultiPolygon {
       this.outer = this.order();
       this.contours = [this.outer];
     }
+
+    this.segments = [];
+    this.edges = [];
+
+    for(let i = 0; i < this.contours.length; i++) {
+      let points = this.contours[i];
+      let segments = this.find_segments(points, i);
+      this.segments[i] = segments;  
+      this.edges[i] = this.find_edges(segments);
+    }
   }
 
   is_raw_array(points) {
@@ -123,6 +133,59 @@ class MultiPolygon {
     return contours
   }
 
+  find_segments(points, contour_id = 0) {
+    let segments = [];
+    let n = points.length;
+    let previous;
+    for (let i = 0; i < n - 1; i++) {
+      const start = points[i];
+      const end = points[i + 1];
+
+      const segment = new Segment(start, end, i, contour_id);
+      segments.push(segment);
+
+      if(previous) { 
+        previous.next = segment; 
+        segment.previous = previous;
+      }
+      previous = segment;
+    }
+
+    // Create the final segment connecting the last vertex to the first
+    const start = points[n - 1];
+    const end = points[0];  
+    const segment = new Segment(start, end, n, contour_id);
+    segments.push(segment);
+    const first = segments[0];
+
+    first.previous = segment;
+    segment.next = first;
+    previous.next = segment;
+    segment.previous = previous;
+
+    return segments;
+  }
+
+  find_edges(segments) {
+    let edges = [];
+    let current = [segments[0]];
+
+    for(let i = 1; i < segments.length; i++){
+      const segment = segments[i];
+      const next_segment = segment.next.to_v();
+      let angle = segment.to_v().angleBetween(next_segment);
+
+      if(Math.abs(angle) < ANGLE){
+        current.push(segment);
+      } else {
+        edges.push(current);
+        current = [segment];
+      }
+    }
+
+    return edges;
+  }
+
   // Boolean operations using Martinez algorithm
   intersection(other){
     return this.operation(other, 'intersection');
@@ -173,7 +236,7 @@ class MultiPolygon {
     if (!result?.[0]?.[0]?.length) {
       return 
     }
-
+    console.log("Operation result:", result);
     let results = []
     for(let r of result) {
       if (r.length > 0) {
@@ -213,11 +276,73 @@ class MultiPolygon {
     return inside;
   }
 
+
+  // Intersections methods
+  intersect_polyline(polyline) {
+    let junctures = [];
+    const polyline_bounds = polyline.bounds();
+    for (let polyline_segment of polyline.segments) {
+      for(let contour_segments of this.segments){
+        for (let polygon_segment of contour_segments) {
+          if (!polygon_segment.intersects(polyline_bounds)) { 
+            continue 
+          };
+    
+          const points = polyline_segment.intersection(polygon_segment, true); 
+    
+          if (points.length < 1) { 
+            continue 
+          }
+    
+          for (let point of points) {
+            let juncture = new Juncture(point, polyline_segment, polygon_segment);
+            
+            let duplicate = false;
+            for(let other of junctures) {
+              let dx = Math.abs(other.point.x - juncture.point.x);
+              let dy = Math.abs(other.point.y - juncture.point.y);
+              if (dx <= ERROR && dy <= ERROR) {
+                duplicate = true;
+              }
+            }
+            if (duplicate) continue;
+            
+            polygon_segment.junctures.push(juncture);
+            polyline_segment.junctures.push(juncture);
+            junctures.push(juncture);
+
+          }
+        }
+      }
+    }
+
+    let sorted_junctures = []
+    for(let polyline_segment of polyline.segments) { 
+      polyline_segment.sort();
+      sorted_junctures.push(...polyline_segment.junctures);
+    }
+    for (let contour_segments of this.segments) {
+      for (let polygon_segment of contour_segments) {
+        polygon_segment.sort(); 
+      }
+    }
+    
+    return sorted_junctures;
+  }
+
+  hatch(spacing, direction = 'horizontal') {
+    let hatching = new Hatching(this, spacing);
+    hatching.hatch(direction);
+    hatching.draw();
+  }
+
   draw(){
     fill(255, 255, 255);
     push();
       beginShape();
-      for(let v of this.contours[0]){
+      for(let i = 0; i < this.outer.length; i++){
+        let v = this.outer[i];
+
         vertex(v.x, v.y);
       }
       for(let i = 1; i < this.contours.length; i++){

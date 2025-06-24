@@ -93,6 +93,8 @@ function setup(){
 function draw(){
   default_setup()
   noLoop();
+
+  polylineE.draw(); 
   
   // polyCircleA.draw();
   // polyCircleB.draw();
@@ -100,11 +102,15 @@ function draw(){
 //   polyCircleD.draw();
 
 
-
+  // piecesA.draw();
   // piecesB.draw();
   // piecesD.draw();
   piecesE[0].draw();
   // piecesE[1].draw();
+  // piecesE[1].draw();
+
+  let ring = piecesE[0]
+  ring.hatch(5, 'upwards')
 
   // for(let piece of piecesD){
   //   piece.draw();

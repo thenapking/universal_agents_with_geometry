@@ -1,7 +1,11 @@
 class RegularPolygon extends Polygon {
   constructor(x, y, w, h, sides, rotation = 0) {
     let points = [];
-    for (let i = 0; i < sides; i++) {
+
+    // Martinez clipping is a bit funny.  For circles (n>20) adding the end point does help close the circle neatly
+    // Note that for regular n-agons, for small n, Martinez will give odd results if subtracting the insides.
+    sides = sides > 20 ? sides + 1 : sides;
+    for (let i = 0; i < sides + 1; i++) {
       let angle = TWO_PI / sides * i;
       
       let px = x + w * cos(angle);

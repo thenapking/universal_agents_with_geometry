@@ -19,7 +19,7 @@ function create_concentric_circles(){
 
   polyCircleA = new RegularPolygon(
     W/3 + off, H/2,
-    W/4, W/4, 100
+    W/4, W/4, 30
   );
 
   polyCircleB = new RegularPolygon(
@@ -34,16 +34,23 @@ function create_concentric_circles(){
 
   polyCircleD = new RegularPolygon(
     2*W/3 - off, H/2,
-    W/6, W/6, 100
+    W/6, W/6, 200
   );
 
+  let pE = [  
+    createVector(0.9 * W, 0.95*H),
+    createVector(0.35*W, 0.15*H)
+  ];
 
- 
+  polylineE = new Polyline(pE);
+  piecesC = new MultiPolygon([polyCircleC.points])
+  piecesD = new MultiPolygon([polyCircleD.points])
 
-  piecesB = polyCircleA.difference(polyCircleB);
-  piecesD = polyCircleC.difference(polyCircleD);
+  // piecesB = polyCircleA.difference(polyCircleB);
+  // piecesD = polyCircleC.difference(polyCircleD);
   
-  piecesE = piecesB.xor(piecesD);  
+  piecesE = piecesC.difference(piecesD);  
+  
   // piecesC = polyCircleA.difference(polyCircleC);
 
   // piecesD = disjoint([polyCircleA, polyCircleB, polyCircleC, polyCircleD], true);
