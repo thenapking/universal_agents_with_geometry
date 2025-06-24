@@ -90,49 +90,42 @@ class Polyline {
   }
 
 
-  walk(juncture, result, direction) {
-    console.log("Walking on polyline from juncture:", juncture);
-    fill('brown');
-    // circle(juncture.point.x, juncture.point.y, 10);
-    let current_segment = juncture.polyline;
+  walk(juncture, piece, direction) {
+    let next = juncture.polyline;
 
-    if (current_segment.junctures.length > 1) {
-      let idx = current_segment.junctures.findIndex(j => j === juncture);
-      let next_idx = direction === 'with' ? idx + 1 : idx - 1;
-      console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
-      let next_juncture = current_segment.junctures[next_idx];
-      if(direction === 'against') { fill('yellow'); } else { fill('orange'); }  
-      result.push(next_juncture.point);
-      next_juncture.increment();
-      return next_juncture;
+    if (next.junctures.length > 1) {
+      return this.walk_to_next_juncture(next, juncture, piece, direction);
     } 
 
-    let r = this.walk_to_end_of_edge(current_segment, juncture, result);
-    return r
+    return this.walk_to_end_of_edge(next, juncture, piece);
+  }
+
+  walk_to_next_juncture(segment, juncture, piece, direction) {
+    if(!segment) { return  }
+
+    let idx = segment.junctures.findIndex(j => j === juncture);
+    let next_idx = direction === 'with' ? idx + 1 : idx - 1;
+    console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
+    // need some logic to check whether at last or first juncture
+    let next_juncture = segment.junctures[next_idx];
+    piece.push(next_juncture.point);
+    next_juncture.increment();
+    return next_juncture;
   }
 
 
-
-
-  walk_to_end_of_edge(segment, juncture, result) {
-    console.log("Walking to end of segment:", segment);
+  walk_to_end_of_edge(segment, juncture, piece) {
     let counter = 0;
     while (segment && counter < 1000) {
       counter++;
-      result.push(segment.end); 
-      if(juncture.direction){
-        segment = segment.next;  
-      } else {
-        segment = segment.previous;
-      }
+      piece.push(segment.end); 
 
       if (!segment) { return juncture; }
 
-      // If we find an intersection, stop and return the juncture
       if (segment.junctures.length > 0) {
-        let next_juncture = segment.junctures[0];
+        const next_juncture = segment.junctures[0];
         next_juncture.increment();  
-        result.push(next_juncture.point);
+        piece.push(next_juncture.point);
         return next_juncture;  
       }
     }
