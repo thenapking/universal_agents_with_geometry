@@ -94,27 +94,18 @@ function draw(){
   default_setup()
   noLoop();
 
-  polylineE.draw(); 
+  // polylineE.draw(); 
   
-  // polyCircleA.draw();
-  // polyCircleB.draw();
-  // polyCircleC.draw();
-//   polyCircleD.draw();
 
-
-  // piecesA.draw();
-  // piecesB.draw();
-  // piecesD.draw();
-  piecesE[0].draw();
-  // piecesE[1].draw();
-  // piecesE[1].draw();
 
   let ring = piecesE[0]
-  ring.hatch(5, 'upwards')
+  // ring.draw();
+  piecesF = piecesE[0].split(polylineE)
 
-  // for(let piece of piecesD){
-  //   piece.draw();
-  // }
+  piecesF[0].draw();
+  piecesF[1].draw();
+
+
 }
 
 function draw_scene(){

@@ -1,3 +1,4 @@
+let bc = 1;
 class MultiPolygon {
   constructor(points) {
     // points is an array of raw vectors
@@ -329,6 +330,121 @@ class MultiPolygon {
     
     return sorted_junctures;
   }
+
+  
+  // TODO - in progress, needs to be tested
+  split(input_polyline) {
+    console.log("--------------")
+
+    // Duplicate the polyline to avoid double counting junctures
+    let polyline = new Polyline(input_polyline.points);
+    // Find the junctures
+    let junctures = this.intersect_polyline(polyline);
+    if (junctures.length === 0) return [this];
+
+    let junctures_counter = [];
+    for(let juncture of junctures) {
+      let contour_id = juncture.contour_id;
+      let counter = junctures_counter[contour_id] || 0;
+      junctures_counter[contour_id] = counter + 1;
+    }
+
+    let first = polyline.first();
+    let results = [];
+    let current = first;
+    let next = { visits: 1};
+
+   
+    // Traverse the junctures
+    for(let i = 0; i < 2; i++) {
+      console.log("-------NEW PIECE-----")
+      current.increment() // not used
+      fill('green')
+      circle(current.point.x, current.point.y, 30);
+      let result = [];
+      results.push(result);
+
+      let next_juncture = this.walk_polygon_forwards(current, result, junctures)
+      next = next_juncture;
+      console.log("Juncture contour ", next_juncture.contour_id, "visits:", next_juncture.visits);
+
+      while(next_juncture && next_juncture !== current && next_juncture.visits < 4) { 
+        let direction = i % 2 === 1 ? 'with' : 'against';
+        next_juncture = polyline.walk(next_juncture, result, direction) 
+        if(next_juncture !== current ) {
+          next_juncture = this.walk_polygon_forwards(next_juncture, result, junctures);
+          console.log("Next juncture:", next_juncture);
+          console.log("I walked forward. I am on contour: ", next_juncture.contour_id, "visits:", next_juncture.visits);
+          // clockwise = next_juncture.contour_id === 0;
+        }
+      }
+
+      if(next == first) { break; }
+
+      current = next;
+    }
+
+
+    let new_polygons = [];
+
+    for(let result of results) {
+      let new_polygon = new MultiPolygon([result]);
+      new_polygons.push(new_polygon);
+    }
+
+    return new_polygons;
+  }
+
+  walk_polygon_forwards(juncture, result, junctures) {
+    let next = juncture.polygon;
+    if (next.junctures.length > 1) {
+      return this.walk_multiple_junctures(next, juncture, result);
+    }
+
+    return this.walk_to_end_of_edge(next, juncture, result);
+  }
+
+  walk_multiple_junctures(next_segment, juncture, result) {
+    if(!next_segment) { return  }
+    const last = next_segment.junctures[next_segment.junctures.length - 1];
+    if (last !== juncture) {
+      let idx = next_segment.junctures.findIndex(j => j === juncture);
+      let next_juncture = next_segment.junctures[idx + 1];
+      result.push(next_juncture.point);
+      next_juncture.increment();
+      console.log("Multiple on contour. Contour: ", next_juncture.countour_id, "visits:", next_juncture.visits);
+      fill('red')
+      circle(next_juncture.point.x, next_juncture.point.y, 10);
+      return next_juncture;
+    }
+  }
+
+  walk_to_end_of_edge(segment, juncture, result) {
+    let counter = 0;
+    while (segment && counter < 1000) {
+      counter++;
+      result.push(segment.end);  
+      segment = segment.next;  
+
+      if (!segment) { return juncture;}  // TODO is this guard required?
+
+      if (segment.junctures.length > 0) {
+        const next_juncture = segment.junctures[0];
+        console.log("!--BLUE Incrementing juncture by walking to end of edge. Contour: ", next_juncture.contour_id, "visits:", next_juncture.visits);
+        next_juncture.increment();  
+        fill('blue')
+        bc++;
+        circle(next_juncture.point.x, next_juncture.point.y, bc * 2);
+        result.push(next_juncture.point);  
+        return next_juncture;  
+      }
+    }
+
+    return juncture;  
+  }
+
+
+  // DRAWING METHODS
 
   hatch(spacing, direction = 'horizontal') {
     let hatching = new Hatching(this, spacing);

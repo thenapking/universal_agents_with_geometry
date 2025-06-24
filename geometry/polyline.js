@@ -90,42 +90,31 @@ class Polyline {
   }
 
 
-  walk_forwards(juncture, result) {
-    console.log("Walking polyline from juncture:", juncture);
+  walk(juncture, result, direction) {
+    console.log("Walking on polyline from juncture:", juncture);
+    fill('brown');
+    // circle(juncture.point.x, juncture.point.y, 10);
     let current_segment = juncture.polyline;
 
     if (current_segment.junctures.length > 1) {
-      return this.walk_multiple_junctures(current_segment, juncture, result);
+      let idx = current_segment.junctures.findIndex(j => j === juncture);
+      let next_idx = direction === 'with' ? idx + 1 : idx - 1;
+      console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
+      let next_juncture = current_segment.junctures[next_idx];
+      if(direction === 'against') { fill('yellow'); } else { fill('orange'); }  
+      bc++
+      circle(next_juncture.point.x, next_juncture.point.y, bc*2 + 10);
+      result.push(next_juncture.point);
+      next_juncture.increment();
+      return next_juncture;
     } 
 
-    console.log("Before", result)
     let r = this.walk_to_end_of_edge(current_segment, juncture, result);
-    console.log("After", result)
     return r
   }
 
 
-  walk_multiple_junctures(segment, juncture, result) {    
-    console.log("Walking polyline with multiple junctures:", segment.junctures);
-    const last = segment.junctures[segment.junctures.length - 1];
 
-    if (last !== juncture) {
-      console.log("Walking forwards");
-      let idx = segment.junctures.findIndex(j => j === juncture);
-      let next_juncture = segment.junctures[idx + 1];
-      result.push(next_juncture.point);
-      next_juncture.increment();
-      return next_juncture;
-    } else {
-      console.log("Walking backwards")
-      let idx = segment.junctures.findIndex(j => j === juncture);
-      let next_juncture = segment.junctures[idx - 1];
-      result.push(next_juncture.point);
-      next_juncture.increment();
-      return next_juncture;
-
-    }
-  }
 
   walk_to_end_of_edge(segment, juncture, result) {
     console.log("Walking to end of segment:", segment);
