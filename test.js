@@ -3,7 +3,43 @@
 let piecesB, piecesAC, piecesCA, piecesC, piecesD, piecesE;
 let polygonD, adjacency_map, colour_map, shared_map, final;
 function init_test(){
-  create_test_polygons();
+  // create_test_polygons();
+  create_concentric_circles();
+}
+
+function create_concentric_circles(){
+  polyOuter = new Polygon([
+    createVector(0, 0),
+    createVector(W, 0),
+    createVector(W, H),
+    createVector(0, H)
+  ]);
+
+  polyCircleA = new RegularPolygon(
+    W/2, H/2,
+    W/4, W/4, 300
+  );
+
+  polyCircleB = new RegularPolygon(
+    W/2, H/2,
+    W/5, W/5, 300
+  );
+
+  polyCircleC = new RegularPolygon(
+    W/4, H/4,
+    W/6, W/6, 150
+  );
+
+  polyCircleD = new RegularPolygon(
+    W/2, H/2,
+    W/8, W/8, 150
+  );
+
+  piecesB = polyCircleA.difference(polyCircleB);
+  
+  // piecesC = polyCircleA.difference(polyCircleC);
+
+  piecesD = disjoint([polyCircleA, polyCircleB, polyCircleC, polyCircleD], true);
 }
 
 function create_test_polygons(){
@@ -18,6 +54,21 @@ function create_test_polygons(){
   polyCircleA = new RegularPolygon(
     W/3 + 60, H/2,
     W/8, W/8, 150
+  );
+
+  polyCircleB = new RegularPolygon(
+    W/2 + 60, H/2 - 60,
+    W/10, W/10, 150
+  );
+
+  polyCircleC = new RegularPolygon(
+    W/2 + 60, H/2 + 40,
+    W/12, W/12, 150
+  );
+
+  polyCircleD = new RegularPolygon(
+    W/2 + 66, H/2,
+    W/16, W/16, 150
   );
 
   let pA = [
@@ -40,11 +91,16 @@ function create_test_polygons(){
     createVector(0.66 * W, 0.25*H)
   ];
 
+  let pE = [  
+    createVector(0.9 * W, 0.95*H),
+    createVector(0.35*W, 0.15*H)
+  ];
 
 
   polylineA = new Polyline(pA);
   polylineC = new Polyline(pC);
   polylineD = new Polyline(pD);
+  polylineE = new Polyline(pE);
  
   polylineB = new Polyline(pB);
   polygonB = polylineB.to_polygon(20)
@@ -55,7 +111,7 @@ function create_test_polygons(){
 
   // it works better to use the greiner horman algorithm
   // it also works better to split by the lines afterwards
-  piecesD = disjoint([polyCircleA, polygonC], true)
+  piecesD = disjoint([polyCircleA, polyCircleB, polyCircleC, polyCircleD, polygonC], true)
 
 
   let bits = [];
@@ -74,7 +130,15 @@ function create_test_polygons(){
     }
   }
 
-  final = piecesE.concat(piecesB);
+  piecesF = [];
+  for(let b of piecesE){
+    let r = b.split(polylineE);
+    for(let p of r){
+      piecesF.push(p);
+    }
+  }
+
+  final = piecesF.concat(piecesB);
 
   adjacency_map = adjacency(final)
   shared_map = shared_vertices(final);
@@ -125,20 +189,23 @@ function create_colour_map() {
 
 function full_recursive_colour_map() {
   let results = [];
-
   for (let i = 0; i < final.length; i++) {
     if (results[i] === undefined) {
-      recursive_colour_map(i, results);
+      recursive_colour_map(0, i, results, ['black', 'brown', 'yellow', 'cyan', 'red', 'green', 'blue', 'purple', 'orange', 'pink'] );
     }
   }
 
   return results;
 }
 
-function recursive_colour_map(idx = 0, results = []){
+function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
+  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
+    return results; 
+  } 
+
   if(results[idx] == undefined) {
     let neighbours = adjacency_map[idx];
-    let unused = [...colours];
+    let unused = [...input_colours];
 
     for(let n of neighbours){
       let colour = results[n];
@@ -155,16 +222,63 @@ function recursive_colour_map(idx = 0, results = []){
     }
 
     if(unused.length > 0){
-      console.log("Unused colours for piece", idx, unused);
       results[idx] = unused[0];
+
+      if (random() < 0.1 && depth < 20) {
+        let r = random(['green', 'blue', 'purple', 'orange', 'pink']);
+        console.log("Choosing random colour for piece", idx, "from", unused, "selected:", r);
+        results[idx] = r
+      } 
+      
+      
     } 
 
     if(shared_map[idx].length > 0){
       for(let i of shared_map[idx]){
-        recursive_colour_map(i, results);
+        recursive_colour_map(depth++, i, results, input_colours);
       }
     }
+
+    
   }
 
   return results;
+}
+
+
+function draw_polygon_test(){
+  polylineA.draw();
+  polylineD.draw();
+  polylineE.draw();
+
+  // polyCircleA.draw();
+  // polyCircleB.draw();
+
+  piecesB[0].draw();
+  piecesB[1].draw();
+
+  // piecesD[0].draw();
+  // piecesD[1].draw();
+  // piecesD[2].draw();
+  // piecesD[3].draw();
+  // piecesD[4].draw();
+
+
+
+
+
+  for(let i = 0; i < final.length; i++){
+    let piece = final[i];
+    let c = colour_map[i];
+    if(c === undefined) {
+      c = color(255, 255, 255);
+    } else {
+      c = color(c);
+    }
+    fill(c);
+    // noFill();
+    piece.draw();
+    fill(0);
+    // text(i, piece.centroid().x, piece.centroid().y);
+  }
 }

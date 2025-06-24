@@ -117,7 +117,7 @@ class Segment {
     // Check if segments are parallel
     if (Math.abs(cross(d1, d2)) > tolerance) return false;
 
-    // Check if they lie on the same line (collinear)
+    // Check if they lie on the same line 
     let offset = p5.Vector.sub(other.start, this.start);
     if (Math.abs(cross(d1, offset)) > tolerance) return false;
 
@@ -130,23 +130,18 @@ class Segment {
 
     let a = [a_start, a_end].sort((a, b) => a - b);
     let b = [b_start, b_end].sort((a, b) => a - b);
-
+    
+    // check if the segment start/ends overlap
+    // may not be necessary
     let check = a[1] >= b[0] - tolerance && b[1] >= a[0] - tolerance;
     if (!check) return false;
 
+    // check if the other lap length is more than zero
     let overlap_start = Math.max(a[0], b[0]);
     let overlap_end = Math.min(a[1], b[1]);
     let overlap_length = overlap_end - overlap_start;
 
-    if(overlap_length < tolerance) return false;
-
-    // console.log("Adjacent segments found:", this, other);
-    let cr = random(colours)
-    // strokeWeight(2);  
-    // this.draw(cr);
-    // other.draw(cr);
-
-    return true
+    return overlap_length > tolerance;
   }
 
   distance(point) {

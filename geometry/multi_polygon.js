@@ -1,45 +1,59 @@
-const ERROR = 0.001
-const ANGLE = 3.141/24;
-const AREA = 200;
-const PARK = 3000;
-const CIVIC = 1000;
-const BLOCK = 2000;
-
-const LARGE_SW = 10;
-const MEDIUM_SW = 8;
-const SMALL_SW = 3;
-class Polygon {
+class MultiPolygon {
   constructor(points) {
     this.points = points;
 
-    if(Array.isArray(points[0])){
+    // points is an array of raw vectors
+    if(this.is_contour_array(points)) {
+      console.log("Polygon: is_contour_array");
+      this.contours = this.find_contours(points);
+      this.points = this.contours[0]
+    } else {
+      this.points = this.convert_to_vectors(points);
+      this.points = this.order();
+      this.contours = [this.points];
+      this.find_segments();
+      this.find_edges();
+    }
+  }
+
+  is_raw_array(points) {
+    return Array.isArray(points[0]) && points[0].length === 2
+  }
+
+  is_contour_array(points) {
+    return Array.isArray(points[0]) && points[0].length > 2
+  }
+
+  convert_to_vectors(points) {
+    if(this.is_raw_array(points)) {
       let new_points = [];
       for(let v of points){
         new_points.push(createVector(v[0], v[1]));
       }
-      this.points = new_points;
+      return new_points;
     }
 
-    this.order();
-
-    this.find_segments();
-    this.find_edges();
+    return points
   }
 
   count() {
     return this.points.length;
   }
 
-  order() {
+  order(points = this.points, clockwise = true) {
+    let n = points.length;
     let sum = 0;
-    for (let i = 0; i < this.count(); i++) {
-      const j = (i + 1) % this.count(); // Next vertex, wrap around
-      sum += (this.points[j].x - this.points[i].x) * (this.points[j].y + this.points[i].y);
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n; 
+      sum += (points[j].x - points[i].x) * (points[j].y + points[i].y);
     }
 
-    if (sum < 0) {
-      this.points.reverse();
+    const is_clockwise = sum < 0;
+    if (is_clockwise !== clockwise) {
+      points.reverse();
     }
+
+    return points
   }
 
   to_a(){
@@ -50,16 +64,18 @@ class Polygon {
     return arr;
   }
 
-  area() {
-    let n = this.count();
+  area(points = this.points, signed = false) {
+    let n = points.length;
     if (n < 3) return 0;
 
     let A = 0;
     for (let i = 0; i < n; i++) {
       let j = (i + 1) % n;
-      A += this.points[i].x * this.points[j].y - this.points[j].x * this.points[i].y;
+      A += points[i].x * points[j].y - points[j].x * points[i].y;
     }
-    return Math.abs(A * 0.5);
+
+    let fA = A * 0.5
+    return signed ? fA : Math.abs(fA);
   }
 
   centroid(){
@@ -88,6 +104,25 @@ class Polygon {
       maxY = Math.max(maxY, v.y);
     }
     return [minX, minY, maxX, maxY];
+  }
+
+  find_contours(){
+    if(!Array.isArray(this.points[0])){
+      return [this.points];
+    }
+
+    let contours = [];
+    for(let i = 0; i < this.points.length; i++){
+      let contour = this.points[i];
+
+      if(contour.length < 3) continue; // skip degenerate contours
+      contour = this.convert_to_vectors(contour);
+      contour = this.order(contour);
+      contours.push(contour);
+    }
+
+    console.log("Found contours:", contours);
+    return contours
   }
 
   find_segments() {
@@ -208,11 +243,12 @@ class Polygon {
       return 
     }
     console.log("DIFF", result)
-    if(result[0].length > 1) {
-      return new MultiPolygon(result[0]);
-    } else {
-      return new Polygon(result[0].flat(1));  
-    }
+    let results = [];
+    // for(let r of result){
+    //   console.log("r", r);
+    //   results.push(new Polygon(r.flat(1)));
+    // }
+    return new Polygon(result[0])
   }
 
   // Housing fill works well with this, but not martinez difference
@@ -236,9 +272,6 @@ class Polygon {
     
     return new Polygon(result[0]);
   }
-
-
-
 
   subdivide(threshold = AREA, counter = 0) {
     let area = this.area();
@@ -462,11 +495,19 @@ class Polygon {
   }
 
   draw(){
-    if (this.count() < 3) return;
+    // if (this.count() < 3) return;
+    // noFill();
     push();
       beginShape();
-      for(let v of this.points){
+      for(let v of this.contours[0]){
         vertex(v.x, v.y);
+      }
+      for(let i = 1; i < this.contours.length; i++){
+        beginContour()
+        for(let v of this.contours[i]){
+          vertex(v.x, v.y);
+        }
+        endContour(CLOSE);
       }
       endShape(CLOSE);
     pop();

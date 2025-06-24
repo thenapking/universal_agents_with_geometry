@@ -86,28 +86,24 @@ function setup(){
 
   // create_polygons();
   // create_coffers();
-  create_test_polygons();
+  // create_test_polygons();
+  create_concentric_circles();
 }
 
 function draw(){
   default_setup()
   noLoop();
   
-  // polylineA.draw();
-  // polylineD.draw();
+  // polyCircleA.draw();
+  // polyCircleB.draw();
+  // polyCircleC.draw();
+//   polyCircleD.draw();
 
-  piecesB[0].draw();
-  piecesB[1].draw();
+  // piecesB.draw();
 
-  for(let i = 0; i < final.length; i++){
-    let piece = final[i];
-    let c = colour_map[i];
-    fill(c);
-    // noFill();
-    piece.draw();
-    fill(0);
-    text(i, piece.centroid().x, piece.centroid().y);
-  }
+  // for(let piece of piecesD){
+  //   piece.draw();
+  // }
 }
 
 function draw_scene(){
