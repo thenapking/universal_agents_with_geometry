@@ -15,31 +15,38 @@ function create_concentric_circles(){
     createVector(0, H)
   ]);
 
+  let off = 60
+
   polyCircleA = new RegularPolygon(
-    W/2, H/2,
-    W/4, W/4, 300
+    W/3 + off, H/2,
+    W/4, W/4, 100
   );
 
   polyCircleB = new RegularPolygon(
-    W/2, H/2,
-    W/5, W/5, 300
+    W/3 + off, H/2,
+    W/6, W/6, 100
   );
 
   polyCircleC = new RegularPolygon(
-    W/4, H/4,
-    W/6, W/6, 150
+    2*W/3 - off, H/2,
+    W/4, W/4, 100
   );
 
   polyCircleD = new RegularPolygon(
-    W/2, H/2,
-    W/8, W/8, 150
+    2*W/3 - off, H/2,
+    W/6, W/6, 100
   );
 
+
+ 
+
   piecesB = polyCircleA.difference(polyCircleB);
+  piecesD = polyCircleC.difference(polyCircleD);
   
+  piecesE = piecesB.xor(piecesD);  
   // piecesC = polyCircleA.difference(polyCircleC);
 
-  piecesD = disjoint([polyCircleA, polyCircleB, polyCircleC, polyCircleD], true);
+  // piecesD = disjoint([polyCircleA, polyCircleB, polyCircleC, polyCircleD], true);
 }
 
 function create_test_polygons(){

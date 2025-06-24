@@ -99,7 +99,12 @@ function draw(){
   // polyCircleC.draw();
 //   polyCircleD.draw();
 
+
+
   // piecesB.draw();
+  // piecesD.draw();
+  piecesE[0].draw();
+  // piecesE[1].draw();
 
   // for(let piece of piecesD){
   //   piece.draw();
