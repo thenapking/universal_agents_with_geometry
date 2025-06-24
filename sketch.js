@@ -93,15 +93,21 @@ function draw(){
   default_setup()
   noLoop();
   
-  polylineA.draw();
-  polylineD.draw();
+  // polylineA.draw();
+  // polylineD.draw();
+
   piecesB[0].draw();
   piecesB[1].draw();
 
-  piecesC[0].draw();
-  piecesC[1].draw();
-
-
+  for(let i = 0; i < final.length; i++){
+    let piece = final[i];
+    let c = colour_map[i];
+    fill(c);
+    // noFill();
+    piece.draw();
+    fill(0);
+    text(i, piece.centroid().x, piece.centroid().y);
+  }
 }
 
 function draw_scene(){

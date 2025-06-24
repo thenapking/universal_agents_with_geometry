@@ -159,19 +159,16 @@ class Polygon {
 
   // Adjacency
   adjacent(other) {
-    let tolerance = 1e-6;
     for (let segment of this.segments) {
-      for (let point of other.points) {
-        if (segment.distance(point) < tolerance) return true;
+      for (let other_segment of other.segments) {
+        if(segment.adjacent(other_segment)) {
+          stroke(0, 255, 0);
+          segment.draw();
+          other_segment.draw();
+          return true;
+        }
       }
     }
-
-    for (let segment of other.segments) {
-      for (let point of this.points) {
-        if (segment.distance(point) < tolerance) return true;
-      }
-    }
-
     return false
   }
 
@@ -197,6 +194,7 @@ class Polygon {
   union(other){
     let this_points = [this.to_a()];
     let other_points = [other.to_a()];
+    
     let result = martinez.union(this_points, other_points);
     return new Polygon(result.flat(1).flat(1));
   }
@@ -209,7 +207,7 @@ class Polygon {
     if (!result?.[0]?.[0]?.length) {
       return 
     }
-    // console.log("DIFF", result)
+    console.log("DIFF", result)
     let results = [];
     for(let r of result){
       results.push(new Polygon(r.flat(1)));
@@ -228,6 +226,15 @@ class Polygon {
       results.push(new Polygon(r));
     }
     return results;
+  }
+
+  intersection_greiner(other){
+    let this_points = this.to_a();
+    let other_points = other.to_a();
+    let result = greinerHormann.intersection(this_points, other_points);
+    if(result === null) return;
+    
+    return new Polygon(result[0]);
   }
 
 
@@ -457,7 +464,6 @@ class Polygon {
   draw(){
     if (this.count() < 3) return;
     push();
-      noFill();
       beginShape();
       for(let v of this.points){
         vertex(v.x, v.y);
@@ -467,10 +473,7 @@ class Polygon {
   }
 }
 
-
-
-
-function disjoint(polygons) {
+function disjoint(polygons, greinerHormann = false) {
   let n = polygons.length;
   let pieces = [];
 
@@ -488,11 +491,20 @@ function disjoint(polygons) {
     // compute the piece
     let piece = included[0];
     for (let i = 1; i < included.length && piece; i++) {
-      piece = piece.intersection(included[i]);
+      if(greinerHormann) {
+        piece = piece.intersection_greiner(included[i]);
+      } else {
+        piece = piece.intersection(included[i]);
+      }
     }
+
     if (piece) {
       for (let poly of excluded) {
-        piece = piece.difference(poly);
+        if(greinerHormann) {
+          piece = piece.difference_greiner(poly);
+        } else {
+          piece = piece.difference(poly);
+        }
         if (!piece) break; // empty piece
         // difference will return two pieces.  We can discard anything but the first.
         piece = piece[0]
@@ -502,6 +514,53 @@ function disjoint(polygons) {
   }
 
   return pieces;
+}
+
+function adjacency(polygons){
+  let result = [];
+  for(let i = 0; i < polygons.length; i++){
+    result[i] = [];
+    let p = polygons[i];
+    for(let j = 0; j < polygons.length; j++){
+      if( i === j) continue;
+      let q = polygons[j];
+      if(p.adjacent(q)){
+        result[i].push(j);
+      }
+    }
+  }
+  return result;
+}
+
+function shared_vertices(polygons){
+  let result = [];
+  let adjacency_map = adjacency(polygons);
+  let tolerance = 1e-6; // Tolerance for vertex comparison
+  for(let i = 0; i < polygons.length; i++){
+    result[i] = [];
+    let p = polygons[i];
+    for(let j = 0; j < polygons.length; j++){
+      if( i === j) continue;
+      if(adjacency_map[i].includes(j)) continue;
+      let q = polygons[j];
+      let found = false;
+      for(let s of p.segments){
+        for(let t of q.segments){
+          if( p5.Vector.dist(s.start, t.start) < tolerance || 
+              p5.Vector.dist(s.start, t.end)   < tolerance || 
+              p5.Vector.dist(s.end, t.start)   < tolerance || 
+              p5.Vector.dist(s.end, t.end)     < tolerance){
+            result[i].push(j);
+            found = true; 
+            break;
+            
+          }
+        }
+        if(found) { break; }
+      }
+    }
+  }
+  return result;
 }
 
 

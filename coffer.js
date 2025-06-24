@@ -26,7 +26,7 @@ let SMALL = ['hatching', 'circles']
 let MEDIUM = ['housing', 'hatching', 'blank' ]
 let LARGE = ['housing',  'hatching', 'blank'];  
 let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
-let colours = ['blue', 'red', 'green', 'purple', 'orange', 'brown', 'pink', 'black', 'grey', 'cyan', 'magenta'];
+let colours = ['black', 'brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',    'cyan', 'magenta'];
 
 class Coffer {
   constructor(polygon) {
