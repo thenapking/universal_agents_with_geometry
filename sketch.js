@@ -95,19 +95,24 @@ function draw(){
   noLoop();
 
   // polylineE.draw(); 
+
+  // polyCircleA.draw();  
+  // polyCircleB.draw();
+  // for(let piece of piecesA){
+  //   let pieces = piece.split(polylineE);
+
+  //   for(let p of pieces){
+  //       p.draw();
+  //   }
+  // }
   
+  piecesB = disjoint(piecesD, false);
+  console.log("Pieces B:", piecesB);
 
-
- 
-  // piecesF = piecesE[0].split(polylineE)
-
-  piecesH[0].draw();
-  piecesH[1].draw();
-
-  // let ring = piecesE
-  // ring.draw();
-
-  // piecesF[1].draw();
+  // piecesB[0].draw();
+  for(let piece of piecesB){
+    piece.draw();
+  }
 
 
 }

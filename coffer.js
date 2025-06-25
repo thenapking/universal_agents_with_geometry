@@ -39,16 +39,8 @@ class Coffer {
     this.pieces.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object, direction: direction});
   }
 
-  // TODO: add methods to divide it by
-  // (a) grid and construction lines - NOT WORKING
-  // (b) other polygons
-  // (c) poly_roads /
-  // (d) roads
-
-
   split_by_poly_roads(point_arrays, road_width = LARGE_SW, detail = 0.1) {
     for(let points of point_arrays){
-      // console.log("SPLITTING BY POLY ROADS", points);
       let new_pieces = []
 
       let polyline = new Polyline(points);
@@ -57,23 +49,18 @@ class Coffer {
 
       for(let polygon of this.polygons){
         let results = polygon.difference(road);
-        // console.log("results", results);
         for(let result of results){
           new_pieces.push(result);
         }
         console.log(new_pieces)
       }
-      // console.log("NEW PIECES", new_pieces.length, new_pieces);
       this.polygons = new_pieces;
-      // console.log("POLYGONS AFTER SPLIT", this.polygons.length, this.polygons);
     }
   }
 
   split_by_line(point_arrays, detail = 0.1) {
     for(let points of point_arrays){
       if(this.polygons.length > 1000) { return; }
-      console.log("HERE WE GO AGAIN")
-      console.log("SPLITTING BY LINES", points);
       let new_pieces =  []
 
       let polyline = new Polyline(points);
@@ -294,6 +281,55 @@ function create_coffers(){
 
 
 }
+
+
+function adjacency(polygons){
+  let result = [];
+  for(let i = 0; i < polygons.length; i++){
+    result[i] = [];
+    let p = polygons[i];
+    for(let j = 0; j < polygons.length; j++){
+      if( i === j) continue;
+      let q = polygons[j];
+      if(p.adjacent(q)){
+        result[i].push(j);
+      }
+    }
+  }
+  return result;
+}
+
+function shared_vertices(polygons){
+  let result = [];
+  let adjacency_map = adjacency(polygons);
+  let tolerance = 1e-6; // Tolerance for vertex comparison
+  for(let i = 0; i < polygons.length; i++){
+    result[i] = [];
+    let p = polygons[i];
+    for(let j = 0; j < polygons.length; j++){
+      if( i === j) continue;
+      if(adjacency_map[i].includes(j)) continue;
+      let q = polygons[j];
+      let found = false;
+      for(let s of p.segments){
+        for(let t of q.segments){
+          if( p5.Vector.dist(s.start, t.start) < tolerance || 
+              p5.Vector.dist(s.start, t.end)   < tolerance || 
+              p5.Vector.dist(s.end, t.start)   < tolerance || 
+              p5.Vector.dist(s.end, t.end)     < tolerance){
+            result[i].push(j);
+            found = true; 
+            break;
+            
+          }
+        }
+        if(found) { break; }
+      }
+    }
+  }
+  return result;
+}
+
 
 
 

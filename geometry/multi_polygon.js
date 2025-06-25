@@ -3,12 +3,11 @@ class MultiPolygon {
   constructor(points) {
     // points is an array of raw vectors
     if(this.is_contour_array(points)) {
-      console.log("Polygon: is_contour_array");
       this.contours = this.find_contours(points);
       this.outer = this.contours[0]
     } else {
       this.outer = this.convert_to_vectors(points);
-      this.outer = this.order();
+      this.outer = this.order(points);
       this.contours = [this.outer];
     }
 
@@ -19,7 +18,8 @@ class MultiPolygon {
       let points = this.contours[i];
       let segments = this.find_segments(points, i);
       this.segments[i] = segments;  
-      this.edges[i] = this.find_edges(segments);
+      // TODO
+      // this.edges[i] = this.find_edges(segments);
     }
   }
 
@@ -130,7 +130,6 @@ class MultiPolygon {
       contours.push(contour);
     }
 
-    console.log("Found contours:", contours);
     return contours
   }
 
@@ -161,8 +160,11 @@ class MultiPolygon {
 
     first.previous = segment;
     segment.next = first;
-    previous.next = segment;
-    segment.previous = previous;
+    
+    if(previous){
+      previous.next = segment;
+      segment.previous = previous;
+    }
 
     return segments;
   }
@@ -204,6 +206,51 @@ class MultiPolygon {
     return this.operation(other, 'difference');
   }
 
+  // Housing fill works well with this, but not martinez difference
+  difference_greiner(other){
+    let this_points = [];
+    for(let contour of this.contours) {
+      this_points.push(this.to_a(contour));
+    }
+
+    let other_points = [];
+    for(let contour of other.contours) {
+      other_points.push(other.to_a(contour));
+    }
+
+    let result = greinerHormann.diff(this_points, other_points);
+    if(result === null) return;
+    let results = [];
+    for(let r of result){
+      results.push(new MultiPolygon(r[0]));
+    }
+    return results;
+  }
+
+  intersection_greiner(other){
+    let this_points = [];
+    for(let contour of this.contours) {
+      this_points.push(this.to_a(contour));
+    }
+
+    let other_points = [];
+    for(let contour of other.contours) {
+      other_points.push(other.to_a(contour));
+    }
+
+    let result = greinerHormann.intersection(this_points, other_points);
+    if(result === null) return;
+    let results = [];
+    for(let r of result){
+      results.push(new MultiPolygon(r));
+    }
+    return results;
+  }
+
+
+  
+
+
   operation(other, op) {
     let this_points = [];
     for(let contour of this.contours) {
@@ -216,28 +263,33 @@ class MultiPolygon {
     }
 
     let result;
-    switch(op) {
-      case 'union':
-        result = martinez.union(this_points, other_points);
-        break;
-      case 'difference':
-        result = martinez.diff(this_points, other_points);
-        break;
-      case 'intersection':
-        result = martinez.intersection(this_points, other_points);
-        break;
-      case 'xor':
-        result = martinez.xor(this_points, other_points);
-        break;
-      default:
-        console.error("Unknown operation:", op);
-        return;
+    try {
+      switch(op) {
+        case 'union':
+          result = martinez.union(this_points, other_points);
+          break;
+        case 'difference':
+          result = martinez.diff(this_points, other_points);
+          break;
+        case 'intersection':
+          result = martinez.intersection(this_points, other_points);
+          break;
+        case 'xor':
+          result = martinez.xor(this_points, other_points);
+          break;
+        default:
+          console.error("Unknown operation:", op);
+          return;
+      }
+    } catch (e) {
+      console.error("Martinez diff failed:", e);
+      return [new MultiPolygon(this_points)];
     }
 
     if (!result?.[0]?.[0]?.length) {
       return 
     }
-    console.log("Operation result:", result);
+    // console.log("Operation result:", result);
     let results = []
     for(let r of result) {
       if (r.length > 0) {
@@ -475,7 +527,6 @@ class MultiPolygon {
   }
 
   draw(){
-    fill(255, 255, 255);
     push();
       beginShape();
       for(let i = 0; i < this.outer.length; i++){

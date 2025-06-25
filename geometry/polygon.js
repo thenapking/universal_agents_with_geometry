@@ -477,7 +477,11 @@ function disjoint(polygons, greinerHormann = false) {
   let n = polygons.length;
   let pieces = [];
 
+  
+
   for (let i = 1; i < (1 << n); i++) {
+    if(i > 1000 ) { break; }
+    // console.log("i = ", i);
     // bitmask representing which polygons are included in this combination
     let included = [];
     let excluded = [];
@@ -493,22 +497,32 @@ function disjoint(polygons, greinerHormann = false) {
     for (let i = 1; i < included.length && piece; i++) {
       if(greinerHormann) {
         piece = piece.intersection_greiner(included[i]);
+        if(piece) { piece = piece[0]; } 
       } else {
+        // the intersection should return only one piece, but it will be in an array
         piece = piece.intersection(included[i]);
+        if(piece) { piece = piece[0]; } 
       }
     }
 
     if (piece) {
+      console.log("FOUND PIECE", piece);
       for (let poly of excluded) {
+        console.log("EXCLUDED", poly);
+        console.log("PIECE", piece)
         if(greinerHormann) {
           piece = piece.difference_greiner(poly);
+
         } else {
           piece = piece.difference(poly);
         }
         if (!piece) break; // empty piece
         // difference will return two pieces.  We can discard anything but the first.
         piece = piece[0]
+        console.log("piece after DIFF", piece);
+
       }
+      console.log("piece after EXCLUDED", piece);
       if (piece) pieces.push(piece);
     }
   }
@@ -516,51 +530,5 @@ function disjoint(polygons, greinerHormann = false) {
   return pieces;
 }
 
-function adjacency(polygons){
-  let result = [];
-  for(let i = 0; i < polygons.length; i++){
-    result[i] = [];
-    let p = polygons[i];
-    for(let j = 0; j < polygons.length; j++){
-      if( i === j) continue;
-      let q = polygons[j];
-      if(p.adjacent(q)){
-        result[i].push(j);
-      }
-    }
-  }
-  return result;
-}
-
-function shared_vertices(polygons){
-  let result = [];
-  let adjacency_map = adjacency(polygons);
-  let tolerance = 1e-6; // Tolerance for vertex comparison
-  for(let i = 0; i < polygons.length; i++){
-    result[i] = [];
-    let p = polygons[i];
-    for(let j = 0; j < polygons.length; j++){
-      if( i === j) continue;
-      if(adjacency_map[i].includes(j)) continue;
-      let q = polygons[j];
-      let found = false;
-      for(let s of p.segments){
-        for(let t of q.segments){
-          if( p5.Vector.dist(s.start, t.start) < tolerance || 
-              p5.Vector.dist(s.start, t.end)   < tolerance || 
-              p5.Vector.dist(s.end, t.start)   < tolerance || 
-              p5.Vector.dist(s.end, t.end)     < tolerance){
-            result[i].push(j);
-            found = true; 
-            break;
-            
-          }
-        }
-        if(found) { break; }
-      }
-    }
-  }
-  return result;
-}
 
 

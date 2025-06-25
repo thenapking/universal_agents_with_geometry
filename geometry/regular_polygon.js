@@ -1,4 +1,4 @@
-class RegularPolygon extends Polygon {
+class RegularPolygon extends MultiPolygon {
   constructor(x, y, w, h, sides, rotation = 0) {
     let points = [];
 
@@ -17,8 +17,8 @@ class RegularPolygon extends Polygon {
       let rx = x + dx * cos(rotation) - dy * sin(rotation);
       let ry = y + dx * sin(rotation) + dy * cos(rotation);
 
-      points.push(createVector(rx, ry));
+      points.push([rx, ry]);
     }
-    super(points);
+    super([points]);
   }
 }

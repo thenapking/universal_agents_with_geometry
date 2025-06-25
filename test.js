@@ -7,6 +7,44 @@ function init_test(){
   create_concentric_circles();
 }
 
+function concentric_circle(x, y, r, w, n){
+  let pieces = [];
+
+  for(let i = 0; i < n; i++){
+    let dA = i * w
+    let dB = (i + 1) * w;
+
+    if(dA >= r || dB >= r) { break;}
+
+    let polyCircleA = new RegularPolygon(
+      x, y,
+      r - dA, r - dA, 100
+    );
+
+    let polyCircleB = new RegularPolygon(
+      x, y,
+      r - dB, r - dB, 100
+    );
+
+    let piece = polyCircleA.difference(polyCircleB);
+    if(piece.length > 0){
+      pieces.push(piece[0]);
+    }
+  }
+
+  let last = new RegularPolygon(
+    x, y,
+    r - n * w, r - n * w, 100
+  );
+
+  pieces.push(last);
+
+
+
+  return pieces
+
+}
+
 function create_concentric_circles(){
   polyOuter = new Polygon([
     createVector(0, 0),
@@ -15,33 +53,50 @@ function create_concentric_circles(){
     createVector(0, H)
   ]);
 
-  let off = 60
+  let off = 200
 
   polyCircleA = new RegularPolygon(
     W/3 + off, H/2,
-    W/4, W/4, 30
+    W/4, W/4, 100
   );
 
-  polyCircleB = new RegularPolygon(
+  polyCircleA2 = new RegularPolygon(
     W/3 + off, H/2,
     W/6, W/6, 100
   );
 
-  polyCircleC = new RegularPolygon(
+  polyCircleA3 = new RegularPolygon(
+    W/3 + off, H/2,
+    W/8, W/8, 100
+  );
+
+
+  polyCircleB = new RegularPolygon(
     2*W/3 - off, H/2,
-    W/4, W/4, 100
+    W/4, W/4, 150
+  );
+
+  polyCircleB2 = new RegularPolygon(
+    2*W/3 - off, H/2,
+    W/6, W/6, 150
+  );
+
+  polyCircleB3 = new RegularPolygon(
+    2*W/3 - off, H/2,
+    W/8, W/8, 150
+  );
+
+  polyCircleC = new RegularPolygon(
+    W/2 + 60, H/2 + 40,
+    W/12, W/12, 150
   );
 
   polyCircleD = new RegularPolygon(
-    2*W/3 - off + 60, H/2,
-    W/12, W/12, 200
+    W/2 + 66, H/2,
+    W/16, W/16, 150
   );
 
-  polyCircleE = new RegularPolygon(
-    W/2 - off, H/2,
-    W/20, W/20, 200
-  );
-
+  
   let pE = [  
     createVector(0.9 * W, 0.95*H),
     createVector(0.35*W, 0.15*H)
@@ -49,16 +104,11 @@ function create_concentric_circles(){
 
   polylineE = new Polyline(pE);
 
-  piecesA = new MultiPolygon([polyCircleA.points]);
-  piecesB = new MultiPolygon([polyCircleB.points]);
-  piecesC = new MultiPolygon([polyCircleC.points])
-  piecesD = new MultiPolygon([polyCircleD.points])
-  piecesE = new MultiPolygon([polyCircleE.points])
-  
-  piecesF = piecesC.difference(piecesD);  
-  piecesG = piecesF[0].difference(piecesE);
 
-  piecesH = piecesG[0].split(polylineE);
+  
+  piecesC = concentric_circle(2*W/3 - off, H/2, W/4, 10, 8);
+  piecesA = concentric_circle(W/3 + off, H/2, W/4, 10, 8);
+  piecesD = [polyCircleA, polyCircleB, polyCircleC, polyCircleD, polyCircleA2, polyCircleA3, polyCircleB2, polyCircleB3];
 
 }
 
