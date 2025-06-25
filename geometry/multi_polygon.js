@@ -1,12 +1,16 @@
-let bc = 1;
+const SCALE = 10000000; // precision scale factor for integer coords
+
 class MultiPolygon {
+  static next_id = 1;
   constructor(points) {
     // points is an array of raw vectors
+    this.id = MultiPolygon.next_id++;
+
     if(this.is_contour_array(points)) {
       this.contours = this.find_contours(points);
       this.outer = this.contours[0]
     } else {
-      this.outer = this.convert_to_vectors(points);
+      this.outer = this.to_vectors(points);
       this.outer = this.order(points);
       this.contours = [this.outer];
     }
@@ -18,8 +22,7 @@ class MultiPolygon {
       let points = this.contours[i];
       let segments = this.find_segments(points, i);
       this.segments[i] = segments;  
-      // TODO
-      // this.edges[i] = this.find_edges(segments);
+      this.edges[i] = this.find_edges(segments);
     }
   }
 
@@ -31,18 +34,7 @@ class MultiPolygon {
     return Array.isArray(points[0]) && points[0].length > 2
   }
 
-  convert_to_vectors(points) {
-    if(this.is_raw_array(points)) {
-      let new_points = [];
-      for(let v of points){
-        new_points.push(createVector(v[0], v[1]));
-      }
-      return new_points;
-    }
-
-    return points
-  }
-
+  
   count() {
     return this.outer.length;
   }
@@ -63,12 +55,16 @@ class MultiPolygon {
     return points
   }
 
-  to_martinez(){
-    let martinez_points = [];
-    for(let contour of this.contours) {
-      martinez_points.push(this.to_a(contour));
+  to_vectors(points) {
+    if(this.is_raw_array(points)) {
+      let new_points = [];
+      for(let v of points){
+        new_points.push(createVector(v[0], v[1]));
+      }
+      return new_points;
     }
-    return martinez_points;
+
+    return points
   }
 
   to_a(points){
@@ -79,24 +75,29 @@ class MultiPolygon {
     return arr;
   }
 
-  area(points, signed = false) {
-    let n = points.length;
-    if (n < 3) return 0;
-
-    let A = 0;
-    for (let i = 0; i < n; i++) {
-      let j = (i + 1) % n;
-      A += points[i].x * points[j].y - points[j].x * points[i].y;
+  to_clipper_paths() {
+    let results = [];
+    for(let contour of this.contours) {
+      if (contour.length < 3) continue; // skip degenerate contours
+      let path = []
+      for(let point of contour) {
+        let p = { X: point.x * SCALE, Y: point.y * SCALE }
+        path.push(p);
+      }
+      results.push(path);
     }
 
-    let fA = A * 0.5
-    return signed ? fA : Math.abs(fA);
+    return results;
+  }
+
+  area(signed = false) {
+    area(this.outer, signed);
   }
 
   is_zero_area() {
     let A = 0;
     for(let contour of this.contours) {
-      A += this.area(contour, true);
+      A += area(contour, true);
     }
     return Math.abs(A) < 1e-6;
   }
@@ -130,6 +131,13 @@ class MultiPolygon {
     return [minX, minY, maxX, maxY];
   }
 
+  intersects_bounds(other){
+    const [minX, minY, maxX, maxY] = this.bounds();
+    const [otherMinX, otherMinY, otherMaxX, otherMaxY] = other.bounds();
+
+    return !(maxX < otherMinX || minX > otherMaxX || maxY < otherMinY || minY > otherMaxY);
+  }
+
   find_contours(points){
     if(!Array.isArray(points[0])){
       return [points];
@@ -140,7 +148,7 @@ class MultiPolygon {
       let contour = points[i];
 
       if(contour.length < 3) continue; // skip degenerate contours
-      contour = this.convert_to_vectors(contour);
+      contour = this.to_vectors(contour);
       let clockwise = i == 0
       contour = this.order(contour, clockwise);
       contours.push(contour);
@@ -207,93 +215,21 @@ class MultiPolygon {
 
   // Boolean operations using Martinez algorithm
   intersection(other){
-    return this.operation(other, 'intersection');
+    return clipper(this, other, 'intersection');
   }
 
   xor(other){
-    return this.operation(other, 'xor');
+    return clipper(this, other, 'xor');
   }
 
   union(other){
-    return this.operation(other, 'union');
+    return clipper(this, other, 'union');
   }
 
   difference(other){
-    return this.operation(other, 'difference');
+    return clipper(this, other, 'difference');
   }
 
-
-
-
-  operation(other, op) {
-    let this_points = this.to_martinez();
-
-    if (!this_points.length || !this_points[0]?.length) {
-      console.log("No points in this polygon for operation:", op);
-      return [];
-    }
-
-    let other_points = other.to_martinez();
-
-    if (!other_points.length || !other_points[0]?.length) {
-      console.log("No points in other polygon for operation:", op);
-      if (op === 'difference' || op === 'union') {
-        return [new MultiPolygon(this_points)];
-      } else {
-        return [];
-      }
-    }
-
-    if (this.is_zero_area()) {
-      console.log("Zero area polygon for operation:", op);
-      return [];
-    }
-
-    if (other.is_zero_area()) {
-      console.log("Zero area other polygon for operation:", op);
-      if (op === 'difference' || op === 'union') {
-        return [new MultiPolygon(this_points)];
-      }
-      return [];
-    }
-  
-
-    let result;
-    try {
-      switch(op) {
-        case 'union':
-          result = martinez.union(this_points, other_points);
-          break;
-        case 'difference':
-          result = martinez.diff(this_points, other_points);
-          break;
-        case 'intersection':
-          result = martinez.intersection(this_points, other_points);
-          break;
-        case 'xor':
-          result = martinez.xor(this_points, other_points);
-          break;
-        default:
-          console.error("Unknown operation:", op);
-          return;
-      }
-    } catch (e) {
-      console.error("Martinez diff failed:", e);
-      return [new MultiPolygon(this_points)];
-    }
-
-    if (!result?.[0]?.[0]?.length) {
-      return 
-    }
-    // console.log("Operation result:", result);
-    let results = []
-    for(let r of result) {
-      if (r.length > 0) {
-        results.push(new MultiPolygon(r));
-      }
-    }
-    return results
-  }
 
   contains(point) {
     let inside = this.contour_contains(point, this.outer);
@@ -301,28 +237,11 @@ class MultiPolygon {
     
     for(let i = 1; i < this.contours.length; i++) {
       let inner = this.contours[i];
-      let in_a_hole = this.contour_contains(point, inner);
+      let in_a_hole = contains(point, inner);
       if (in_a_hole) { return false }
     }
 
     return true;    
-  }
-
-  contour_contains(point, points) {
-    let n = points.length;
-
-    let inside = false;
-    let x = point.x, y = point.y;
-
-    for (let i = 0, j = n - 1; i < n; j = i++) {
-      let xi = points[i].x, yi = points[i].y;
-      let xj = points[j].x, yj = points[j].y;
-
-      let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-
-    return inside;
   }
 
 
@@ -544,46 +463,61 @@ class MultiPolygon {
 
 
 function multi_disjoint(polygons) {
-  let n = polygons.length;
-  let pieces = [];
+  const n = polygons.length;
+  const pieces = [];
+  const piece_cache = new Map();
+  
 
   for (let i = 1; i < (1 << n); i++) {
-    if(i > 1000) { break; } // prevent runaway errors
-    // bitmask representing which polygons are included in this combination
-    let included = [];
-    let excluded = [];
+    const k = lowest_index(i);
+    const j = i & ~(1 << k);
 
-    for (let j = 0; j < n; j++) {
-      if (i & (1 << j)) included.push(polygons[j]);
-      else excluded.push(polygons[j]);
+    let cached_fragments = j === 0 ? [polygons[k]] : piece_cache.get(j);
+    if (!cached_fragments || cached_fragments.length === 0) continue;
+
+    let new_fragments = [];
+
+    const polygon = polygons[k];
+
+    for (let fragment of cached_fragments) {
+      if (!polygon.intersects_bounds(fragment)) continue;
+
+      const result = fragment.intersection(polygon);
+      if (result) new_fragments.push(...result);
     }
 
-    let piece = included[0];
-    let fragments = [piece];
+    if (new_fragments.length > 0) {
+      piece_cache.set(i, new_fragments);
 
-    for (let i = 1; i < included.length && piece; i++) {
-      let new_fragments = [];
-      for (let fragment of fragments) {
-        if (!fragment || fragment.is_zero_area?.()) continue;
-        let intersect = fragment.intersection(included[i]);
-        if (intersect) new_fragments.push(...intersect);
+      // subtract excluded polygons
+      let excluded = [];
+      for (let m = 0; m < n; m++) {
+        if ((i & (1 << m)) === 0) excluded.push(polygons[m]);
       }
-      fragments = new_fragments;
-    }
 
-    for (let poly of excluded) {
-      let new_fragments = [];
-      for (let fragment of fragments) {
-        let difference = fragment.difference(poly);
-        if (difference) new_fragments.push(...difference);
+      for (let piece of excluded) {
+        const differences = [];
+        for (let fragment of new_fragments) {
+          if (!piece.intersects_bounds(fragment)) {
+            differences.push(fragment);
+            continue;
+          }
+          const diff = fragment.difference(piece);
+          if (diff) differences.push(...diff);
+        }
+        new_fragments = differences;
       }
-      fragments = new_fragments;
-    }
 
-    pieces.push(...fragments.filter(f => f && !f.is_zero_area?.()));
+      pieces.push(...new_fragments.filter(f => !f.is_zero_area?.()));
+    }
   }
 
   return pieces;
 }
 
+
+
+function lowest_index(mask) {
+  return Math.log2(mask & -mask); // gets position of least significant 1
+}
 

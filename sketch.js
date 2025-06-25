@@ -20,7 +20,7 @@
 
 let DPI= 96;
 let wi = 7;
-let hi = 7;
+let hi = 10;
 let bwi = 0.25;
 let W = wi * DPI;
 let H = hi * DPI;
@@ -87,37 +87,24 @@ function setup(){
   // create_polygons();
   // create_coffers();
   // create_test_polygons();
-  create_concentric_circles();
+  // create_concentric_circles();
+  test_clipper();
+  frameRate(30);
+  default_setup()
+
 }
 
+let cnt = 0;
 function draw(){
-  default_setup()
-  noLoop();
 
-  // polylineE.draw(); 
-
-  // polyCircleA.draw();  
-  // polyCircleB.draw();
-  // for(let piece of piecesA){
-  //   let pieces = piece.split(polylineE);
-
-  //   for(let p of pieces){
-  //       p.draw();
-  //   }
-  // }
-
-  // piecesC[0].draw();
-  // piecesC[1].draw();
-  
-  let result = multi_disjoint(piecesD);
-  console.log("Pieces B:", result);
-
-  // result[0].draw();
-  for(let piece of result){
-    piece.draw();
+  if(cnt < piecesA.length){
+    piecesA[cnt].draw();
   }
+  cnt++
 
-
+  if(cnt >= piecesA.length){
+    noLoop();
+  }
 }
 
 function draw_scene(){

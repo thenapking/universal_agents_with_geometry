@@ -2,10 +2,6 @@
 
 let piecesA, piecesB, piecesAC, piecesCA, piecesC, piecesD, piecesE, piecesF, piecesG, piecesH;
 let polygonD, adjacency_map, colour_map, shared_map, final;
-function init_test(){
-  // create_test_polygons();
-  create_concentric_circles();
-}
 
 function concentric_circle(x, y, r, w, n){
   let pieces = [];
@@ -23,6 +19,39 @@ function concentric_circle(x, y, r, w, n){
   }
 
   return pieces
+}
+
+function test_clipper(){
+  polyCircleA = new RegularPolygon(
+    W/4 + 60, H/3,
+    W/8, W/8, 150
+  );
+
+  polyCircleB = new RegularPolygon(
+    W/2 - 160, H/2 - 60,
+    W/10, W/10, 150
+  );
+
+  polyCircleC = new RegularPolygon(
+    W/2 + 120, H/2 + 40,
+    W/12, W/12, 150
+  );
+
+  polyCircleD = new RegularPolygon(
+    W/2 + 66, H/2,
+    W/16, W/16, 150
+  );
+  
+  piecesB = concentric_circle(W/3 + 60, H/2, W/4, 20, 5);
+  piecesC = concentric_circle(3*W/4 - 100, H/2 - 150, W/6, 10, 4);
+  piecesD = concentric_circle(2*W/3 -30, H/2 + 160, W/5, 10, 6);
+  piecesE = concentric_circle(W/4 + 60, 3*H/4 + 60, W/3 - 20, 40, 3);
+  
+  console.time("multi_disjoint");
+  let res = piecesC.concat(piecesB).concat(piecesD).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]);
+  console.log("Disjointing pieces:", res.length, 1 << res.length);
+  piecesA = multi_disjoint(res);
+  console.timeEnd("multi_disjoint");
 }
 
 function create_concentric_circles(){

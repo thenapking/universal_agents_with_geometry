@@ -9,3 +9,14 @@ function setup_svg(){
   setSvgDefaultStrokeWeight(1); 
   setSvgFlattenTransforms(false); // if true: larger files, closer to original
 }
+
+const memo = new Map();
+
+function memoize(op, a, b, fn) {
+  const key = `${op}:${a.id}-${b.id}`;
+  if (memo.has(key)) return memo.get(key);
+
+  const result = fn();
+  memo.set(key, result);
+  return result;
+}
