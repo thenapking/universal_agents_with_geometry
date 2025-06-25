@@ -22,11 +22,10 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL = ['hatching', 'circles']
-let MEDIUM = ['housing', 'hatching', 'blank' ]
-let LARGE = ['housing',  'hatching', 'blank'];  
-let directions = ['horizontal', 'vertical', 'downwards', 'upwards'];
-let colours = ['black', 'brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',    'cyan', 'magenta'];
+let SMALL = ['downwards', 'upwards', 'circles']
+let MEDIUM = [ 'housing', 'downwards', 'upwards', 'blank' ]
+let LARGE = [ 'housing', 'downwards', 'upwards', 'blank'];  
+let colours = ['black', 'brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 
 class Coffer {
   constructor(polygon) {
@@ -79,9 +78,8 @@ class Coffer {
     }
   }
 
-  fill(){
+  fill(c){
     for(let polygon of this.polygons){
-      // console.log("FILLING POLYGON", polygon);
       const [minX, minY, maxX, maxY] = polygon.bounds();
       let W = maxX - minX;
       let H = maxY - minY;
@@ -96,46 +94,19 @@ class Coffer {
         fill_types = ['blank']
       } else if(area < 6000) {
         area_type = 'small';
-        fill_types = shuffle(SMALL).slice();
+        fill_types = SMALL
       } else if(area < 21000) {
         area_type = 'medium';
-        fill_types = shuffle(MEDIUM).slice();
+        fill_types = MEDIUM
       } else {
         area_type = 'large';
-        fill_types = shuffle(LARGE).slice();
+        fill_types = LARGE
       }
       
-      let available_colours = colours.slice()
-      let available_directions = directions.slice();
-
-      for(let other_coffer of coffers){
-        for(let other of other_coffer.pieces) {
-          if(other.polygon.adjacent(polygon)) {
-            if(other.fill_type === 'blank') { continue; }
-
-            let index = fill_types.indexOf(other.fill_type);
-            let direction_index = available_directions.indexOf(other.direction);
-            if(other.fill_type === 'hatching' ) {
-              if(direction_index > -1) {
-                // console.log("REMOVING DIRECTION", other.direction, "FROM AVAILABLE DIRECTIONS", available_directions);
-                available_directions.splice(direction_index, 1);
-              }
-              if(available_directions.length === 0) {
-                // console.log("NO DIRECTIONS LEFT, REMOVING FILL TYPE", other.fill_type, "FROM AVAILABLE FILL TYPES", fill_types);
-                fill_types.splice(index, 1);
-              }
-
-            } else if(index > -1) {
-              // console.log("REMOVING FILL TYPE", other.fill_type, "FROM AVAILABLE FILL TYPES", fill_types);
-
-              fill_types.splice(index, 1);
-            }
-          }
-        }
-      }
-
-      let colour = available_colours.length > 0 ? random(available_colours) : 'black'
-      fill_type = fill_types.length > 0 ? random(fill_types) : 'blank';
+      
+      let colour = 'black';
+      let cidx = colours.indexOf(c);
+      fill_type = fill_types[cidx] || 'blank'
 
   
       let pc = polygon.centroid();
@@ -149,11 +120,9 @@ class Coffer {
       let fill_object;
       let direction;
 
-      if(fill_type === 'hatching') {
-        direction = random(available_directions);
-  
-        fill_object = new Hatching(polygon, 5, direction);
-        fill_object.hatch(direction);
+      if(fill_type === 'downwards' || fill_type === 'upwards') {
+        fill_object = new Hatching(polygon, 5, fill_type);
+        fill_object.hatch(fill_type);
       }
   
       if(fill_type === 'circles') {
@@ -243,6 +212,8 @@ class Coffer {
     push();
       for(let piece of this.pieces) {
         if(piece.fill_type != 'housing') { continue }
+        console.log("Drawing housing piece", piece);
+        houses = this
         piece.polygon.draw();
         if(piece.fill) {
           piece.fill.draw();
@@ -258,28 +229,94 @@ class Coffer {
   }
 }
 
-let coffers = [];
-function create_coffers(){
-  let road_points = get_contour(WATER_LEVEL);
-  let poly_roads = [polylines[2], polylines[3], polylines[4], polylines[0]];
+let houses;
 
-  let potential_coffers = disjoint([polyCircleB, polyCircleC, polyCircleD, polyCircleE, polyCircleF, polyCircleG]);
+let coffers = [];
+
+function create_coffers(list){
+  // let road_points = get_contour(WATER_LEVEL);
+  let poly_roads = [polylineA, polylineD];
+
+  let potential_coffers = multi_disjoint(list)
+
+  for(let polyline of poly_roads){
+    potential_coffers = split_polygons(potential_coffers, polyline);
+  }
+
   for(let shape of potential_coffers){
     let coffer = new Coffer(shape);
-    coffer.split_by_poly_roads([road_points], 25)
-    coffer.split_by_poly_roads(poly_roads, 6);
     coffers.push(coffer);
   }
 
-  for(let coffer of coffers){
-    // coffer.unsplit();
+  
+  adjacency_map = create_adjacency_map(coffers)
+  shared_map = find_shared_vertices(coffers, adjacency_map);
+  colour_map = full_recursive_colour_map(coffers);
+
+  for(let i=0; i < coffers.length; i++){
+    let c = colour_map[i] || 'black';
+    let coffer = coffers[i];
+    coffer.fill(c);
   }
 
-  for(let coffer of coffers){
-    coffer.fill();
-  } 
+}
 
+function split_polygons(polygons, polyline){
+  let new_polygons = [];
+  for(let polygon of polygons){
+    let results = polygon.split(polyline);
 
+    for(let result of results){
+      new_polygons.push(result);
+    }
+  }
+    
+  return new_polygons;
+}
+
+function create_adjacency_map(coffers){
+  let result = [];
+  for(let i = 0; i < coffers.length; i++){
+    result[i] = [];
+    let coffer = coffers[i];
+    for(let j = 0; j < coffers.length; j++){
+      if(i === j) continue;
+      let other = coffers[j];
+      if(coffer.polygon.adjacent(other.polygon)){
+        result[i].push(j);
+      }
+    }
+  }
+  return result;
+}
+
+function find_shared_vertices(coffers, adjacency_map){
+  let result = [];
+  let tolerance = 1e-6; // Tolerance for vertex comparison
+  for(let i = 0; i < coffers.length; i++){
+    result[i] = [];
+    let coffer = coffers[i];
+    for(let j = 0; j < coffers.length; j++){
+      if(i === j) continue;
+      if(adjacency_map[i].includes(j)) continue;
+      let other = coffers[j];
+      let found = false;
+      for(let s of coffer.polygon.segments[0]){
+        for(let t of other.polygon.segments[0]){
+          if(p5.Vector.dist(s.start, t.start) < tolerance || 
+             p5.Vector.dist(s.start, t.end)   < tolerance || 
+             p5.Vector.dist(s.end, t.start)   < tolerance || 
+             p5.Vector.dist(s.end, t.end)     < tolerance){
+            result[i].push(j);
+            found = true; 
+            break;
+          }
+        }
+        if(found) { break; }
+      }
+    }
+  }
+  return result;
 }
 
 

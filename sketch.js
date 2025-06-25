@@ -97,14 +97,14 @@ function setup(){
 let cnt = 0;
 function draw(){
 
-  if(cnt < piecesF.length){
-    let c = colour_map[cnt % colour_map.length] || 'green';
-    fill(c)
-    piecesF[cnt].draw();
+  if(cnt < coffers.length){
+    // let c = colour_map[cnt % colour_map.length] || 'green';
+    // fill(c)
+    coffers[cnt].draw();
   }
   cnt++
 
-  if(cnt >= piecesF.length){
+  if(cnt >= coffers.length){
     noLoop();
   }
 }

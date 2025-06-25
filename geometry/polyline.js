@@ -86,7 +86,7 @@ class Polyline {
 
 
     let points = tops.concat(bottoms.reverse());
-    return new Polygon(points);
+    return new MultiPolygon([points]);
   }
 
 

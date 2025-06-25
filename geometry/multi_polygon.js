@@ -213,6 +213,22 @@ class MultiPolygon {
     return edges;
   }
 
+  find_longest_edge() {
+    let longest;
+    let max_length = 0;
+    for(let edge of this.edges[0]){
+      let length = 0
+      for(let segment of edge){
+        length += segment.length();
+      }
+      if(length > max_length){
+        max_length = length;
+        longest = edge;
+      }
+    }
+    return longest;
+  }
+
   // Boolean operations using Martinez algorithm
   intersection(other){
     return clipper(this, other, 'intersection');
@@ -257,6 +273,68 @@ class MultiPolygon {
       }
     }
     return false
+  }
+
+  subdivide(threshold = AREA, counter = 0) {
+    // console.log("Subdividing polygon", this.id, "and threshold", threshold, "counter:", counter);
+    let area = this.area(false);
+    if (area < threshold) {
+      console.log("Area is below threshold, returning original polygon");
+      return [this];
+    }
+
+    if(area > PARK && random(1) < 0.03){
+      // make a park 
+      return [this]
+    }
+
+    if(area > CIVIC && random(1) < 0.07){
+      // make a hatched area
+      return [this]
+    }
+
+    let stroke_width = area > BLOCK ? MEDIUM_SW : SMALL_SW;
+
+    // console.log(stroke_width)
+    let edge = this.find_longest_edge();
+    if (!edge) {
+      console.warn("No edges found for subdivision");
+      return [this];
+    }
+
+    let p1 = edge[0].start
+    let p2 = edge[edge.length - 1].end;
+    let midpoint = p5.Vector.add(p1, p2).mult(0.5);
+
+    // Compute the unit‐vector direction of the longest edge,
+    // then rotate by 90° to get a perpendicular direction
+    let parallel = p5.Vector.sub(p2, p1).normalize();
+    // Rotating (x,y) → (−y, x) is a 90° CCW rotation:
+    let perpendicular = createVector(-parallel.y, parallel.x);
+
+    const [minX, minY, maxX, maxY] = this.bounds();
+    let w = maxX - minX;
+    let h = maxY - minY;
+    let diagonal = 2 * Math.sqrt(w * w + h * h);
+
+    // 5) Build two endpoints A, B for our infinite (sampled) cutting line:
+    let A = p5.Vector.add(midpoint, p5.Vector.mult(perpendicular, diagonal));
+    let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
+
+    let new_line = new Polyline([A, B]);
+    let new_street = new_line.to_polygon(stroke_width);
+    let pieces = this.difference(new_street);
+    // console.log("pieces after DIFF", pieces);  
+
+    // 8) Recursively subdivide each piece:
+    let result = [];
+    for (let piece of pieces) {
+      let pieces = piece.subdivide(threshold, counter++);
+      // console.log("pieces after subdivide", pieces);
+      result.push(...pieces);
+    }
+    // console.log("result after subdivide", result);
+    return result;
   }
 
 

@@ -82,29 +82,30 @@ function test_clipper(){
   piecesE = concentric_circle(W/4 + 60, 3*H/4 + 60, W/3 - 20, 40, 3);
   
   let res = piecesC.concat(piecesB).concat(piecesD).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]); //
-  piecesA = multi_disjoint(res)
+  create_coffers(res);
+  // piecesA = multi_disjoint(res)
 
-  piecesG = [];
-  for(let b of piecesA){
-    let r = b.split(polylineA);
-    for(let p of r){
-      piecesG.push(p);
-    }
-  }
+  // piecesG = [];
+  // for(let b of piecesA){
+  //   let r = b.split(polylineA);
+  //   for(let p of r){
+  //     piecesG.push(p);
+  //   }
+  // }
 
-  piecesF = [];
-  for(let b of piecesG){
-    let r = b.split(polylineD);
-    for(let p of r){
-      piecesF.push(p);
-    }
-  }
-  // piecesF = piecesG
+  // piecesF = [];
+  // for(let b of piecesG){
+  //   let r = b.split(polylineD);
+  //   for(let p of r){
+  //     piecesF.push(p);
+  //   }
+  // }
+  // // piecesF = piecesG
 
 
-  adjacency_map = adjacency(piecesF)
-  shared_map = shared_vertices(piecesF);
-  colour_map = full_recursive_colour_map(piecesF);
+  // adjacency_map = adjacency(piecesF)
+  // shared_map = shared_vertices(piecesF);
+  // colour_map = full_recursive_colour_map(piecesF);
 }
 
 function create_concentric_circles(){

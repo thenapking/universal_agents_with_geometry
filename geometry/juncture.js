@@ -8,7 +8,7 @@ class Juncture {
     this.winding = this.orientation_is_clockwise() ? 'with' : 'against';
 
     this.visits = 0;
-    console.log("New juncture created at:", this.point, "Visits", this.visits, "Winding:", this.winding);
+    // console.log("New juncture created at:", this.point, "Visits", this.visits, "Winding:", this.winding);
   }
 
   increment() {

@@ -94,12 +94,6 @@ function create_polygons(){
     W/5, W/5, POLYGONAL_DETAIL
   );
 
-  // polyCircleE = new RegularPolygon(
-  //   0.25*W, 0.7*H,
-  //   W/7, W/7, 150
-  // );
-
-
 
   polylineA = [
     createVector(W/2 + 60, 0),
