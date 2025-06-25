@@ -311,8 +311,8 @@ function shared_vertices(polygons){
       if(adjacency_map[i].includes(j)) continue;
       let q = polygons[j];
       let found = false;
-      for(let s of p.segments){
-        for(let t of q.segments){
+      for(let s of p.segments[0]){
+        for(let t of q.segments[0]){
           if( p5.Vector.dist(s.start, t.start) < tolerance || 
               p5.Vector.dist(s.start, t.end)   < tolerance || 
               p5.Vector.dist(s.end, t.start)   < tolerance || 

@@ -89,7 +89,7 @@ function setup(){
   // create_test_polygons();
   // create_concentric_circles();
   test_clipper();
-  frameRate(30);
+  frameRate(20);
   default_setup()
 
 }
@@ -97,12 +97,14 @@ function setup(){
 let cnt = 0;
 function draw(){
 
-  if(cnt < piecesA.length){
-    piecesA[cnt].draw();
+  if(cnt < piecesF.length){
+    let c = colour_map[cnt % colour_map.length] || 'green';
+    fill(c)
+    piecesF[cnt].draw();
   }
   cnt++
 
-  if(cnt >= piecesA.length){
+  if(cnt >= piecesF.length){
     noLoop();
   }
 }

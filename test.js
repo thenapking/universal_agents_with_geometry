@@ -41,17 +41,70 @@ function test_clipper(){
     W/2 + 66, H/2,
     W/16, W/16, 150
   );
+
+  let pA = [
+    createVector(0, H/2 - 80),
+    createVector(W, H/2 + 160)
+  ]
+
+  let pB = [
+    createVector(0.15 * W, H/2 - 48),
+    createVector(0.1125*W, H/2 - 56)
+  ]
+
+  let pC = [
+    createVector(0.45 * W, H/2 + 16),
+    createVector(0.2625*W, H/2 - 24)
+  ]
+
+  let pD = [
+    createVector(60, H),
+    createVector(0.66 * W, 0)
+  ];
+
+  let pE = [  
+    createVector(0.9 * W, 0.95*H),
+    createVector(0.35*W, 0.15*H)
+  ];
+
+
+  polylineA = new Polyline(pA);
+  polylineC = new Polyline(pC);
+  polylineD = new Polyline(pD);
+  polylineE = new Polyline(pE);
+
+
+ 
   
   piecesB = concentric_circle(W/3 + 60, H/2, W/4, 20, 5);
   piecesC = concentric_circle(3*W/4 - 100, H/2 - 150, W/6, 10, 4);
   piecesD = concentric_circle(2*W/3 -30, H/2 + 160, W/5, 10, 6);
   piecesE = concentric_circle(W/4 + 60, 3*H/4 + 60, W/3 - 20, 40, 3);
   
-  console.time("multi_disjoint");
-  let res = piecesC.concat(piecesB).concat(piecesD).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]);
-  console.log("Disjointing pieces:", res.length, 1 << res.length);
-  piecesA = multi_disjoint(res);
-  console.timeEnd("multi_disjoint");
+  let res = piecesC.concat(piecesB).concat(piecesD).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]); //
+  piecesA = multi_disjoint(res)
+
+  piecesG = [];
+  for(let b of piecesA){
+    let r = b.split(polylineA);
+    for(let p of r){
+      piecesG.push(p);
+    }
+  }
+
+  piecesF = [];
+  for(let b of piecesG){
+    let r = b.split(polylineD);
+    for(let p of r){
+      piecesF.push(p);
+    }
+  }
+  // piecesF = piecesG
+
+
+  adjacency_map = adjacency(piecesF)
+  shared_map = shared_vertices(piecesF);
+  colour_map = full_recursive_colour_map(piecesF);
 }
 
 function create_concentric_circles(){
@@ -271,7 +324,7 @@ function create_colour_map() {
 }
 
 
-function full_recursive_colour_map() {
+function full_recursive_colour_map(final) {
   let results = [];
   for (let i = 0; i < final.length; i++) {
     if (results[i] === undefined) {
@@ -284,6 +337,7 @@ function full_recursive_colour_map() {
 
 function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
   if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
+    results[idx] = 'pink'; // Fallback colour
     return results; 
   } 
 

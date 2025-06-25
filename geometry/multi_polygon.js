@@ -232,7 +232,7 @@ class MultiPolygon {
 
 
   contains(point) {
-    let inside = this.contour_contains(point, this.outer);
+    let inside = contains(point, this.outer);
     if (!inside) { return false; }
     
     for(let i = 1; i < this.contours.length; i++) {
@@ -242,6 +242,21 @@ class MultiPolygon {
     }
 
     return true;    
+  }
+
+   // Adjacency
+   adjacent(other) {
+    for (let segment of this.segments[0]) {
+      for (let other_segment of other.segments[0]) {
+        if(segment.adjacent(other_segment)) {
+          // stroke(0, 255, 0);
+          // segment.draw();
+          // other_segment.draw();
+          return true;
+        }
+      }
+    }
+    return false
   }
 
 
