@@ -105,7 +105,7 @@ class Polyline {
 
     let idx = segment.junctures.findIndex(j => j === juncture);
     let next_idx = direction === 'with' ? idx + 1 : idx - 1;
-    console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
+    // console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
     // need some logic to check whether at last or first juncture
     let next_juncture = segment.junctures[next_idx];
     piece.push(next_juncture.point);

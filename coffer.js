@@ -2,10 +2,10 @@
 // 1. One coffer, replicating existing code / 
 // 2. Two non-intersecting coffers /
 // 3. Multiple intersecting coffers /
-// 4. Street fill randomness relative to distance from centre
-// 5. Adjacent polygons must not have the same fill type or colour DONE
+// 4. Street fill randomness relative to distance from centre /
+// 5. Adjacent polygons must not have the same fill type or colour /
 // 6. Adjacent polygons can be unioned
-// 7. Three intersecting coffers, plus smaller coffers which may be complete contained within a larger coffer
+// 7. Three intersecting coffers, plus smaller coffers which may be complete contained within a larger coffer /
 // 8. Outer polygon
 // 9. Data from slime mould
 
@@ -22,11 +22,10 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL = ['downwards', 'upwards', 'circles']
-let MEDIUM = [ 'housing', 'downwards', 'upwards', 'blank' ]
-let LARGE = [ 'housing', 'downwards', 'upwards', 'blank'];  
-let colours = ['black', 'brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
-
+let SMALL =  [ 'black', 'downwards', 'upwards', 'pips', ]
+let MEDIUM = [ 'black', 'downwards', 'upwards', 'circles', 'blank' ]
+let LARGE =  [ 'blank' ];  
+let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 class Coffer {
   constructor(polygon) {
     this.polygon = polygon;
@@ -34,9 +33,10 @@ class Coffer {
     this.polygons = [polygon];
   }
 
-  add_piece(polygon, fill_type, fill_object, colour, direction) {
-    this.pieces.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object, direction: direction});
-  }
+  add_piece(polygon, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area) {
+    this.pieces.push({polygon: polygon, fill_type: fill_type, colour: colour, fill: fill_object, 
+      area_type: area_type, area: area, area_ratio: area_ratio, bounding_box_area: bounding_box_area});
+  };
 
   split_by_poly_roads(point_arrays, road_width = LARGE_SW, detail = 0.1) {
     for(let points of point_arrays){
@@ -83,7 +83,9 @@ class Coffer {
       const [minX, minY, maxX, maxY] = polygon.bounds();
       let W = maxX - minX;
       let H = maxY - minY;
-      let area = W * H;
+      let bounding_box_area = W * H;
+      let area = polygon.area();
+      let area_ratio = polygon.max_diameter() / polygon.min_diameter(); 
   
       let fill_type = 'blank';
       let fill_types = []
@@ -95,7 +97,7 @@ class Coffer {
       } else if(area < 6000) {
         area_type = 'small';
         fill_types = SMALL
-      } else if(area < 21000) {
+      } else if(area < 30000) {
         area_type = 'medium';
         fill_types = MEDIUM
       } else {
@@ -104,9 +106,10 @@ class Coffer {
       }
       
       
-      let colour = 'black';
       let cidx = colours.indexOf(c);
-      fill_type = fill_types[cidx] || 'blank'
+      let colour = colours[cidx] || 'grey';
+
+      fill_type = fill_types[cidx] || fill_types[0];
 
   
       let pc = polygon.centroid();
@@ -118,11 +121,15 @@ class Coffer {
       
       
       let fill_object;
-      let direction;
+      if(area_ratio < 2 && (area_type == 'large' || area_type == 'medium')) { fill_type = 'housing'}
 
-      if(fill_type === 'downwards' || fill_type === 'upwards') {
-        fill_object = new Hatching(polygon, 5, fill_type);
-        fill_object.hatch(fill_type);
+      console.log("FILL", fill_type, colour, area_type);
+
+      if(fill_type === 'downwards' || fill_type === 'upwards' || fill_type === 'black') {
+        let sw = fill_type === 'black' ? 2 : 5;
+        let final_fill_type = fill_type === 'black' ? 'downwards' : fill_type;  
+        fill_object = new Hatching(polygon, sw, final_fill_type);
+        fill_object.hatch(final_fill_type);
       }
   
       if(fill_type === 'circles') {
@@ -138,7 +145,7 @@ class Coffer {
       }
   
       if(fill_type !== 'housing') {
-        this.add_piece(polygon, fill_type, fill_object, colour, direction);
+        this.add_piece(polygon, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area);
         continue;
       }
   
@@ -153,7 +160,7 @@ class Coffer {
             let sw = area > CIVIC ? 6 : 4;
             let fill_object = new Hatching(piece, sw, direction);
             fill_object.hatch(direction);
-            this.add_piece(piece, fill_type, fill_object, colour, direction);
+            this.add_piece(piece, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area);
           }
         }
       }
@@ -212,8 +219,6 @@ class Coffer {
     push();
       for(let piece of this.pieces) {
         if(piece.fill_type != 'housing') { continue }
-        console.log("Drawing housing piece", piece);
-        houses = this
         piece.polygon.draw();
         if(piece.fill) {
           piece.fill.draw();
@@ -254,7 +259,7 @@ function create_coffers(list){
   colour_map = full_recursive_colour_map(coffers);
 
   for(let i=0; i < coffers.length; i++){
-    let c = colour_map[i] || 'black';
+    let c = colour_map[i] || 'grey';
     let coffer = coffers[i];
     coffer.fill(c);
   }
@@ -319,53 +324,57 @@ function find_shared_vertices(coffers, adjacency_map){
   return result;
 }
 
+function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
+  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
+    results[idx] = 'pink'; // Fallback colour
+    return results; 
+  } 
 
-function adjacency(polygons){
-  let result = [];
-  for(let i = 0; i < polygons.length; i++){
-    result[i] = [];
-    let p = polygons[i];
-    for(let j = 0; j < polygons.length; j++){
-      if( i === j) continue;
-      let q = polygons[j];
-      if(p.adjacent(q)){
-        result[i].push(j);
+  if(results[idx] == undefined) {
+    let neighbours = adjacency_map[idx];
+    let unused = [...input_colours];
+
+    for(let n of neighbours){
+      let colour = results[n];
+      if(colour !== undefined){
+        unused = unused.filter(c => c !== colour);
       }
     }
-  }
-  return result;
-}
 
-function shared_vertices(polygons){
-  let result = [];
-  let adjacency_map = adjacency(polygons);
-  let tolerance = 1e-6; // Tolerance for vertex comparison
-  for(let i = 0; i < polygons.length; i++){
-    result[i] = [];
-    let p = polygons[i];
-    for(let j = 0; j < polygons.length; j++){
-      if( i === j) continue;
-      if(adjacency_map[i].includes(j)) continue;
-      let q = polygons[j];
-      let found = false;
-      for(let s of p.segments[0]){
-        for(let t of q.segments[0]){
-          if( p5.Vector.dist(s.start, t.start) < tolerance || 
-              p5.Vector.dist(s.start, t.end)   < tolerance || 
-              p5.Vector.dist(s.end, t.start)   < tolerance || 
-              p5.Vector.dist(s.end, t.end)     < tolerance){
-            result[i].push(j);
-            found = true; 
-            break;
-            
-          }
-        }
-        if(found) { break; }
+    if(shared_map[idx].length > 0){
+      let shared_colours = shared_map[idx].map(s => results[s]).filter(c => c !== undefined);
+      if(shared_colours.length > 0){
+        unused = unused.filter(c => shared_colours.includes(c));
       }
     }
+
+    if(unused.length > 0){
+      results[idx] = unused[0];
+    } 
+
+    if(shared_map[idx].length > 0){
+      for(let i of shared_map[idx]){
+        recursive_colour_map(depth++, i, results, input_colours);
+      }
+    }
+
+    
   }
-  return result;
+
+  return results;
 }
+
+function full_recursive_colour_map(final) {
+  let results = [];
+  for (let i = 0; i < final.length; i++) {
+    if (results[i] === undefined) {
+      recursive_colour_map(0, i, results, colours );
+    }
+  }
+
+  return results;
+}
+
 
 
 

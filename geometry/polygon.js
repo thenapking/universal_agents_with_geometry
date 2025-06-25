@@ -349,8 +349,6 @@ class Polygon {
 
   // TODO - in progress, needs to be tested
   split(input_polyline) {
-    console.log("--------------")
-
     // Duplicate the polyline to avoid double counting junctures
     let polyline = new Polyline(input_polyline.points);
     // Find the junctures

@@ -40,9 +40,10 @@ class Group {
 
     let results = [];
     for(let polygon of polygons){
-      let clipped = this.boundaries[0].intersection(polygon)
+      let clipped = this.boundaries[0].intersection(polygon)[0]
       if(clipped) { results.push(clipped) };
     }
+
     return results;
   }
 }

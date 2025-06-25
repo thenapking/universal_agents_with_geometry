@@ -24,7 +24,7 @@ function concentric_circle(x, y, r, w, n){
 function test_clipper(){
   polyCircleA = new RegularPolygon(
     W/4 + 60, H/3,
-    W/8, W/8, 150
+    W/3, W/3, 150
   );
 
   polyCircleB = new RegularPolygon(
@@ -75,37 +75,16 @@ function test_clipper(){
 
 
  
-  
-  piecesB = concentric_circle(W/3 + 60, H/2, W/4, 20, 5);
-  piecesC = concentric_circle(3*W/4 - 100, H/2 - 150, W/6, 10, 4);
-  piecesD = concentric_circle(2*W/3 -30, H/2 + 160, W/5, 10, 6);
-  piecesE = concentric_circle(W/4 + 60, 3*H/4 + 60, W/3 - 20, 40, 3);
+  let off = 100
+  let xoff = 50
+  piecesB = concentric_circle(W/3 + 60 + xoff, H/2 - off, W/4, 20, 5);
+  piecesC = concentric_circle(3*W/4 - 100 + xoff, H/2 - 150- off, W/6, 10, 4);
+  piecesD = concentric_circle(2*W/3 -30 + xoff, H/2 + 160- off, W/5, 10, 6);
+  piecesE = concentric_circle(W/4 + 60 + xoff, 3*H/4 + 60- off, W/3 - 20, 40, 3);
   
   let res = piecesC.concat(piecesB).concat(piecesD).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]); //
   create_coffers(res);
-  // piecesA = multi_disjoint(res)
-
-  // piecesG = [];
-  // for(let b of piecesA){
-  //   let r = b.split(polylineA);
-  //   for(let p of r){
-  //     piecesG.push(p);
-  //   }
-  // }
-
-  // piecesF = [];
-  // for(let b of piecesG){
-  //   let r = b.split(polylineD);
-  //   for(let p of r){
-  //     piecesF.push(p);
-  //   }
-  // }
-  // // piecesF = piecesG
-
-
-  // adjacency_map = adjacency(piecesF)
-  // shared_map = shared_vertices(piecesF);
-  // colour_map = full_recursive_colour_map(piecesF);
+  
 }
 
 function create_concentric_circles(){
@@ -285,139 +264,6 @@ function create_test_polygons(){
 }
 
 
-function create_colour_map() {
-  let result = [];
-  let usage = {};
-  for (let color of colours) usage[color] = 0;
-
-  for (let i = 0; i < final.length; i++) {
-    let neighbours = adjacency_map[i];
-    let unused = [...colours];
-
-    for (let n of neighbours) {
-      let colour = result[n];
-      if (colour !== undefined) {
-        unused = unused.filter(c => c !== colour);
-      }
-    }
-
-    // Sort unused by how often each color has been used (ascending)
-
-    if(shared_map[i].length > 0){
-      console.log("Shared vertices for piece", i, shared_map[i]);
-      let shared_colours = shared_map[i].map(s => result[s]).filter(c => c !== undefined);
-      console.log("Shared colours:", shared_colours);
-      if(shared_colours.length > 0){
-        unused = unused.filter(c => shared_colours.includes(c));
-      }
-    }
-
-    unused.sort((a, b) => usage[a] - usage[b]);
-
-    
-
-    let selected = unused[0];
-    result[i] = selected;
-    usage[selected]++;
-  }
-
-  return result;
-}
-
-
-function full_recursive_colour_map(final) {
-  let results = [];
-  for (let i = 0; i < final.length; i++) {
-    if (results[i] === undefined) {
-      recursive_colour_map(0, i, results, ['black', 'brown', 'yellow', 'cyan', 'red', 'green', 'blue', 'purple', 'orange', 'pink'] );
-    }
-  }
-
-  return results;
-}
-
-function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
-  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
-    results[idx] = 'pink'; // Fallback colour
-    return results; 
-  } 
-
-  if(results[idx] == undefined) {
-    let neighbours = adjacency_map[idx];
-    let unused = [...input_colours];
-
-    for(let n of neighbours){
-      let colour = results[n];
-      if(colour !== undefined){
-        unused = unused.filter(c => c !== colour);
-      }
-    }
-
-    if(shared_map[idx].length > 0){
-      let shared_colours = shared_map[idx].map(s => results[s]).filter(c => c !== undefined);
-      if(shared_colours.length > 0){
-        unused = unused.filter(c => shared_colours.includes(c));
-      }
-    }
-
-    if(unused.length > 0){
-      results[idx] = unused[0];
-
-      if (random() < 0.1 && depth < 20) {
-        let r = random(['green', 'blue', 'purple', 'orange', 'pink']);
-        console.log("Choosing random colour for piece", idx, "from", unused, "selected:", r);
-        results[idx] = r
-      } 
-      
-      
-    } 
-
-    if(shared_map[idx].length > 0){
-      for(let i of shared_map[idx]){
-        recursive_colour_map(depth++, i, results, input_colours);
-      }
-    }
-
-    
-  }
-
-  return results;
-}
-
-
-function draw_polygon_test(){
-  polylineA.draw();
-  polylineD.draw();
-  polylineE.draw();
-
-  // polyCircleA.draw();
-  // polyCircleB.draw();
-
-  piecesB[0].draw();
-  piecesB[1].draw();
-
-  // piecesD[0].draw();
-  // piecesD[1].draw();
-  // piecesD[2].draw();
-  // piecesD[3].draw();
-  // piecesD[4].draw();
 
 
 
-
-
-  for(let i = 0; i < final.length; i++){
-    let piece = final[i];
-    let c = colour_map[i];
-    if(c === undefined) {
-      c = color(255, 255, 255);
-    } else {
-      c = color(c);
-    }
-    fill(c);
-    // noFill();
-    piece.draw();
-    fill(0);
-    // text(i, piece.centroid().x, piece.centroid().y);
-  }
-}

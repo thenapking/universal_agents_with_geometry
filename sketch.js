@@ -84,29 +84,13 @@ function setup(){
   create_noise_field()
  
 
-  // create_polygons();
-  // create_coffers();
-  // create_test_polygons();
-  // create_concentric_circles();
   test_clipper();
-  frameRate(20);
   default_setup()
 
 }
 
-let cnt = 0;
 function draw(){
-
-  if(cnt < coffers.length){
-    // let c = colour_map[cnt % colour_map.length] || 'green';
-    // fill(c)
-    coffers[cnt].draw();
-  }
-  cnt++
-
-  if(cnt >= coffers.length){
-    noLoop();
-  }
+  draw_scene();
 }
 
 function draw_scene(){

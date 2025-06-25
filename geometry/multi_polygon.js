@@ -90,8 +90,53 @@ class MultiPolygon {
     return results;
   }
 
+  max_diameter(points = this.outer) {
+    let max_dist = 0;
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        let dx = points[i].x - points[j].x;
+        let dy = points[i].y - points[j].y;
+        let distSq = dx * dx + dy * dy;
+        if (distSq > max_dist) {
+          max_dist = distSq;
+        }
+      }
+    }
+    return Math.sqrt(max_dist);
+  }
+
+  min_diameter(points = this.outer) {
+    let minWidth = Infinity;
+  
+    for (let i = 0; i < points.length; i++) {
+      let a = points[i];
+      let b = points[(i + 1) % points.length];
+  
+      let edge = {x: b.x - a.x, y: b.y - a.y};
+      let length = Math.sqrt(edge.x ** 2 + edge.y ** 2);
+      if (length === 0) continue;
+  
+      // Normalize perpendicular vector
+      let normal = {x: -edge.y / length, y: edge.x / length};
+  
+      // Project all points onto this normal
+      let minProj = Infinity;
+      let maxProj = -Infinity;
+      for (let p of points) {
+        let projection = p.x * normal.x + p.y * normal.y;
+        minProj = Math.min(minProj, projection);
+        maxProj = Math.max(maxProj, projection);
+      }
+  
+      let width = maxProj - minProj;
+      minWidth = Math.min(minWidth, width);
+    }
+  
+    return minWidth;
+  }
+
   area(signed = false) {
-    area(this.outer, signed);
+    return area(this.outer, signed);
   }
 
   is_zero_area() {
@@ -276,26 +321,21 @@ class MultiPolygon {
   }
 
   subdivide(threshold = AREA, counter = 0) {
-    // console.log("Subdividing polygon", this.id, "and threshold", threshold, "counter:", counter);
-    let area = this.area(false);
+    let area = this.area()
     if (area < threshold) {
-      console.log("Area is below threshold, returning original polygon");
       return [this];
     }
 
-    if(area > PARK && random(1) < 0.03){
-      // make a park 
+    if(area > PARK && random(1) < 0.03 && counter > 0){
       return [this]
     }
 
-    if(area > CIVIC && random(1) < 0.07){
-      // make a hatched area
+    if(area > CIVIC && random(1) < 0.07 && counter > 0){
       return [this]
     }
 
     let stroke_width = area > BLOCK ? MEDIUM_SW : SMALL_SW;
 
-    // console.log(stroke_width)
     let edge = this.find_longest_edge();
     if (!edge) {
       console.warn("No edges found for subdivision");
@@ -324,16 +364,14 @@ class MultiPolygon {
     let new_line = new Polyline([A, B]);
     let new_street = new_line.to_polygon(stroke_width);
     let pieces = this.difference(new_street);
-    // console.log("pieces after DIFF", pieces);  
 
+    if (pieces.length === 0) { return [this]; }
     // 8) Recursively subdivide each piece:
     let result = [];
     for (let piece of pieces) {
       let pieces = piece.subdivide(threshold, counter++);
-      // console.log("pieces after subdivide", pieces);
       result.push(...pieces);
     }
-    // console.log("result after subdivide", result);
     return result;
   }
 
@@ -393,8 +431,6 @@ class MultiPolygon {
 
   
   split(input_polyline) {
-    console.log("--------------")
-
     // Duplicate the polyline to avoid double counting junctures
     let polyline = new Polyline(input_polyline.points);
     let junctures = this.intersect_polyline(polyline);
@@ -414,14 +450,13 @@ class MultiPolygon {
    
     // Traverse the junctures
     for(let i = 0; i < junctures.length * 2; i++) {
-      console.log("-------NEW PIECE-----")
       current.increment() // not used
       let piece = [];
       pieces.push(piece);
 
       let next_juncture = this.walk(current, piece)
       next = next_juncture;
-      console.log("Juncture contour ", next_juncture.contour_id, "visits:", next_juncture.visits);
+      // console.log("Juncture contour ", next_juncture.contour_id, "visits:", next_juncture.visits);
 
       while(next_juncture && next_juncture !== current && next_juncture.visits < 1000) { 
         // I am not sure why this works... really
