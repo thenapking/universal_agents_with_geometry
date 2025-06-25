@@ -10,39 +10,19 @@ function init_test(){
 function concentric_circle(x, y, r, w, n){
   let pieces = [];
 
-  for(let i = 0; i < n; i++){
+  for(let i = 0; i <= n; i++){
     let dA = i * w
-    let dB = (i + 1) * w;
+    if(dA >= r) { break;}
 
-    if(dA >= r || dB >= r) { break;}
-
-    let polyCircleA = new RegularPolygon(
+    let polyCircle = new RegularPolygon(
       x, y,
       r - dA, r - dA, 100
     );
-
-    let polyCircleB = new RegularPolygon(
-      x, y,
-      r - dB, r - dB, 100
-    );
-
-    let piece = polyCircleA.difference(polyCircleB);
-    if(piece.length > 0){
-      pieces.push(piece[0]);
-    }
+   
+    pieces.push(polyCircle);
   }
 
-  let last = new RegularPolygon(
-    x, y,
-    r - n * w, r - n * w, 100
-  );
-
-  pieces.push(last);
-
-
-
   return pieces
-
 }
 
 function create_concentric_circles(){
@@ -92,9 +72,15 @@ function create_concentric_circles(){
   );
 
   polyCircleD = new RegularPolygon(
-    W/2 + 66, H/2,
+    W/2, H/2,
     W/16, W/16, 150
   );
+
+  polyCircleE = new RegularPolygon(
+    3*W/4 + 66, H/2 - 60,
+    W/16, W/16, 150
+  );
+
 
   
   let pE = [  
@@ -104,11 +90,10 @@ function create_concentric_circles(){
 
   polylineE = new Polyline(pE);
 
-
-  
-  piecesC = concentric_circle(2*W/3 - off, H/2, W/4, 10, 8);
-  piecesA = concentric_circle(W/3 + off, H/2, W/4, 10, 8);
-  piecesD = [polyCircleA, polyCircleB, polyCircleC, polyCircleD, polyCircleA2, polyCircleA3, polyCircleB2, polyCircleB3];
+  piecesC = concentric_circle(2*W/3 - off, H/2, W/4, 10, 2);
+  piecesA = concentric_circle(W/3 + off, H/2, W/4, 10, 2);
+  piecesB = concentric_circle(W/3 + off, H/4, W/5, 10, 2);
+  piecesD = piecesC.concat(piecesA).concat(piecesB).concat([polyCircleC, polyCircleD, polyCircleE]);
 
 }
 

@@ -63,6 +63,14 @@ class MultiPolygon {
     return points
   }
 
+  to_martinez(){
+    let martinez_points = [];
+    for(let contour of this.contours) {
+      martinez_points.push(this.to_a(contour));
+    }
+    return martinez_points;
+  }
+
   to_a(points){
     let arr = [];
     for(let v of points){
@@ -83,6 +91,14 @@ class MultiPolygon {
 
     let fA = A * 0.5
     return signed ? fA : Math.abs(fA);
+  }
+
+  is_zero_area() {
+    let A = 0;
+    for(let contour of this.contours) {
+      A += this.area(contour, true);
+    }
+    return Math.abs(A) < 1e-6;
   }
 
   centroid(){
@@ -206,61 +222,41 @@ class MultiPolygon {
     return this.operation(other, 'difference');
   }
 
-  // Housing fill works well with this, but not martinez difference
-  difference_greiner(other){
-    let this_points = [];
-    for(let contour of this.contours) {
-      this_points.push(this.to_a(contour));
-    }
 
-    let other_points = [];
-    for(let contour of other.contours) {
-      other_points.push(other.to_a(contour));
-    }
-
-    let result = greinerHormann.diff(this_points, other_points);
-    if(result === null) return;
-    let results = [];
-    for(let r of result){
-      results.push(new MultiPolygon(r[0]));
-    }
-    return results;
-  }
-
-  intersection_greiner(other){
-    let this_points = [];
-    for(let contour of this.contours) {
-      this_points.push(this.to_a(contour));
-    }
-
-    let other_points = [];
-    for(let contour of other.contours) {
-      other_points.push(other.to_a(contour));
-    }
-
-    let result = greinerHormann.intersection(this_points, other_points);
-    if(result === null) return;
-    let results = [];
-    for(let r of result){
-      results.push(new MultiPolygon(r));
-    }
-    return results;
-  }
-
-
-  
 
 
   operation(other, op) {
-    let this_points = [];
-    for(let contour of this.contours) {
-      this_points.push(this.to_a(contour));
+    let this_points = this.to_martinez();
+
+    if (!this_points.length || !this_points[0]?.length) {
+      console.log("No points in this polygon for operation:", op);
+      return [];
     }
 
-    let other_points = [];
-    for(let contour of other.contours) {
-      other_points.push(other.to_a(contour));
+    let other_points = other.to_martinez();
+
+    if (!other_points.length || !other_points[0]?.length) {
+      console.log("No points in other polygon for operation:", op);
+      if (op === 'difference' || op === 'union') {
+        return [new MultiPolygon(this_points)];
+      } else {
+        return [];
+      }
     }
+
+    if (this.is_zero_area()) {
+      console.log("Zero area polygon for operation:", op);
+      return [];
+    }
+
+    if (other.is_zero_area()) {
+      console.log("Zero area other polygon for operation:", op);
+      if (op === 'difference' || op === 'union') {
+        return [new MultiPolygon(this_points)];
+      }
+      return [];
+    }
+  
 
     let result;
     try {
@@ -544,6 +540,50 @@ class MultiPolygon {
       endShape(CLOSE);
     pop();
   }
+}
+
+
+function multi_disjoint(polygons) {
+  let n = polygons.length;
+  let pieces = [];
+
+  for (let i = 1; i < (1 << n); i++) {
+    if(i > 1000) { break; } // prevent runaway errors
+    // bitmask representing which polygons are included in this combination
+    let included = [];
+    let excluded = [];
+
+    for (let j = 0; j < n; j++) {
+      if (i & (1 << j)) included.push(polygons[j]);
+      else excluded.push(polygons[j]);
+    }
+
+    let piece = included[0];
+    let fragments = [piece];
+
+    for (let i = 1; i < included.length && piece; i++) {
+      let new_fragments = [];
+      for (let fragment of fragments) {
+        if (!fragment || fragment.is_zero_area?.()) continue;
+        let intersect = fragment.intersection(included[i]);
+        if (intersect) new_fragments.push(...intersect);
+      }
+      fragments = new_fragments;
+    }
+
+    for (let poly of excluded) {
+      let new_fragments = [];
+      for (let fragment of fragments) {
+        let difference = fragment.difference(poly);
+        if (difference) new_fragments.push(...difference);
+      }
+      fragments = new_fragments;
+    }
+
+    pieces.push(...fragments.filter(f => f && !f.is_zero_area?.()));
+  }
+
+  return pieces;
 }
 
 

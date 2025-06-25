@@ -105,12 +105,15 @@ function draw(){
   //       p.draw();
   //   }
   // }
-  
-  piecesB = disjoint(piecesD, false);
-  console.log("Pieces B:", piecesB);
 
-  // piecesB[0].draw();
-  for(let piece of piecesB){
+  // piecesC[0].draw();
+  // piecesC[1].draw();
+  
+  let result = multi_disjoint(piecesD);
+  console.log("Pieces B:", result);
+
+  // result[0].draw();
+  for(let piece of result){
     piece.draw();
   }
 
