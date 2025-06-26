@@ -64,29 +64,93 @@ class Polyline {
   }
 
   to_polygon(stroke_width) {
-    let sw = stroke_width/2
     let tops = [];
     let bottoms = [];
+    let previous_normal = null;
 
-    for(let segment of this.segments){
+    for (let i = 0; i < this.segments.length; i++) {
+      let segment = this.segments[i];
+      
+      let curvature_factor  = 1;
+      if (i < this.segments.length - 1) {
+        let current = segment.to_v();
+        let next_segment = this.segments[i + 1];
+        let next = next_segment.to_v();
+        let angle = current.angleBetween(next);
+        curvature_factor = Math.pow(1 - Math.abs(angle) / Math.PI, 2)
+        // console.log("Curvature factor for segment", i, ":", curvature_factor);
+      }
+
+      let sw = stroke_width * curvature_factor / 2;
       let normal = segment.normal().mult(sw);
+
+      // Ensure the normal direction is consistent with the previous one
+      if (previous_normal && normal.dot(previous_normal) < 0) {
+        console.log("Flipping normal for segment", i);
+        normal.mult(-1);  // Flip normal if it’s pointing in the opposite direction
+      }
+      previous_normal = normal;
+  
       let top = segment.start.copy().add(normal);
       let bottom = segment.start.copy().sub(normal);
-
+  
       tops.push(top);
       bottoms.push(bottom);
     }
-
+  
     let last_segment = this.segments[this.segments.length - 1];
-    let last_normal = last_segment.normal().mult(sw);
+    let last_normal = last_segment.normal().mult(stroke_width / 2);
     let last_top = last_segment.end.copy().add(last_normal);
     let last_bottom = last_segment.end.copy().sub(last_normal);
     tops.push(last_top);
     bottoms.push(last_bottom);
-
-
+  
+    // Concatenate tops and bottoms to form the polygon
     let points = tops.concat(bottoms.reverse());
-    return new MultiPolygon([points]);
+    return new MultiPolygon(points);
+  }
+
+  to_bezier(detail = 10, curviness = 0.5) {
+    let points = [this.points[0]];
+  
+    for (let i = 1; i < this.points.length - 1; i++) {
+      let previous = this.points[i - 1];
+      let current = this.points[i];
+      let next = this.points[i + 1];
+
+      let direction1 = p5.Vector.sub(current, previous).normalize();
+      let direction2 = p5.Vector.sub(next, current).normalize();
+      let offset1 = direction1.mult(current.dist(previous) * curviness);
+      let offset2 = direction2.mult(current.dist(next) * curviness);
+
+  
+      let tangent1 = current.copy().add(offset1);
+      let tangent2 = next.copy().sub(offset2);
+  
+      // Interpolate Bezier curve between the points
+      for (let j = 0; j <= detail; j++) {
+        let t = j / detail;
+        let point = calculate_bezier(current, tangent1, tangent2, next, t);
+        points.push(point);
+      }
+    }
+  
+    // Add the last point
+    points.push(this.points[this.points.length - 1]);
+  
+    return new Polyline(points);
+  }
+  
+  intersects(other){
+    for (let segment of this.segments) {
+      for (let other_segment of other.segments) {
+        let intersection = segment.intersection(other_segment, false);
+        if (intersection.length > 0) {
+          return true;
+        }
+      }
+    }
+    return false
   }
 
 

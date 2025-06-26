@@ -29,6 +29,17 @@ function contains(point, points) {
   return inside;
 }
 
+function calculate_bezier(p0, p1, p2, p3, t) {
+  let u = 1 - t;
+
+  let p = p0.copy().mult(u**3); 
+  p.add(p1.copy().mult(3 * u**2 * t)); 
+  p.add(p2.copy().mult(3 * u * t**2)); 
+  p.add(p3.copy().mult(t**3)); 
+
+  return p;
+}
+
 
 function clipper(poly, other, op) {
   const clipper = new ClipperLib.Clipper();

@@ -48,6 +48,11 @@ let active_group_id = 0;
 
 let road, road_points, reverse_points;
 let seed; 
+
+function preload() {
+  load_data(1)
+}
+
 function setup(){
   createCanvas(W + 2* BW, H + 2 * BW);
 
@@ -64,15 +69,55 @@ function setup(){
   create_noise_field()
  
 
-  test_clipper();
   default_setup()
-
+  process_data();
+  test_slime();
+  frameRate(10);
 }
 
+let ctx = 0;
 function draw(){
-  draw_scene();
+  noFill();
+  stroke(0)
+  // draw_scene();
   
+  // polyCircleA.draw();
   
+
+  // for(let p of piecesB){
+  //   p.draw();
+  // }
+  // for(let p of piecesC){
+  //   p.draw();
+  // } 
+  // for(let p of piecesD){
+  //   p.draw();
+  // }
+  // for(let p of piecesE){
+  //   p.draw();
+  // }
+
+  // polyCircleB.draw();
+  // polyCircleC.draw();
+  // polyCircleD.draw();
+
+  // for(let l of processed_connections){
+  //   l.draw();
+  // }
+  let p = piecesG[ctx]
+  if(p){
+    p.draw();
+    ctx++;
+
+  }
+  else{
+    noLoop();
+  }
+
+  // polylineA.draw();
+
+//  piecesF.draw();
+
 
 }
 
@@ -81,28 +126,33 @@ function draw_scene(){
 
   if(active > 0){
     push()
-    default_setup()
+      default_setup()
 
-    draw_coffers();
-    draw_groups();
+      draw_coffers();
+      draw_groups();
     pop()
 
 
     draw_borders();
 
   } else {
-    let file_name = `output_${seed}.svg`;
-    console.log("Exporting to: ", file_name);
-    if(exporting){ beginRecordSVG(this, file_name); }
+    
+    if(exporting){ 
+      let file_name = `output_${seed}.svg`;
+      console.log("Exporting to: ", file_name);
+      beginRecordSVG(this, file_name); 
+    }
+
     push()
       default_setup()
-
       draw_coffers();
       final_draw();
     pop()
+
     draw_borders();
     
     noLoop();
+
     if(exporting){ endRecordSVG(this); }
   }
 }

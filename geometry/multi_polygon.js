@@ -8,11 +8,9 @@ class MultiPolygon {
 
     if(this.is_contour_array(points)) {
       this.contours = this.find_contours(points);
-      this.outer = this.contours[0]
     } else {
-      this.outer = this.to_vectors(points);
-      this.outer = this.order(points);
-      this.contours = [this.outer];
+      console.log("MultiPolygon: points is not a contour array, assuming raw array");
+      this.contours = [this.order(points)];
     }
 
     this.segments = [];
@@ -20,10 +18,14 @@ class MultiPolygon {
 
     for(let i = 0; i < this.contours.length; i++) {
       let points = this.contours[i];
-      let segments = this.find_segments(points, i);
-      this.segments[i] = segments;  
-      this.edges[i] = this.find_edges(segments);
+      this.segments[i] = this.find_segments(points, i);
+      // let clean_points = this.clean_segments(segments);
+      // this.contours[i] = this.to_vectors(clean_points);
+      // this.segments[i] = this.find_segments(clean_points, i);
+      this.edges[i] = this.find_edges(this.segments[i]);
     }
+
+    this.outer = this.contours[0];
   }
 
   is_raw_array(points) {
@@ -236,6 +238,40 @@ class MultiPolygon {
     }
 
     return segments;
+  }
+
+  //TODO: This cleaning method is not fully working
+  clean_segments(segments) {
+    let points = [];
+  
+    // Loop through each segment
+    for (let i = 0; i < segments.length; i++) {
+      let segment = segments[i];
+
+      points.push(segment.start);
+      
+      for (let j = 1; j < i - 1; j++) { 
+        let other = segments[j];
+  
+        let intersections = segment.intersection(other, true);
+  
+        // If an intersection is found
+        if (intersections.length > 0) {
+          console.log("Intersection found between segments", segment.index, "and", other.index);
+          
+          let intersection_point = intersections[0];
+          for(let k = j; k < i; k++) {
+            points[k] = null;
+          }
+          points.push(intersection_point);
+          
+          break;
+        }
+      }
+    }
+
+  
+    return points.filter(p => p !== null);  
   }
 
   find_edges(segments) {
