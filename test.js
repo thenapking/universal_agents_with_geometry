@@ -12,7 +12,7 @@ function concentric_circle(x, y, r, w, n){
 
     let polyCircle = new RegularPolygon(
       x, y,
-      r - dA, r - dA, 100
+      r - dA, r - dA, 100, 'city'
     );
    
     pieces.push(polyCircle);
@@ -36,22 +36,22 @@ function test_slime(){
   let sf = 0.5
   polyCircleA = new RegularPolygon(
     mh0.position.x * sf, mh0.position.y * sf,
-    W/3, W/3, 100
+    W/3, W/3, 100, 'city'
   );
 
   polyCircleB = new RegularPolygon(
     mih0.position.x * sf, mih0.position.y * sf,
-    W/10, W/10, 100
+    W/10, W/10, 100, 'city'
   );
 
   polyCircleC = new RegularPolygon( 
     mih1.position.x * sf, mih1.position.y * sf,
-    W/12, W/12, 100
+    W/12, W/12, 100, 'city'
   );
 
   polyCircleD = new RegularPolygon(
     mih2.position.x * sf, mih2.position.y * sf,
-    W/16, W/16, 100
+    W/16, W/16, 100, 'city'
   );
 
 
@@ -82,14 +82,13 @@ function test_slime(){
     }
   }
 
-
-  piecesF = []
-  for(let road of all_roads){
-    let poly = road.to_polygon(5);
-    piecesF.push(poly);
-  }
-  let res = piecesB.concat(piecesF).concat(piecesC).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]) 
-  piecesG = multi_disjoint(res);
+  let r1 = all_roads[0].to_polygon(INTERCITY_ROAD, 'road');
+  let r2 = all_roads[1].to_polygon(INTERCITY_ROAD, 'road');
+  let r3 = all_roads[2].to_polygon(INTERCITY_ROAD, 'road');
+  let long_road = r1.union(r2)[0].union(r3)[0];
+  
+  let res = piecesB.concat(piecesC).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]).concat([long_road]);
+  create_coffers(res, [])
 
 
 

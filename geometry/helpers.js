@@ -90,11 +90,11 @@ function clipper(poly, other, op) {
     return [];
   }
 
-  const results = from_clipper_paths(solution);
+  const results = from_clipper_paths(solution, poly);
   return results;
 }
 
-function from_clipper_paths(paths) {
+function from_clipper_paths(paths, parent) {
   const new_paths = [];
   for (const path of paths) {
     let scaled = [];
@@ -102,7 +102,7 @@ function from_clipper_paths(paths) {
       let p = [point.X / SCALE, point.Y / SCALE]
       scaled.push(p)
     }
-    new_paths.push(new MultiPolygon([scaled]));
+    new_paths.push(new MultiPolygon([scaled], parent.type, parent));
   }
 
   new_paths.sort((a, b) => Math.abs(area(b.outer, true)) - Math.abs(area(a.outer, true)));
@@ -124,7 +124,7 @@ function from_clipper_paths(paths) {
         used.add(j); // Mark this hole as used
       }
     }
-    polygons.push(new MultiPolygon([path.outer, ...holes]));
+    polygons.push(new MultiPolygon([path.outer, ...holes], parent.type, parent));
     used.add(i); // Mark this path as used
   }
 

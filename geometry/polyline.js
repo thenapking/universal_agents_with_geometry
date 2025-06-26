@@ -63,7 +63,7 @@ class Polyline {
     }
   }
 
-  to_polygon(stroke_width) {
+  to_polygon(stroke_width, type) {
     let tops = [];
     let bottoms = [];
     let previous_normal = null;
@@ -107,7 +107,7 @@ class Polyline {
   
     // Concatenate tops and bottoms to form the polygon
     let points = tops.concat(bottoms.reverse());
-    return new MultiPolygon(points);
+    return new MultiPolygon(points, type);
   }
 
   to_bezier(detail = 10, curviness = 0.5) {

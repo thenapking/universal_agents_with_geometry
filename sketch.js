@@ -30,6 +30,11 @@ let BORDER_MARGIN = 5;
 let POLYGONAL_DETAIL = 360;
 let SF = 0.9
 
+let INTERCITY_ROAD = 6
+let MAJOR_ROAD = 4.5;
+let MINOR_ROAD = 3;
+
+
 let PHI;
 
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
@@ -72,15 +77,16 @@ function setup(){
   default_setup()
   process_data();
   test_slime();
-  frameRate(10);
+  frameRate(30);
 }
 
 let ctx = 0;
 function draw(){
-  noFill();
-  stroke(0)
-  // draw_scene();
   
+  draw_scene();
+  
+  // noFill();
+  // stroke(0)
   // polyCircleA.draw();
   
 
@@ -104,20 +110,21 @@ function draw(){
   // for(let l of processed_connections){
   //   l.draw();
   // }
-  let p = piecesG[ctx]
-  if(p){
-    p.draw();
-    ctx++;
-
-  }
-  else{
-    noLoop();
-  }
+  // let p = coffers[ctx]
+  // if(p){
+  //   p.draw();
+  //   ctx++;
+  // }
+  // else{
+  //   noLoop();
+  // }
 
   // polylineA.draw();
 
 //  piecesF.draw();
-
+//   piecesF[0].draw();
+//   piecesF[2].draw();
+//   piecesF[3].draw(); 
 
 }
 

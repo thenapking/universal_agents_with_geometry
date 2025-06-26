@@ -2,9 +2,11 @@ const SCALE = 10000000; // precision scale factor for integer coords
 
 class MultiPolygon {
   static next_id = 1;
-  constructor(points) {
+  constructor(points, type, parent) {
     // points is an array of raw vectors
     this.id = MultiPolygon.next_id++;
+    this.parent = parent;
+    this.type = parent ? parent.type : type;
 
     if(this.is_contour_array(points)) {
       this.contours = this.find_contours(points);
@@ -370,7 +372,8 @@ class MultiPolygon {
       return [this]
     }
 
-    let stroke_width = area > BLOCK ? MEDIUM_SW : SMALL_SW;
+    let stroke_width = area > BLOCK ? MAJOR_ROAD : MINOR_ROAD;
+    if(counter === 0) { stroke_width = INTERCITY_ROAD; }
 
     let edge = this.find_longest_edge();
     if (!edge) {
@@ -534,7 +537,7 @@ class MultiPolygon {
     let new_polygons = [];
     for(let piece of pieces) {
       
-      let new_polygon = new MultiPolygon([piece]);
+      let new_polygon = new MultiPolygon([piece], this.type, this.parent);
       let final = [piece]
       for(let missing of missing_contours) {
         let centroid = missing.centroid();
@@ -544,7 +547,7 @@ class MultiPolygon {
         } 
 
       }
-      let final_polygon = new MultiPolygon(final);
+      let final_polygon = new MultiPolygon(final, this.type, this.parent);
       new_polygons.push(final_polygon);
     }
 
@@ -570,7 +573,7 @@ class MultiPolygon {
       let next_juncture = segment.junctures[idx + 1];
       piece.push(next_juncture.point);
       next_juncture.increment();
-      console.log("Multiple on contour. Contour: ", next_juncture.countour_id, "visits:", next_juncture.visits);
+      console.log("Multiple on contour. Contour: ", next_juncture.contour_id, "visits:", next_juncture.visits);
       return next_juncture;
     }
   }

@@ -27,10 +27,11 @@ let MEDIUM = [ 'black', 'blank', 'downwards', 'upwards', 'circles'  ]
 let LARGE =  [ 'blank' ];  
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 class Coffer {
-  constructor(polygon) {
+  constructor(polygon, type) {
     this.polygon = polygon;
     this.pieces = [];
     this.polygons = [polygon];
+    this.type = type || 'default'; // 'default', 'housing', 'park', 'civic', 'road'
   }
 
   add_piece(polygon, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area) {
@@ -238,10 +239,9 @@ let houses;
 
 let coffers = [];
 
-function create_coffers(list){
+function create_coffers(list, poly_roads){
   // let road_points = get_contour(WATER_LEVEL);
-  let poly_roads = [polylineA, polylineD];
-
+  
   let potential_coffers = multi_disjoint(list)
 
   for(let polyline of poly_roads){
@@ -249,8 +249,10 @@ function create_coffers(list){
   }
 
   for(let shape of potential_coffers){
-    let coffer = new Coffer(shape);
-    coffers.push(coffer);
+    if(shape.type == 'city'){
+      let coffer = new Coffer(shape);
+      coffers.push(coffer);
+    }
   }
 
   
