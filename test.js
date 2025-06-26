@@ -21,50 +21,75 @@ function concentric_circle(x, y, r, w, n){
   return pieces
 }
 
+function hatching_test(){
+  beginRecordSVG(this, "PEN HATCH TEST"); 
+  let xoff = 50;
+  let yoff = 50;
+  let counter = 0.5; 
+  noFill();
+  stroke(0);
+  translate(BW, BW);
+  for(let y = 0; y < yoff * 3; y += yoff){
+    for(let x = 0; x < W - BW; x += xoff){
+      let coords = [[x, y], [x + xoff, y], [x + xoff, y + yoff], [x, y + yoff]];
+      let poly = new Polygon(coords);
+      let hatching = new Hatching(poly, counter, 'upwards');
+      hatching.hatch('upwards');
+      poly.draw();
+      hatching.draw();
+      counter+=0.5;
+    }
+  }
+  endRecordSVG(this); 
+}
+
 function test_clipper(){
+  let off = 100
+  let xoff = 50
+
   polyCircleA = new RegularPolygon(
-    W/4 + 60, H/3,
+    W/4 + 60 + xoff, H/3,
     W/3, W/3, 150
   );
 
   polyCircleB = new RegularPolygon(
-    W/2 - 160, H/2 - 60,
+    W/2 - 160 + xoff, H/2 - 60  + off,
     W/10, W/10, 150
   );
 
   polyCircleC = new RegularPolygon(
-    W/2 + 120, H/2 + 40,
+    W/2 + 120 + xoff, H/2 + 40  + off,
     W/12, W/12, 150
   );
 
   polyCircleD = new RegularPolygon(
-    W/2 + 66, H/2,
+    W/2 + 66 + xoff, H/2  + off,
     W/16, W/16, 150
   );
 
   let pA = [
-    createVector(0, H/2 - 80),
-    createVector(W, H/2 + 160)
+    createVector(0 + xoff, H/2 - 80 + off),
+    createVector(W + xoff, H/2 + 160 + off)
   ]
 
   let pB = [
-    createVector(0.15 * W, H/2 - 48),
-    createVector(0.1125*W, H/2 - 56)
+    createVector(0.15 * W, H/2 - 48 + off),
+    createVector(0.1125*W, H/2 - 56 + off)
   ]
 
   let pC = [
-    createVector(0.45 * W, H/2 + 16),
-    createVector(0.2625*W, H/2 - 24)
+    createVector(0.45 * W + xoff, H/2 + 16 + off),
+    createVector(0.2625*W + xoff, H/2 - 24 + off)
   ]
 
   let pD = [
-    createVector(60, H),
-    createVector(0.66 * W, 0)
+    createVector(60 + xoff, H + off),
+    createVector(0.66 * W + xoff, 0 + off)
   ];
 
   let pE = [  
-    createVector(0.9 * W, 0.95*H),
-    createVector(0.35*W, 0.15*H)
+    createVector(0.9 * W + xoff, 0.95*H + off),
+    createVector(0.35*W + xoff, 0.15*H + off)
   ];
 
 
@@ -75,8 +100,7 @@ function test_clipper(){
 
 
  
-  let off = 100
-  let xoff = 50
+  
   piecesB = concentric_circle(W/3 + 60 + xoff, H/2 - off, W/4, 20, 5);
   piecesC = concentric_circle(3*W/4 - 100 + xoff, H/2 - 150- off, W/6, 10, 4);
   piecesD = concentric_circle(2*W/3 -30 + xoff, H/2 + 160- off, W/5, 10, 6);

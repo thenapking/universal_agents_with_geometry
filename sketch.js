@@ -52,26 +52,6 @@ function setup(){
   createCanvas(W + 2* BW, H + 2 * BW);
 
   seed = Math.floor(Math.random() * 1000000);
-  // seed = 814009
-  // Noise seed: 672470
-  // seed =  71751
-  // seed =  476141
-  // seed =  867664
-  // seed =  630821
-  // seed =  613094
-  // seed = 938214
-  // seed =  274152
-  // seed =  289768
-  // seed =  124826
-  // seed =  690352
-  // seed =  210054
-  // seed =  46391
-  // seed =  566617
-  // seed =  644768
-  // seed =  645494
-  // seed =  276226
-
-  // seed =  590184
   console.log("seed = ", seed);
   randomSeed(seed);
   noiseSeed(seed);
@@ -91,6 +71,9 @@ function setup(){
 
 function draw(){
   draw_scene();
+  
+  
+
 }
 
 function draw_scene(){

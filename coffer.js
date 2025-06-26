@@ -22,8 +22,8 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL =  [ 'black', 'downwards', 'upwards', 'pips', ]
-let MEDIUM = [ 'black', 'downwards', 'upwards', 'circles', 'blank' ]
+let SMALL =  [ 'black', 'blank', 'downwards', 'upwards', 'vertical', 'pips' ]
+let MEDIUM = [ 'black', 'blank', 'downwards', 'upwards', 'circles'  ]
 let LARGE =  [ 'blank' ];  
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 class Coffer {
@@ -97,7 +97,7 @@ class Coffer {
       } else if(area < 6000) {
         area_type = 'small';
         fill_types = SMALL
-      } else if(area < 30000) {
+      } else if(area < 40000) {
         area_type = 'medium';
         fill_types = MEDIUM
       } else {
@@ -126,7 +126,7 @@ class Coffer {
       console.log("FILL", fill_type, colour, area_type);
 
       if(fill_type === 'downwards' || fill_type === 'upwards' || fill_type === 'black') {
-        let sw = fill_type === 'black' ? 2 : 5;
+        let sw = fill_type === 'black' ? 6 : 9;
         let final_fill_type = fill_type === 'black' ? 'downwards' : fill_type;  
         fill_object = new Hatching(polygon, sw, final_fill_type);
         fill_object.hatch(final_fill_type);
@@ -157,7 +157,7 @@ class Coffer {
             createCircularGroup(piece);
           } else {
             let direction = area > CIVIC ? 'downwards' : 'upwards';
-            let sw = area > CIVIC ? 6 : 4;
+            let sw = area > CIVIC ? 12 : 9;
             let fill_object = new Hatching(piece, sw, direction);
             fill_object.hatch(direction);
             this.add_piece(piece, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area);
