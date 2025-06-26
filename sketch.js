@@ -33,6 +33,9 @@ let SF = 0.9
 let INTERCITY_ROAD = 6
 let MAJOR_ROAD = 4.5;
 let MINOR_ROAD = 3;
+let SMALL_HATCH = 4
+let MEDIUM_HATCH = 6;
+let LARGE_HATCH = 10;
 
 
 let PHI;
@@ -40,7 +43,7 @@ let PHI;
 let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let intersection, union, diff, split;
 
-let exporting = false;
+let exporting = true;
 
 let polyOuter, polyInner;
 let test_polyline, test_poly;

@@ -127,7 +127,7 @@ class Coffer {
       console.log("FILL", fill_type, colour, area_type);
 
       if(fill_type === 'downwards' || fill_type === 'upwards' || fill_type === 'black') {
-        let sw = fill_type === 'black' ? 6 : 9;
+        let sw = fill_type === 'black' ? SMALL_HATCH : MEDIUM_HATCH;
         let final_fill_type = fill_type === 'black' ? 'downwards' : fill_type;  
         fill_object = new Hatching(polygon, sw, final_fill_type);
         fill_object.hatch(final_fill_type);
@@ -158,7 +158,7 @@ class Coffer {
             createCircularGroup(piece);
           } else {
             let direction = area > CIVIC ? 'downwards' : 'upwards';
-            let sw = area > CIVIC ? 12 : 9;
+            let sw = area < CIVIC ? SMALL_HATCH : MEDIUM_HATCH;
             let fill_object = new Hatching(piece, sw, direction);
             fill_object.hatch(direction);
             this.add_piece(piece, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area);

@@ -85,9 +85,11 @@ function test_slime(){
   let r1 = all_roads[0].to_polygon(INTERCITY_ROAD, 'road');
   let r2 = all_roads[1].to_polygon(INTERCITY_ROAD, 'road');
   let r3 = all_roads[2].to_polygon(INTERCITY_ROAD, 'road');
-  let long_road = r1.union(r2)[0].union(r3)[0];
+  let r4 = all_roads[3].to_polygon(INTERCITY_ROAD, 'road');
+  let r5 = all_roads[4].to_polygon(INTERCITY_ROAD, 'road');
+  let long_road = r1.union(r2)[0].union(r3)[0].union(r4)[0];
   
-  let res = piecesB.concat(piecesC).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]).concat([long_road]);
+  let res = piecesB.concat(piecesC).concat(piecesE).concat([polyCircleA, polyCircleB, polyCircleC, polyCircleD]).concat([long_road, r5]);
   create_coffers(res, [])
 
 
