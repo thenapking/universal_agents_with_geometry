@@ -119,14 +119,14 @@ function draw(){
   // animation_draw();
 
   // stroke(255,0,0)
-  let p = coffers[ctx]
-  if(p){
-    p.draw();
-    ctx++
+  // let p = coffers[ctx]
+  // if(p){
+  //   p.draw();
+  //   ctx++
 
-  } else{
-    noLoop();
-  }
+  // } else{
+  //   noLoop();
+  // }
   
   
 

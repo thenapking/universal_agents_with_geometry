@@ -66,7 +66,6 @@ class Polyline {
   to_polygon(stroke_width, type) {
     let tops = [];
     let bottoms = [];
-    let previous_normal = null;
 
     for (let i = 0; i < this.segments.length; i++) {
       let segment = this.segments[i];
@@ -84,12 +83,6 @@ class Polyline {
       let sw = stroke_width * curvature_factor / 2;
       let normal = segment.normal().mult(sw);
 
-      // Ensure the normal direction is consistent with the previous one
-      if (previous_normal && normal.dot(previous_normal) < 0) {
-        console.log("Flipping normal for segment", i);
-        normal.mult(-1);  // Flip normal if it’s pointing in the opposite direction
-      }
-      previous_normal = normal;
   
       let top = segment.start.copy().add(normal);
       let bottom = segment.start.copy().sub(normal);

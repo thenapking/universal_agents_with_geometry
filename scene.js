@@ -33,10 +33,11 @@ class Scene {
     let polyline_roads = this.create_offscreen_connections();
     let roads = []
     for(let polyline of polyline_roads){
-      roads.push(polyline.to_polygon(5, 'road'));
+      // roads.push(polyline.to_polygon(5, 'road'));
     }
-    this.roads = unionPolygons(roads);
-    this.create_onscreen_connections();
+    // this.roads = unionPolygons(roads);
+    this.roads = polyline_roads ;
+    // this.create_onscreen_connections();
     create_coffers(this.potential_coffers, []);
   }
 
@@ -51,7 +52,8 @@ class Scene {
     for(let h of selected){
       for(let other of selected){
         if(h.id === other.id){ continue; }
-        let road_points = this.graph.shortest(h.id, other.id);
+        let road_points = this.graph.shortest(h, other, false);
+        console.log("Road points:", road_points);
         let polyline = new Polyline(road_points) //.to_bezier(40);
         let intersects = false;
         for(let existing of roads){
@@ -116,7 +118,7 @@ class Scene {
 
     let final = unionPolygons([this.roads, unionized]);
 
-    let intersected = poly.intersection(final, true);
+    let intersected = poly.intersection(unionized, true);
     return intersected[0];
 
   }
@@ -307,23 +309,23 @@ class Scene {
         fill(0)
         text(h.id, x + 10, y + 10);
         noFill();
-        this.polycircles[i].draw();
+        // this.polycircles[i].draw();
         
       }
 
       fill(0, 0, 255);
 
-      this.roads.draw()
+      // this.roads.draw()
       // this.roads[1].draw()
       // this.roads[2].draw()
       // this.roads[3].draw()
-      // for(let l of this.roads){
-        // l.draw();
-      // }
+      for(let l of this.roads){
+        l.draw();
+      }
 
 
       for(let r of this.focus_roads){
-        r.draw();
+        // r.draw();
       }
       noFill();
 
