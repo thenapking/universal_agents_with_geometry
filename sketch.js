@@ -96,7 +96,19 @@ function setup(){
     ]};
   scene = new Scene(template)
   default_setup()
-  // scene.draw();
+  // for(let c of connections){
+  //   let from = createVector(c.from.position.x, c.from.position.y) //.sub(MBW, 3*MBW); 
+  //   let to = createVector(c.to.position.x, c.to.position.y) //.sub(MBW, 3*MBW); 
+    
+  //   let pl = new Polyline([from, to])
+  //   let poly = pl.to_polygon(5);
+  //   push();
+  //   translate(BW, BW-2*MBW);
+
+  //     poly.draw();
+  //   pop();
+  // }
+  scene.draw();
 }
 
 let ctx = 0;
@@ -116,22 +128,13 @@ function draw(){
     noLoop();
   }
   
+  
 
   
 
 }
 
-// for(let c of connections){
-//   let from = createVector(c.from.position.x, c.from.position.y).sub(MBW, 3*MBW); 
-//   let to = createVector(c.to.position.x, c.to.position.y).sub(MBW, 3*MBW); 
-  
-//   let pl = new Polyline([from, to])
-//   let poly = pl.to_polygon(5);
-//   push();
-//     translate(BW, BW-2*MBW)
-//     // poly.draw();
-//   pop();
-// }
+
 
 // fill(0,255,0)
 // for(let h of minor_hotspots){

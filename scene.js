@@ -31,10 +31,11 @@ class Scene {
     this.offscreen_hotspots = this.find_hotspots(this.offscreen_foci, false);
     this.hotspots = this.find_hotspots(this.foci, false);
     let polyline_roads = this.create_offscreen_connections();
+    let roads = []
     for(let polyline of polyline_roads){
-      this.roads.push(polyline.to_polygon(5, 'road'));
+      roads.push(polyline.to_polygon(5, 'road'));
     }
-
+    this.roads = unionPolygons(roads);
     this.create_onscreen_connections();
     create_coffers(this.potential_coffers, []);
   }
@@ -51,7 +52,7 @@ class Scene {
       for(let other of selected){
         if(h.id === other.id){ continue; }
         let road_points = this.graph.shortest(h.id, other.id);
-        let polyline = new Polyline(road_points).to_bezier(40);
+        let polyline = new Polyline(road_points) //.to_bezier(40);
         let intersects = false;
         for(let existing of roads){
           if(polyline.intersects(existing)){
@@ -103,21 +104,19 @@ class Scene {
       let to = createVector(tx, ty);
       if(p5.Vector.dist(from, f) < r || p5.Vector.dist(to, f) < r){
         
-        let pl = new Polyline([from, to]).to_bezier(40).to_polygon(5, 'road');
+        let pl = new Polyline([from, to]).to_polygon(10, 'road');
         selected.push(pl);
       }
     }
 
-    let all_roads = unionPolygons(this.roads)
     let unionized = selected[0];
     for(let i = 1; i < selected.length; i++){
       unionized = unionized.union(selected[i])[0];
     }
 
-    let try_it = all_roads.union(unionized);
-    console.log("Unionized roads:", try_it);
-    if(try_it.length === 1){ unionized = try_it[0]; }
-    let intersected = poly.intersection(unionized, true);
+    let final = unionPolygons([this.roads, unionized]);
+
+    let intersected = poly.intersection(final, true);
     return intersected[0];
 
   }
@@ -312,15 +311,19 @@ class Scene {
         
       }
 
-      this.roads[0].draw()
-      for(let l of this.roads){
-        // l.draw();
-      }
-
-
       fill(0, 0, 255);
+
+      this.roads.draw()
+      // this.roads[1].draw()
+      // this.roads[2].draw()
+      // this.roads[3].draw()
+      // for(let l of this.roads){
+        // l.draw();
+      // }
+
+
       for(let r of this.focus_roads){
-        // r.draw();
+        r.draw();
       }
       noFill();
 

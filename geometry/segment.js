@@ -35,6 +35,10 @@ class Segment {
     return p5.Vector.sub(this.end, this.start);
   }
 
+  equal(other) {
+    return this.start.equals(other.start) && this.end.equals(other.end);
+  }
+
   normal() {
     const v = this.to_v();
     return createVector(-v.y, v.x).normalize();
