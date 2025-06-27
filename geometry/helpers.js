@@ -90,11 +90,12 @@ function clipper(poly, other, op) {
     return [];
   }
 
-  const results = from_clipper_paths(solution, poly);
+  const results = from_clipper_paths(solution, poly, other);
   return results;
 }
 
-function from_clipper_paths(paths, parent) {
+// TODO remove type overriding
+function from_clipper_paths(paths, parent, other) {
   const new_paths = [];
   for (const path of paths) {
     let scaled = [];
@@ -102,7 +103,9 @@ function from_clipper_paths(paths, parent) {
       let p = [point.X / SCALE, point.Y / SCALE]
       scaled.push(p)
     }
-    new_paths.push(new MultiPolygon([scaled], parent.type, parent));
+    //TODO: remove type overriding
+    let type = other.type == 'road' || other.type == 'decoration' ? other.type : parent.type;
+    new_paths.push(new MultiPolygon([scaled], type, parent));
   }
 
   new_paths.sort((a, b) => Math.abs(area(b.outer, true)) - Math.abs(area(a.outer, true)));

@@ -92,7 +92,7 @@ class Coffer {
       let fill_types = []
       let area_type;
 
-      if(area <  200){
+      if(area <  2000){
         area_type = 'tiny';
         fill_types = ['blank']
       } else if(area < 6000) {
@@ -122,7 +122,8 @@ class Coffer {
       
       
       let fill_object;
-      if(area_ratio < 2 && (area_type == 'large' || area_type == 'medium')) { fill_type = 'housing'}
+      // && area_ratio < 2 && (area_type == 'large' || area_type == 'medium')
+      if(polygon.type == 'city'  && (area_type != 'tiny') ) { fill_type = 'housing'}
 
       console.log("FILL", fill_type, colour, area_type);
 
@@ -249,7 +250,7 @@ function create_coffers(list, poly_roads){
   }
 
   for(let shape of potential_coffers){
-    if(shape.type == 'city'){
+    if(shape.type != 'road'){
       let coffer = new Coffer(shape);
       coffers.push(coffer);
     }

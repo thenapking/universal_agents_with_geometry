@@ -9,10 +9,11 @@ function concentric_circle(x, y, r, w, n){
   for(let i = 0; i <= n; i++){
     let dA = i * w
     if(dA >= r) { break;}
+    let type = i < n ? 'decoration' : 'city';
 
     let polyCircle = new RegularPolygon(
       x, y,
-      r - dA, r - dA, 100, 'city'
+      r - dA, r - dA, 100, type
     );
    
     pieces.push(polyCircle);
@@ -41,17 +42,17 @@ function test_slime(){
 
   polyCircleB = new RegularPolygon(
     mih0.position.x * sf, mih0.position.y * sf,
-    W/10, W/10, 100, 'city'
+    W/10, W/10, 100, 'decoration'
   );
 
   polyCircleC = new RegularPolygon( 
     mih1.position.x * sf, mih1.position.y * sf,
-    W/12, W/12, 100, 'city'
+    W/12, W/12, 100, 'decoration'
   );
 
   polyCircleD = new RegularPolygon(
     mih2.position.x * sf, mih2.position.y * sf,
-    W/16, W/16, 100, 'city'
+    W/16, W/16, 100, 'decoration'
   );
 
 
