@@ -81,7 +81,7 @@ function setup(){
 
   process_data();
   // test_slime();
-  frameRate(30);
+  frameRate(1);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -95,44 +95,58 @@ function setup(){
       // createVector(3*W/4 + BW + MBW, 0),
     ]};
   scene = new Scene(template)
+  default_setup()
+  // scene.draw();
 }
 
 let ctx = 0;
 function draw(){
-  default_setup()
+  
+  translate(BW, BW-2*MBW);
   
   // animation_draw();
+
+  // stroke(255,0,0)
+  let p = coffers[ctx]
+  if(p){
+    p.draw();
+    ctx++
+
+  } else{
+    noLoop();
+  }
   
-  scene.draw();
 
-  for(let c of connections){
-    let from = createVector(c.from.position.x, c.from.position.y).sub(MBW, 3*MBW); 
-    let to = createVector(c.to.position.x, c.to.position.y).sub(MBW, 3*MBW); 
-    
-    let pl = new Polyline([from, to])
-    let poly = pl.to_polygon(5);
-    push();
-      translate(BW, BW-2*MBW)
-      // poly.draw();
-    pop();
-  }
-
-  fill(0,255,0)
-  for(let h of minor_hotspots){
-    let x = h.position.x - MBW;
-    let y = h.position.y - 3*MBW;
-    // circle(x,y, 10);
-  }
-  noLoop();
+  
 
 }
+
+// for(let c of connections){
+//   let from = createVector(c.from.position.x, c.from.position.y).sub(MBW, 3*MBW); 
+//   let to = createVector(c.to.position.x, c.to.position.y).sub(MBW, 3*MBW); 
+  
+//   let pl = new Polyline([from, to])
+//   let poly = pl.to_polygon(5);
+//   push();
+//     translate(BW, BW-2*MBW)
+//     // poly.draw();
+//   pop();
+// }
+
+// fill(0,255,0)
+// for(let h of minor_hotspots){
+//   let x = h.position.x - MBW;
+//   let y = h.position.y - 3*MBW;
+//   // circle(x,y, 10);
+// }
+// noLoop();
 
 function animation_draw(){
   let active = update_groups();
 
   if(active > 0){
     push()
-      default_setup()
+      // default_setup()
 
       draw_coffers();
       draw_groups();
@@ -150,7 +164,7 @@ function animation_draw(){
     }
 
     push()
-      default_setup()
+      // default_setup()
       draw_coffers();
       final_draw();
     pop()

@@ -43,6 +43,10 @@ function calculate_bezier(p0, p1, p2, p3, t) {
 
 function clipper(poly, other, op) {
   const clipper = new ClipperLib.Clipper();
+  if (!poly || !other) {
+    console.error("Invalid polygon or other for operation:", op);
+    return [];
+  }
 
   let poly_paths = poly.to_clipper_paths();
   let other_paths = other.to_clipper_paths();
