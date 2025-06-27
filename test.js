@@ -3,24 +3,6 @@
 let piecesA, piecesB, piecesAC, piecesCA, piecesC, piecesD, piecesE, piecesF, piecesG, piecesH;
 let polygonD, adjacency_map, colour_map, shared_map, final;
 
-function concentric_circle(x, y, r, w, n){
-  let pieces = [];
-
-  for(let i = 0; i <= n; i++){
-    let dA = i * w
-    if(dA >= r) { break;}
-    let type = i < n ? 'decoration' : 'city';
-
-    let polyCircle = new RegularPolygon(
-      x, y,
-      r - dA, r - dA, 100, type
-    );
-   
-    pieces.push(polyCircle);
-  }
-
-  return pieces
-}
 
 let connections0, processed_connections, g;
 function test_slime(){
@@ -197,43 +179,115 @@ function test_clipper(){
 }
 
 
+// OLD SCENE TEST
+function create_polygons(){
+  polyOuter = new Polygon([
+    createVector(0, 0),
+    createVector(W, 0),
+    createVector(W, H),
+    createVector(0, H)
+  ]);
+  let marg = 80;
+  polyInnerA = new Polygon([
+    createVector(marg, marg),
+    createVector(W-marg, marg),
+    createVector(W-marg, H-marg),
+    createVector(marg, H-marg)
+  ]);
 
-let connections = [], emitters = [], journeys = [], hotspots = [], major_hotspots, minor_hotspots;
-function load_data(id){
-  connections = load_file('connections', id);
-  emitters = load_file('emitters', id);
-  journeys = load_file('journeys', id);
-  hotspots = load_file('hotspots', id);
+  polyInnerB = new Polygon([
+    createVector(marg, marg),
+    createVector(W-marg, marg),
+    createVector(W-marg, H-marg),
+    createVector(marg, H-marg)
+  ]);
+
+ 
+  polyCircleA = new RegularPolygon(
+    W/4, H/4,
+    W/4, W/4, POLYGONAL_DETAIL
+  );
+
+  polyCircleB = new RegularPolygon(
+    random(0.5,0.75) * W, 3*H/4,
+    W/2, W/2, POLYGONAL_DETAIL
+  );
+
+  polyCircleC = new RegularPolygon(
+    W/4, H/2,
+    W/5, W/5, POLYGONAL_DETAIL
+  );
+
+  polyCircleD = new RegularPolygon(
+    0.25*W, 0.2*H,
+    W/6, W/6, POLYGONAL_DETAIL
+  );
+
+  polyCircleE = new RegularPolygon(
+    0.75*W, 0.3*H,
+    W/6, W/6, POLYGONAL_DETAIL
+  );
+
+  polyCircleF = new RegularPolygon(
+    0.45*W, 0.267*H,
+    W/6, W/6, POLYGONAL_DETAIL
+  );
+
+  polyCircleG = new RegularPolygon(
+    0.3*W, 0.8*H,
+    W/5, W/5, POLYGONAL_DETAIL
+  );
+
+
+  polylineA = [
+    createVector(W/2 + 60, 0),
+    createVector(W/2 + 20, H)
+  ]
 
   
-}
+  polylineB = [
+    createVector(0, 0),
+    createVector(-W, 2*W)
+  ]
 
-function process_data(){
-  connections = process_file(connections);
-  emitters = process_file(emitters);
-  journeys = process_file(journeys);
-  hotspots = process_file(hotspots)
-  major_hotspots = hotspots.filter(h => h.major)
-  minor_hotspots = hotspots.filter(h => !h.major)
-  hotspots = hotspots.sort((a, b) => { return b.count - a.count; });
-  major_hotspots = major_hotspots.sort((a, b) => { return b.count - a.count; });
-  minor_hotspots = minor_hotspots.sort((a, b) => { return b.count - a.count; });
-}
+  polylineBr = [
+    createVector(-W, 2*W),
+    createVector(0, 0),
+  ]
 
-function load_file(model_name, id){
-  return loadJSON('data/' + id + '/' + model_name +'.json');
-}
+  polylineC = [
+    createVector(3*W/4, -H),
+    createVector(3*W/4, 2*H)
+  ]
 
-function process_file(data){
-  let processed = [];
-  let keys = Object.keys(data);
-  for(let key of keys){
-    let d = data[int(key)];
-    processed.push(d)
+
+
+  polylineF = [
+    createVector(-W, 3*H/4),
+    createVector(2*W, 3*H/4)
+  ]
+
+  polylines.push(polylineA);
+  polylines.push(polylineC);
+  polylines.push(polylineF);
+
+  for(let i = 0; i < 3; i++){
+    let polyline = [
+      createVector(30, H),
+      createVector(130 + i*POLYGONAL_DETAIL, 0), 
+    ]
+
+    polylines.push(polyline);
   }
+  
 
-  return processed;
 }
+
+
+
+
+
+
 
 
 

@@ -1,5 +1,5 @@
 class RegularPolygon extends MultiPolygon {
-  constructor(x, y, w, h, sides, type, parent, rotation = 0) {
+  constructor(x, y, w, h, sides = POLYGONAL_DETAIL, type, parent, rotation = 0) {
     let points = [];
 
     // Martinez clipping is a bit funny.  For circles (n>20) adding the end point does help close the circle neatly

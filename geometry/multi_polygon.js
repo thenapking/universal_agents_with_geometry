@@ -11,7 +11,7 @@ class MultiPolygon {
     if(this.is_contour_array(points)) {
       this.contours = this.find_contours(points);
     } else {
-      console.log("MultiPolygon: points is not a contour array, assuming raw array");
+      // console.log("MultiPolygon: points is not a contour array, assuming raw array");
       this.contours = [this.order(points)];
     }
 

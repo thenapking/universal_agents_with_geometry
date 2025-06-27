@@ -48,8 +48,7 @@ class Graph {
           path.unshift(this.hotspots.find(hotspot => hotspot.id === previous_id));
           previous_id = previous[previous_id];
         }
-        // TODO remove scaling
-        return path.map(hotspot => createVector(hotspot.position.x, hotspot.position.y).mult(0.5));
+        return path.map(hotspot => createVector(hotspot.position.x, hotspot.position.y));
       }
 
       // Explore the neighbors (connected hotspots)

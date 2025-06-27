@@ -22,9 +22,16 @@ let DPI= 96;
 let wi = 7;
 let hi = 10;
 let bwi = 0.25;
+let mbwi = 1
 let W = wi * DPI;
 let H = hi * DPI;
 let BW = bwi * DPI;
+let MBW = mbwi * DPI;
+let FW = W + 2 * BW + 2 * MBW;
+let FH = H + 2 * BW + 2 * MBW;
+let VW = W + 2 * BW;
+let VH = H + 2 * BW;
+
 let MARGIN = 1;
 let BORDER_MARGIN = 5;
 let POLYGONAL_DETAIL = 360;
@@ -40,29 +47,24 @@ let LARGE_HATCH = 10;
 
 let PHI;
 
-let polygonA, polygonB, polylineA, polylineB, polyCircle;
-let intersection, union, diff, split;
+
 
 let exporting = false;
-
-let polyOuter, polyInner;
-let test_polyline, test_poly;
-
-let results = [];
 
 
 let groups = [];
 let active_group_id = 0;
 
-let road, road_points, reverse_points;
+let scene;
+
 let seed; 
 
 function preload() {
-  load_data(1)
+  load_data(2)
 }
 
 function setup(){
-  createCanvas(W + 2* BW, H + 2 * BW);
+  createCanvas(FW, FH);
 
   seed = Math.floor(Math.random() * 1000000);
   console.log("seed = ", seed);
@@ -77,61 +79,55 @@ function setup(){
   create_noise_field()
  
 
-  default_setup()
   process_data();
-  test_slime();
+  // test_slime();
   frameRate(30);
+  template = {
+    foci: [
+      createVector(W/2, H/2)
+    ], 
+    offscreen_foci: [
+      // createVector(W + 2*BW + 2*MBW, 0),
+      createVector(0, 0),
+      createVector(W + 2*BW + 2*MBW, H/4 + BW + MBW),
+      createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
+      // createVector(W/4 + BW + MBW, 0),
+      // createVector(3*W/4 + BW + MBW, 0),
+    ]};
+  scene = new Scene(template)
 }
 
 let ctx = 0;
 function draw(){
+  default_setup()
   
-  draw_scene();
+  // animation_draw();
   
-  // noFill();
-  // stroke(0)
-  // polyCircleA.draw();
-  
+  scene.draw();
 
-  // for(let p of piecesB){
-  //   p.draw();
-  // }
-  // for(let p of piecesC){
-  //   p.draw();
-  // } 
-  // for(let p of piecesD){
-  //   p.draw();
-  // }
-  // for(let p of piecesE){
-  //   p.draw();
-  // }
+  for(let c of connections){
+    let from = createVector(c.from.position.x, c.from.position.y).sub(MBW, 3*MBW); 
+    let to = createVector(c.to.position.x, c.to.position.y).sub(MBW, 3*MBW); 
+    
+    let pl = new Polyline([from, to])
+    let poly = pl.to_polygon(5);
+    push();
+      translate(BW, BW-2*MBW)
+      // poly.draw();
+    pop();
+  }
 
-  // polyCircleB.draw();
-  // polyCircleC.draw();
-  // polyCircleD.draw();
-
-  // for(let l of processed_connections){
-  //   l.draw();
-  // }
-  // let p = coffers[ctx]
-  // if(p){
-  //   p.draw();
-  //   ctx++;
-  // }
-  // else{
-  //   noLoop();
-  // }
-
-  // polylineA.draw();
-
-//  piecesF.draw();
-//   piecesF[0].draw();
-//   piecesF[2].draw();
-//   piecesF[3].draw(); 
+  fill(0,255,0)
+  for(let h of minor_hotspots){
+    let x = h.position.x - MBW;
+    let y = h.position.y - 3*MBW;
+    // circle(x,y, 10);
+  }
+  noLoop();
 
 }
 
-function draw_scene(){
+function animation_draw(){
   let active = update_groups();
 
   if(active > 0){
@@ -166,6 +162,26 @@ function draw_scene(){
     if(exporting){ endRecordSVG(this); }
   }
 }
+// For each group, create the polygons and draw them
+function final_draw(){
+  push();
+  for(group of groups){
+    let results = group.create_polygons();
+    push();
+      group.boundaries[0].draw();
+      push();
+      for(let poly of results){
+        poly.draw();
+      }
+      pop();
+    pop();
+  }
+  pop();
+}
+
+
+
+
 
 function draw_coffers(){
   for(let coffer of coffers){
@@ -200,7 +216,6 @@ function update_groups(){
 }
 
 function default_setup(){
-  translate(BW, BW);
   background(240);
   stroke(0,0,0);
 }

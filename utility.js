@@ -10,6 +10,8 @@ function setup_svg(){
   setSvgFlattenTransforms(false); // if true: larger files, closer to original
 }
 
+
+// NOT USED
 const memo = new Map();
 
 function memoize(op, a, b, fn) {
@@ -19,4 +21,42 @@ function memoize(op, a, b, fn) {
   const result = fn();
   memo.set(key, result);
   return result;
+}
+
+
+let connections = [], emitters = [], journeys = [], hotspots = [], major_hotspots, minor_hotspots;
+function load_data(id){
+  connections = load_file('connections', id);
+  emitters = load_file('emitters', id);
+  journeys = load_file('journeys', id);
+  hotspots = load_file('hotspots', id);
+
+  
+}
+
+function process_data(){
+  connections = process_file(connections);
+  emitters = process_file(emitters);
+  journeys = process_file(journeys);
+  hotspots = process_file(hotspots)
+  major_hotspots = hotspots.filter(h => h.major)
+  minor_hotspots = hotspots.filter(h => !h.major)
+  hotspots = hotspots.sort((a, b) => { return b.count - a.count; });
+  major_hotspots = major_hotspots.sort((a, b) => { return b.count - a.count; });
+  minor_hotspots = minor_hotspots.sort((a, b) => { return b.count - a.count; });
+}
+
+function load_file(model_name, id){
+  return loadJSON('data/' + id + '/' + model_name +'.json');
+}
+
+function process_file(data){
+  let processed = [];
+  let keys = Object.keys(data);
+  for(let key of keys){
+    let d = data[int(key)];
+    processed.push(d)
+  }
+
+  return processed;
 }

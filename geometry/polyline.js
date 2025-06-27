@@ -153,6 +153,19 @@ class Polyline {
     return false
   }
 
+  intersection(other) {
+    let intersections = [];
+    for (let segment of this.segments) {
+      for (let other_segment of other.segments) {
+        let intersection = segment.intersection(other_segment, false);
+        if (intersection.length > 0) {
+          intersections.push(...intersection);
+        }
+      }
+    }
+    return intersections;
+  }
+
 
   walk(juncture, piece, direction) {
     let next = juncture.polyline;
