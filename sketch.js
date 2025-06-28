@@ -94,57 +94,24 @@ function setup(){
       // createVector(W/4 + BW + MBW, 0),
       // createVector(3*W/4 + BW + MBW, 0),
     ]};
-  // scene = new Scene(template)
-  // scene.draw();
+  scene = new Scene(template)
+  scene.draw();
 
   default_setup()
-  
+  // piecesE = scene.graph.to_polygon();
 }
 
 let ctx = 0;
 function draw(){
   
   translate(BW, BW-2*MBW);
-  // join_connections()
-  // for(let c of connections){
-  //   if(c.active === false) { continue; }
-  //   let from = createVector(c.from.position.x, c.from.position.y) 
-  //   let to = createVector(c.to.position.x, c.to.position.y) 
-  //   let points = c.points || [];
-  //   points.push(to);
-  //   points.unshift(from);
-  //   let pl = new Polyline(points)
-  //   let poly = pl.to_polygon(5);
-  //   push();
-  //     poly.draw();
-  //   pop();
-  // }
-
-  let traversed_paths = traverse_connections();
-  stroke(0, 255, 0);
-  noFill();
-  for(let path of traversed_paths){
-    let points = []
-    for(let c of path){
-      points.push(createVector(c.position.x, c.position.y));
-    }
-    if(points.length < 2) { continue; }
-    let pl = new Polyline(points);
-    let poly = pl.to_polygon(5);
-    push();
-      pl.draw();
-    pop();
-  }
-
-  stroke(0, 0, 255);
-
+ 
   
-  noLoop();
   
-  // animation_draw();
+  animation_draw();
 
   // stroke(255,0,0)
-  // let p = coffers[ctx]
+  // let p = piecesE[ctx]
   // if(p){
   //   p.draw();
   //   ctx++
@@ -205,103 +172,7 @@ function join_connections() {
 }
 
 
-// This works until it finds a cycle.
-// When it does that it should split the cycle off from the path and push it to paths.
-// Then we need to continue traversing the rest of the connections.
-// One idea is that we should go backwards from the first node.  Or perhaps we should go backwards and forwards at each step!
-// Extending the path from one end to the other.
-function traverse_connections() {
-  let visited = new Set();  // To track globally visited nodes (across all paths)
-  let paths = [];  // To store all valid paths (including cycles)
 
-  // Iterate through each hotspot
-  for (let i = 0; i < hotspots.length; i++) {
-    let current = hotspots[i];
-    if (!visited.has(current.id)) {
-      let path = [];
-      let stack = [];  // Use stack for backtracking (to track the current path)
-
-      // Start the traversal from the current hotspot
-      stack.push(current);
-      visited.add(current.id);
-
-      // Traverse until no further connections are found or cycle is detected
-      let counter = 0;
-      while (stack.length > 0 && counter < 100) {
-        let currentNode = stack[stack.length - 1];
-        path.push(currentNode);
-        counter++;
-
-        // Find the next unvisited connection
-        let nextConnection = connections.find(c => c.from.id === currentNode.id);
-
-        if (nextConnection) {
-          let nextHotspot = nextConnection.to;
-          if (stack.includes(nextHotspot)) {
-            // We found a cycle! (node already in the stack means cycle)
-            
-            path.push(nextHotspot);
-            console.log("Cycle detected:", path[0].id, "->", nextHotspot.id);
-            paths.push(path);
-            break;  // Exit the loop once the cycle is detected
-          }
-          // if( visited.has(nextHotspot.id)) { break; }
-          stack.push(nextHotspot);
-          visited.add(nextHotspot.id);
-        } else {
-          // If no more connections, break out of the loop
-          stack.pop();
-        }
-      }
-
-      // If the path is longer than 1, it's a valid path (avoid paths of length 1)
-      if (path.length > 1 && !paths.includes(path)) {
-        paths.push(path);
-      }
-    }
-  }
-
-  return paths;
-}
-
-
-
-
-
-// function traverse_connections(){
-//   let visited = new Set();
-//   let paths = [];
-//   for(let i = 0; i < hotspots.length; i++){
-//     let current = hotspots[i];
-//     let path = [];
-//     while (current && !visited.has(current.id)) {
-//       visited.add(current.id);
-//       path.push(current);
-      
-//       // Find the next connection
-//       let nextConnection = connections.find(c => c.from.id === current.id && !visited.has(c.to.id));
-//       if (nextConnection) {
-//         current = nextConnection.to;
-//       } else {
-//         // If no next connection, break the loop
-//         break;
-//       }
-//     }
-//     if(path.length > 0) {
-//       paths.push(path);
-//     }
-//   }
-//   return paths
-// }
-
-
-// fill(0,255,0)
-// for(let h of minor_hotspots){
-//   let x = h.position.x - MBW;
-//   let y = h.position.y - 3*MBW;
-//   // circle(x,y, 10);
-// }
-// noLoop();
 
 function animation_draw(){
   let active = update_groups();

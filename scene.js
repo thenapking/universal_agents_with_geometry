@@ -30,12 +30,9 @@ class Scene {
     this.create_onscreen_foci_from_offscreen_lines()
     this.offscreen_hotspots = this.find_hotspots(this.offscreen_foci, false);
     this.hotspots = this.find_hotspots(this.foci, false);
-    let polyline_roads = this.create_offscreen_connections();
-    let roads = []
-    for(let polyline of polyline_roads){
-      roads.push(polyline.to_polygon(5, 'road'));
-    }
-    this.roads = unionPolygons(roads);
+    let polyline_roads = this.graph.to_polygon()
+    
+    this.roads = unionPolygons(polyline_roads);
     this.create_onscreen_connections();
     create_coffers(this.potential_coffers, []);
   }

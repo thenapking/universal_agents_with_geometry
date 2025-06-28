@@ -20,6 +20,95 @@ class Graph {
     return p5.Vector.dist(a.position, b.position);
   }
 
+  dfsCycleForest(root) {
+    const visited = new Set();
+    const parent = {};
+    const nontreeEdges = [];
+    const stack = [root];
+    const dfsNodes = [];
+
+    while (stack.length) {
+      const node = stack.pop();
+      if (!visited.has(node)) {
+        visited.add(node);
+        dfsNodes.push(node);
+
+        for (const connection of this.adjacencyList.get(node)) {
+          const neighbor = (connection.from_id === node) ? connection.to_id : connection.from_id;
+
+          if (!visited.has(neighbor)) {
+            parent[neighbor] = node;
+            stack.push(neighbor);
+          } else if (parent[node] !== neighbor) {
+            // Non-tree edge (cycle edge)
+            nontreeEdges.push([node, neighbor].sort().join(","));
+          }
+        }
+      }
+    }
+
+    return { parent, nontreeEdges, dfsNodes };
+  }
+
+  buildChain(G, u, v, visited) {
+    const chain = [];
+    while (!visited.has(v)) {
+      chain.push([u, v]);
+      visited.add(v);
+      u = v;
+      v = G[u];
+    }
+    chain.push([u, v]);
+    return chain;
+  }
+
+  chainDecomposition() {
+    const chains = [];
+    const visited = new Set();
+
+    // Loop over all hotspots to make sure we process each component
+    for (const hotspot of this.hotspots) {
+      if (!visited.has(hotspot.id)) {
+        const { parent, nontreeEdges, dfsNodes } = this.dfsCycleForest(hotspot.id);
+
+        // For each hotspot and its non-tree edges, generate the chains
+        for (const node of dfsNodes) {
+          visited.add(node);
+          for (const edge of nontreeEdges) {
+            const [u, v] = edge.split(",").map(Number);
+            if (u === node || v === node) {
+              // Create the cycle or cycle prefix starting with the non-tree edge
+              const chain = this.buildChain(parent, u, v, visited);
+              chains.push(chain);
+            }
+          }
+        }
+      }
+    }
+    return chains;
+  }
+
+  to_polygon(){
+    let decomposition = this.chainDecomposition();
+    let polylines = [];
+    for(let chain of decomposition) {
+      // Skip chains with less than 2 connections
+      // Theses all seem to be duplicates
+      if(chain.length < 3) continue; 
+      let points = []
+      for(let [from_id, to_id] of chain) {
+        let from = this.hotspots.find(h => h.id === from_id);
+        points.push(createVector(from.position.x, from.position.y));
+      }
+      let last = chain[chain.length - 1];
+      let last_hotspot = this.hotspots.find(h => h.id === last[1]);
+      points.push(createVector(last_hotspot.position.x, last_hotspot.position.y));
+      let polyline = new Polyline(points).to_bezier(60).to_polygon(5, 'road');
+      polylines.push(polyline);
+    }
+    return polylines;
+  }
+
   // Dijkstra's algorithm to find the shortest path
   shortest(start_id, end_id) {
     const distances = {};
