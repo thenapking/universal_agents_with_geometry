@@ -94,8 +94,8 @@ function setup(){
       // createVector(W/4 + BW + MBW, 0),
       // createVector(3*W/4 + BW + MBW, 0),
     ]};
-  scene = new Scene(template)
-  scene.draw();
+  // scene = new Scene(template)
+  // scene.draw();
 
   default_setup()
   // piecesE = scene.graph.to_polygon();
@@ -105,9 +105,6 @@ let ctx = 0;
 function draw(){
   
   translate(BW, BW-2*MBW);
- 
-  
-  
   animation_draw();
 
   // stroke(255,0,0)
@@ -120,59 +117,6 @@ function draw(){
   //   noLoop();
   // }
 }
-
-function join_connections() {
-  let connections_joined = true;
-
-  // Repeat until no more connections are joined
-  while (connections_joined) {
-    connections_joined = false;  // Reset the flag
-
-    // Iterate over all hotspots
-    for (let i = 0; i < hotspots.length; i++) {
-      let from_hotspot = hotspots[i];
-
-      // Find all connections starting from this hotspot
-      let joinable = connections.filter(c => c.from.id === from_hotspot.id && c.active !== false);
-
-      // If there is exactly one connection from this hotspot, attempt to join it
-      if (joinable.length === 1) {
-        let connection = joinable[0];
-        let to_hotspot = hotspots.find(h => h.id === connection.to.id);
-        
-        // Find connections that are directly reachable from `to_hotspot`
-        let removable = connections.filter(c => c.from.id === connection.to.id && c.active !== false);
-
-        // If there's exactly one connection going out from `to_hotspot`, join the paths
-        if (removable.length === 1) {
-          let removable_connection = removable[0];
-
-          // Mark the `to_hotspot` as inactive (because it's part of the merged path)
-          to_hotspot.active = false;
-
-          // Merge the two connections into one
-          connection.to = removable_connection.to;
-          connection.to_id = removable_connection.to_id;
-
-          // Merge the points (join the endpoints)
-          connection.points = connection.points || [];
-          connection.points.push(createVector(to_hotspot.position.x, to_hotspot.position.y));
-
-          // Mark the removable connection as inactive (it was merged)
-          removable_connection.active = false;
-
-          // Increment the joined count and set the flag to true
-          connections_joined = true;
-        }
-      }
-    }
-  }
-
-  console.log("Pruning complete. Remaining connections:", connections);
-}
-
-
-
 
 function animation_draw(){
   let active = update_groups();

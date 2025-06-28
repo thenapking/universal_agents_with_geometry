@@ -34,11 +34,24 @@ function load_data(id){
   
 }
 
+let edges = [], nodes = [];
 function process_data(){
   connections = process_file(connections);
+  hotspots = process_file(hotspots)
+  for(let i = 0; i < hotspots.length; i++){
+    let h = hotspots[i];
+    let node = new Node(h.position.x, h.position.y);
+    nodes[i] = node;
+  }
+
+  for(let c of connections){
+    let from = nodes[c.from_id];
+    let to = nodes[c.to_id];
+    let edge = new Edge(from, to);
+    edges.push(edge);
+  }
   emitters = process_file(emitters);
   journeys = process_file(journeys);
-  hotspots = process_file(hotspots)
   major_hotspots = hotspots.filter(h => h.major)
   minor_hotspots = hotspots.filter(h => !h.major)
   hotspots = hotspots.sort((a, b) => { return b.count - a.count; });
