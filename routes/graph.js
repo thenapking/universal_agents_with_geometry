@@ -1,9 +1,16 @@
+// TODO finish off Katz Centrality and Communities and Test
+// Rewrite Scene, so that we find the principal coffer by centrality
+// Identify the other coffers by communities
+// Add in the code to draw convert the graph as polylines, and draw it
+// See if we can refactor in the stuff from coffers.
 class Graph {
   constructor(nodes = [], edges = []) {
     this.nodes = [];
-    this.edges = [];
+    this.edges = new Set();
+    this.degrees = new Map(); 
     this.chains = [];
     this.adjacency = new Map();
+    this._modularity = new Map(); // cache 
     this.initialize(nodes, edges);
   }
 
@@ -21,6 +28,7 @@ class Graph {
     if(!this.adjacency.has(a.id)){
       this.adjacency.set(a.id, []);
       this.nodes.push(a);
+      this.degrees.set(a.id, 0);
     }
   }
 
@@ -28,10 +36,13 @@ class Graph {
     this.add_node(edge.start);
     this.add_node(edge.end);
 
-    this.edges.push(edge);
+    this.edges.add(edge.key())
 
     this.adjacency.get(edge.start.id).push(edge);
     this.adjacency.get(edge.end.id).push(edge);
+
+    this.degrees.set(edge.start.id, this.degrees.get(edge.start.id) + 1);
+    this.degrees.set(edge.end.id, this.degrees.get(edge.end.id) + 1);
   }
 
   find(id){
@@ -39,13 +50,12 @@ class Graph {
   }
 
   degree(node){
-    if (!this.adjacency.has(node)) return 0;
-    return this.adjacency.get(node).length;
+    if (!this.adjacency.has(node.id)) return 0;
+    return this.adjacency.get(node.id).length;
   }
 
   has_edge(a, b) {
-    if (!this.adjacency.has(a) || !this.adjacency.has(b)) return false;
-    return this.adjacency.get(a).some(edge => edge.grab(a) === b);
+    return this.edges.has(Edge.key(a, b));
   }
 
   // Dijkstra
@@ -186,34 +196,61 @@ class Graph {
   }
 
   modularity(communities) {
-    const m = this.edges.length;
+    if (!this._modularity) this._modularity = new Map();
+
+    const key = this.keyForCommunities(communities);
+    if (this._modularity.has(key)) {
+      return this._modularity.get(key);
+    }
+
+    const m = this.edges.size; // edges is a set
     let Q = 0;
-  
-    for (let community of communities) {
-      for(let node of community){
-        for(let other of community){
+    
+    for(let community of communities) {
+      for (let i = 0; i < community.length; i++) {
+        const node = community[i];
+        for (let j = i + 1; j < community.length; j++) {
+          const other = community[j];
+          
           const A = this.has_edge(node, other) ? 1 : 0;
-          const dN = this.degree(node);
-          const dO = this.degree(other);
+          const dN = this.degrees.get(node.id);
+          const dO = this.degrees.get(other.id);
+          
           Q += A - (dN * dO) / (2 * m);
         }
       }
     }
-  
-    return Q / (2 * m);
+    let result = Q / (2 * m);
+    this._modularity.set(key, result);
+    return result;
   }
 
-  // I think this doesn't halt
-  find_communities() {
+  keyForCommunities(communities) {
+    return communities
+      .map(comm => comm.map(n => n.id).sort((a, b) => a - b).join("-"))
+      .sort()  // to make key order-invariant
+      .join("_");
+  }
+
+  base_communitys(){
     let communities = [];
     for (let node of this.nodes) {
       communities.push([node]);
     }
+    return communities;
+  }
+
+  // I think this doesn't halt
+  find_communities() {
+    let communities = this.base_communitys();
 
     let highest = this.modularity(communities);
+    console.log(`Initial modularity: ${highest}`);
     let improvement = true;
-  
-    while (improvement) {
+    let guard = 0
+    while (improvement && guard < 100) {
+      // console.log(`Iteration ${guard}: Current highest modularity: ${highest}`);
+      guard++;
       improvement = false;
       let best_i = null;
       let best_j = null;
@@ -231,6 +268,7 @@ class Graph {
           const delta = modularity - highest;
   
           if (delta > best_delta) {
+            console.log(`Found better community merge: ${i} + ${j} with delta ${delta}`);
             best_delta = delta;
             best_i = i;
             best_j = j;
@@ -251,46 +289,44 @@ class Graph {
 
   // Katz centrality algorithm
   // Requires edges to be weighted
-  centrality({ alpha = 0.1, beta = 1, maxIter = 100, tol = 1e-6 } = {}) {
-    const centrality = {};
-    const lastCentrality = {};
+  centrality({ alpha = 0.1, beta = 1, guard = 100, tol = 1e-6 } = {}) {
+    const results = {};
+    const previous = {};
   
     // Initialize centrality scores
     for (const node of this.nodes) {
-      centrality[node.id] = 1;
+      results[node.id] = 1;
     }
   
-    
-  
-    // Power iteration
-    for (let iter = 0; iter < maxIter; iter++) {
-      let maxChange = 0;
+    for (let i = 0; i < guard; i++) {
+      let maximum = 0;
   
       // Copy previous values
-      for (const id in centrality) {
-        lastCentrality[id] = centrality[id];
+      for (const id in results) {
+        previous[id] = results[id];
       }
   
       for (const node of this.nodes) {
         let sum = 0;
         const incoming = this.adjacency.get(node.id);
+
         for (const edge of incoming) {
-          sum += edge.weight * lastCentrality[edge.from];
+          sum += edge.weight * previous[edge.from];
         }
   
-        centrality[node.id] = beta + alpha * sum;
+        results[node.id] = beta + alpha * sum;
   
-        const change = Math.abs(centrality[node.id] - lastCentrality[node.id]);
-        if (change > maxChange) maxChange = change;
+        const change = Math.abs(results[node.id] - previous[node.id]);
+        if (change > maximum) maximum = change;
       }
   
-      if (maxChange < tol) {
-        console.log(`Katz converged in ${iter + 1} iterations`);
+      if (maximum < tol) {
+        console.log(`Katz converged in ${i + 1} iterations`);
         break;
       }
     }
   
-    return centrality;
+    return results;
   }
   
   

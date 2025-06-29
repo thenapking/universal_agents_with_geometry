@@ -1,5 +1,5 @@
 class Node {
-  static id = 1;
+  static id = 0;
 
   constructor(x, y) {
     this.id = Node.id++; 

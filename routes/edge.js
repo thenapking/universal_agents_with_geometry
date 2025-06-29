@@ -1,5 +1,5 @@
 class Edge {
-  static id = 1;
+  static id = 0;
   constructor(start, end, weight) {
     this.id = Edge.id++;
     // start and end are Nodes
@@ -22,6 +22,18 @@ class Edge {
   grab(id){
     if(this.start.id === id) return this.end;
     return this.start;
+  }
+
+  key() {
+    const id1 = this.start.id;
+    const id2 = this.end.id;
+    return id1 < id2 ? `${id1},${id2}` : `${id2},${id1}`;
+  }
+
+  static key(a, b) {
+    const id1 = typeof a === "object" ? a.id : a;
+    const id2 = typeof b === "object" ? b.id : b;
+    return id1 < id2 ? `${id1},${id2}` : `${id2},${id1}`;
   }
 
   
