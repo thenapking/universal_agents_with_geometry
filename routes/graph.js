@@ -6,7 +6,7 @@ class Graph {
   constructor(nodes = [], edges = []) {
     this.nodes = [];
     this.node_ids = [];
-    this.edges = new Set();
+    this.edges = []
     this.degrees = new Map(); 
     this.weighted_degrees = new Map();
     this.weight = 0;
@@ -14,16 +14,12 @@ class Graph {
     this.internal_weight = []
     this.chains = [];
     this.adjacency = new Map();
-    this.node_to_community = new Map();
     this.communities = [];
-    this.initialize(nodes, edges);
+    this.initialize(edges);
   }
 
-  initialize(nodes = [], edges = []) {
+  initialize(edges = []) {
     // Initialize the adjacency list for each node
-    for (let node of nodes) {
-      this.add_node(node);
-    }
     for (let edge of edges) {
       this.add_edge(edge);
     }
@@ -38,13 +34,13 @@ class Graph {
     }
   }
 
-  // TO DO: ensure that edge.start.position != edge.end.position
-
   add_edge(edge){
+    if(edge.start.position === edge.end.position) { return; } // Prevent self-loops
+
     this.add_node(edge.start);
     this.add_node(edge.end);
 
-    this.edges.add(edge.key())
+    this.edges.push(edge);
 
     this.adjacency.get(edge.start.id).push(edge);
     this.adjacency.get(edge.end.id).push(edge);
@@ -66,9 +62,6 @@ class Graph {
     return this.adjacency.get(node.id).length;
   }
 
-  has_edge(a, b) {
-    return this.edges.has(Edge.key(a, b));
-  }
 
   // Dijkstra
   shortest(a, b) {
@@ -250,6 +243,7 @@ class Graph {
     }
   }
 
+  // one pass of Louvain algorithm
   create_communities(){
     this.basic_communities();
 
@@ -314,9 +308,47 @@ class Graph {
         this.communities[community_id].push(this.nodes[i]);
       }
     }
-
   }
 
+  create_graph_from_communities() {
+    let counter = 0;
+    let new_nodes = []
+    let new_edges = []
+    for(let i = 0; i < this.communities.length; i++) {
+      let community = this.communities[i];
+      let centroid = createVector(0, 0);
+      counter++;
+      if(community === undefined || community.length === 0) continue;
+      for(let node of community) {
+        centroid.add(node.position);
+      }
+      centroid.div(community.length);
+
+      let community_node = new Node(centroid.x, centroid.y); 
+      community_node.members = community.map(n => n.members || [n]).flat();
+      community_node.calculate_radius();
+      new_nodes[i] = community_node;
+    } 
+
+    for(let edge of this.edges) {
+      let start_community_id = edge.start.community_id;
+      let end_community_id = edge.end.community_id;
+      if(start_community_id === end_community_id) { continue; }
+
+      let start_community = new_nodes[start_community_id];
+      let end_community = new_nodes[end_community_id];
+      let new_edge = new Edge(start_community, end_community, 1);
+
+      new_edges.push(new_edge);
+    }
+
+    console.log(new_nodes, new_edges);
+    let new_graph = new Graph(new_nodes, new_edges);
+
+
+    return new_graph;
+  }
+  
   add_node_to_community(node, community_id, shared_links_weight = 0) {
     node.community_id = community_id;
     let weighted_degree = this.weighted_degrees.get(node.id) || 0;
@@ -351,9 +383,23 @@ class Graph {
     return nmap
   }
 
+  louvain(n = 2){
+    let current = this;
+    for(let i = 0; i < n; i++) {
+      console.log("Iteration:", i);
+      current.create_communities();
+      const nc = current.communities.filter(c => c).length;
+      console.log("Number of communities:", nc);
+      if(nc === current.nodes.length) { break }
+      current = current.create_graph_from_communities();
+    }
+
+    return current;
+  }
+
   // Katz centrality algorithm
   // Works better with weighted edges
-  centrality({ alpha = 0.1, beta = 1, guard = 1000, tol = 1e-6 } = {}) {
+  centrality({ alpha = 0.01, beta = 1, guard = 1000, tol = 1e-6 } = {}) {
     const results = {};
     const previous = {};
   
@@ -375,7 +421,8 @@ class Graph {
         for (const edge of incoming) {
           sum += edge.weight * previous[edge.end.id];
         }
-  
+        
+        console.log(sum)
         results[node.id] = beta + alpha * sum;
   
         const change = Math.abs(results[node.id] - previous[node.id]);
@@ -394,25 +441,6 @@ class Graph {
     push();
       for (let node of this.nodes) {
         node.draw();
-      }
-      // for (let edge of this.edges) {
-      //   edge.draw();
-      // }
-      for(let community of this.communities) {
-        console.log(community)
-        if(community === undefined || community.length === 0) continue;
-        let centroid = createVector(0, 0);
-        for(let node of community) {
-          centroid.add(node.position);
-        }
-        centroid.div(community.length);
-        let radius = 0;
-        for(let node of community) {
-          let d = p5.Vector.dist(node.position, centroid);
-          radius = max(radius, d);
-        }
-        noFill()
-        circle(centroid.x, centroid.y, radius * 2);
       }
     pop();
   }
