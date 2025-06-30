@@ -119,6 +119,7 @@ function draw(){
   //   console.log("Done with circles");
   //   noLoop();
   // }
+  // noLoop();
 }
 
 function animation_draw(){

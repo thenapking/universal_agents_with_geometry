@@ -193,20 +193,23 @@ class Graph {
     this.chainDecomposition();
     let polylines = [];
     for(let chain of this.chains) {
-      // Skip chains with less than 2 connections
-      // Theses all seem to be duplicates
-      if(chain.length < 3) continue;
+      
+      // TODO
+      // There's a bug in the chain decomposition algorithm
+      // For this data, chains of less than 5 in length, are not really loops.
+      // This causes the "pinched" polygons.  
+      // They are lines which then erroneously have their first point added in again, pulling them back to the start
+      if(chain.length < 5) continue;
       let points = []
       for(let pair of chain) {
         let id = pair[0]
         let node = this.find(id);
         points.push(node.position);
       }
-      let last_node_id = chain[chain.length - 1][1];
+      let last_node_id = chain[chain.length-1][1];
       let last_node= this.find(last_node_id);
       points.push(last_node.position); 
-  
-      let polyline = new Polyline(points).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
+      let polyline = new Polyline(points, false).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
     
       polylines.push(polyline);
     }

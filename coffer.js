@@ -323,7 +323,7 @@ function find_shared_vertices(coffers, adjacency_map){
 }
 
 function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
-  if(depth > 10) { console.log("Recursion depth exceeded for piece", idx);
+  if(depth > 50) { console.log("Recursion depth exceeded for piece", idx);
     results[idx] = 'pink'; // Fallback colour
     return results; 
   } 

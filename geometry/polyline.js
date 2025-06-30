@@ -1,8 +1,8 @@
 const TOLERANCE = 0.0625;
 class Polyline {
-  constructor(points, tolerance = TOLERANCE) {
+  constructor(points, clean = true, tolerance = TOLERANCE) {
     this.points = points;
-    this.clean(tolerance);
+    if(clean) { this.clean(tolerance) }
     this.find_segments();
   }
 
@@ -77,13 +77,12 @@ class Polyline {
         let next = next_segment.to_v();
         let angle = current.angleBetween(next);
         curvature_factor = Math.pow(1 - Math.abs(angle) / Math.PI, 2)
-        // console.log("Curvature factor for segment", i, ":", curvature_factor);
       }
 
       let sw = stroke_width * curvature_factor / 2;
       let normal = segment.normal().mult(sw);
 
-  
+      
       let top = segment.start.copy().add(normal);
       let bottom = segment.start.copy().sub(normal);
   
@@ -95,6 +94,7 @@ class Polyline {
     let last_normal = last_segment.normal().mult(stroke_width / 2);
     let last_top = last_segment.end.copy().add(last_normal);
     let last_bottom = last_segment.end.copy().sub(last_normal);
+
     tops.push(last_top);
     bottoms.push(last_bottom);
   
@@ -175,8 +175,6 @@ class Polyline {
 
     let idx = segment.junctures.findIndex(j => j === juncture);
     let next_idx = direction === 'with' ? idx + 1 : idx - 1;
-    // console.log("!---- Juncture winding:", direction, "Current index:", idx, "Next index:", next_idx);
-    // need some logic to check whether at last or first juncture
     let next_juncture = segment.junctures[next_idx];
     piece.push(next_juncture.point);
     next_juncture.increment();

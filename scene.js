@@ -17,18 +17,17 @@ class Scene {
     this.offscreen_foci = template.offscreen_foci || [];
     this.offscreen_points = [];
     this.offscreen_lines = [];
-    this.offscreen_hotspots = []; 
-    this.hotspots = [];
+    
     this.graph = new Graph(edges);
     this.c_graph = this.graph.louvain(3)
+    this.roads = this.graph.to_polygon()
     
-    this.roads = [];
     this.create_scene();
   }
 
   create_scene(){
     this.create_lines();
-    this.roads = this.graph.to_polygon()
+    
     let potential_circles = this.c_graph.nodes.sort((a, b) => b.radius - a.radius)
     this.split_circles = []
     let p = potential_circles[0];
@@ -57,11 +56,6 @@ class Scene {
         }
       }
     }
-    // let manual_circle = new RegularPolygon(
-    //   FW/2, FH/2,
-    //   250, 250, 300, 'city'
-    // );
-    // this.polycircles.push(manual_circle);
     let disjoint_circles = multi_disjoint(this.polycircles);
 
     this.disjoint_circles = disjoint_circles;
@@ -160,9 +154,9 @@ class Scene {
       }
       noFill();
       stroke(0, 0, 255);
-      for(let p of this.split_circles){
-        p.draw();
-      }
+      // for(let p of this.split_circles){
+      //   p.draw();
+      // }
 
       translate(BW + MBW, BW + MBW);
       rect(W/2, H/2, W, H);
