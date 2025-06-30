@@ -36,5 +36,10 @@ class Edge {
     return id1 < id2 ? `${id1},${id2}` : `${id2},${id1}`;
   }
 
+  draw() {
+    line(this.start.position.x, this.start.position.y, 
+         this.end.position.x,   this.end.position.y    );
+  }
+
   
 }

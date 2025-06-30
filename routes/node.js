@@ -4,6 +4,7 @@ class Node {
   constructor(x, y) {
     this.id = Node.id++; 
     this.position = createVector(x,y);
+    this.community_id = -1; // Default community ID
   }
 
   distance(other) {
@@ -11,6 +12,6 @@ class Node {
   }
 
   draw() {
-    cricle(this.position.x, this.position.y, 5);
+    circle(this.position.x, this.position.y, 5);
   }
 }

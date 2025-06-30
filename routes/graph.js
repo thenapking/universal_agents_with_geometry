@@ -5,11 +5,17 @@
 class Graph {
   constructor(nodes = [], edges = []) {
     this.nodes = [];
+    this.node_ids = [];
     this.edges = new Set();
     this.degrees = new Map(); 
+    this.weighted_degrees = new Map();
+    this.weight = 0;
+    this.community_weight = []; // total links weight
+    this.internal_weight = []
     this.chains = [];
     this.adjacency = new Map();
-    this._modularity = new Map(); // cache 
+    this.node_to_community = new Map();
+    this.communities = [];
     this.initialize(nodes, edges);
   }
 
@@ -27,9 +33,12 @@ class Graph {
     if(!this.adjacency.has(a.id)){
       this.adjacency.set(a.id, []);
       this.nodes.push(a);
+      this.node_ids.push(a.id);
       this.degrees.set(a.id, 0);
     }
   }
+
+  // TO DO: ensure that edge.start.position != edge.end.position
 
   add_edge(edge){
     this.add_node(edge.start);
@@ -40,14 +49,18 @@ class Graph {
     this.adjacency.get(edge.start.id).push(edge);
     this.adjacency.get(edge.end.id).push(edge);
 
-    this.degrees.set(edge.start.id, this.degrees.get(edge.start.id) + 1);
-    this.degrees.set(edge.end.id, this.degrees.get(edge.end.id) + 1);
+    this.degrees.set(edge.start.id, this.adjacency.get(edge.start.id).length);
+    this.degrees.set(edge.end.id, this.adjacency.get(edge.end.id).length);
+
+    this.weight += edge.weight;
   }
+
 
   find(id){
     return this.nodes.find(node => node.id === id);
   }
 
+  // NOT REQUIRED:
   degree(node){
     if (!this.adjacency.has(node.id)) return 0;
     return this.adjacency.get(node.id).length;
@@ -194,182 +207,149 @@ class Graph {
     return chain;  // Return the chain of nodes
   }
 
-  modularity(communities) {
-    if (!this._modularity) this._modularity = new Map();
-
-    const key = this.keyForCommunities(communities);
-    if (this._modularity.has(key)) {
-      return this._modularity.get(key);
+  modularity() {
+    let result = 0;
+    for(let i = 0; i < this.nodes.length; i++) {
+      // i is community id
+      if(this.community_weight[i] === 0) continue; // no links in this community
+      let dw = this.community_weight[i] / this.weight;
+      let iw = this.internal_weight[i] / this.weight; 
+      result += (iw) - (dw * dw);
     }
 
-    const m = this.edges.size; // edges is a set
-    let Q = 0;
-    
-    for(let community of communities) {
-      for (let i = 0; i < community.length; i++) {
-        const node = community[i];
-        for (let j = i + 1; j < community.length; j++) {
-          const other = community[j];
-          
-          const A = this.has_edge(node, other) ? 1 : 0;
-          const dN = this.degrees.get(node.id);
-          const dO = this.degrees.get(other.id);
-          
-          Q += A - (dN * dO) / (2 * m);
-        }
-      }
-    }
-    let result = Q / (2 * m);
-    this._modularity.set(key, result);
     return result;
-  }
-
-  keyForCommunities(communities) {
-    return communities
-      .map(comm => comm.map(n => n.id).sort((a, b) => a - b).join("-"))
-      .sort()  // to make key order-invariant
-      .join("_");
-  }
-
-  base_communitys(){
-    let communities = [];
-    for (let node of this.nodes) {
-      communities.push([node]);
-    }
-    return communities;
-  }
-
-  find_communities({ resolution = 1, threshold = 1e-7, maxLevel = 2, seed = Math.random } = {}) {
-    const levels = [];
-    let communities = this.base_communitys(); // initial: each node its own community
-    let mod = this.modularity(communities);
-  
-    let level = 0;
-    let improvement = true;
-  
-    while (improvement && (maxLevel === null || level < maxLevel)) {
-      const { newCommunities, improved } = this._louvainOneLevel(communities, resolution, seed);
-      const newMod = this.modularity(newCommunities);
-      console.log(`Level ${level}: Modularity = ${newMod}, Improvement = ${improved}`);
-      levels.push(newCommunities);
-  
-      if (!improved || (newMod - mod < threshold)) {
-        break;
-      }
-  
-      communities = newCommunities;
-      mod = newMod;
-      level += 1;
-    }
-  
-    return 
-  }
-
-  // THIS JUNK METHOD JUST DOESN@T WORK
-  // WE NEED TO BE VERY CAREFUL AND GO BACK TO THE NETWORK X CODE.
-  // THE PREVIOUS FIND COMMUNITIES METHOD FROM NETWORK X WAS ALSO EXTREMELY SLOW
-  // WE'RE ADDING A LOT OF CONCEPTUAL OVERHEAD HERE
-  _louvainOneLevel(communities, resolution, seed = Math.random) {
-    const node2com = new Map();
-    communities.forEach((group, index) => {
-      for (const node of group) {
-        node2com.set(node.id, index);
-      }
-    });
-
-    console.time("community lookup test");
-
-    for (let u of this.nodes) {
-      const neighbors = this.adjacency.get(u.id);
-      for (let edge of neighbors) {
-        const v = edge.start.id === u.id ? edge.end : edge.start;
-        // simulate community lookup
-        const vCommunity = node2com.get(v.id);  // pretend you have a Map
-      }
-    }
     
-    console.timeEnd("community lookup test");
-  
-    const communityMap = communities.map(group => new Set(group.map(n => n.id)));
-    const degrees = this.degrees;
-    const m2 = this.edges.size * 2;
-  
-    let improvement = false;
-    let nbMoves = 1;
-    const shuffledNodes = shuffle(this.nodes);
-    
-  
-    while (nbMoves > 0) {
-      nbMoves = 0;
-  
-      for (const node of shuffledNodes) {
-        const nodeId = node.id;
-        const currentCom = node2com.get(nodeId);
-        const degree = degrees.get(nodeId);
-  
-        // Track connection weights to each community
-        const neighComWeights = new Map();
-        const edges = this.adjacency.get(nodeId);
-        for (const edge of edges) {
-          const neighbor = edge.grab(nodeId);
-          const neighborCom = node2com.get(neighbor.id);
-          const weight = 1;
-          neighComWeights.set(neighborCom, (neighComWeights.get(neighborCom) || 0) + weight);
-        }
-  
-        let bestCom = currentCom;
-        let bestGain = 0;
-  
-        const totalInCurrent = this._communityDegreeSum(communityMap[currentCom], degrees);
-        const removeCost = -(neighComWeights.get(currentCom) || 0) / m2 +
-          resolution * ((totalInCurrent - degree) * degree) / (m2 * m2);
-  
-        for (const [neighborCom, kiIn] of neighComWeights.entries()) {
-          if (neighborCom === currentCom) continue;
-          const totalInNeighbor = this._communityDegreeSum(communityMap[neighborCom], degrees);
-          const gain = removeCost + (kiIn / m2) -
-            resolution * (totalInNeighbor * degree) / (m2 * m2);
-  
-          if (gain > bestGain) {
-            bestGain = gain;
-            bestCom = neighborCom;
+  }
+
+  modularity_gain(shared_weight, community_id, weighted_degree) {
+    let dw = this.community_weight[community_id] / this.weight;
+    let gain = shared_weight - weighted_degree * dw;
+    return gain;
+  }
+
+
+  basic_communities(){
+    this.weighted_degrees = new Map(); 
+    this.community_weight = new Map(); // total links weight
+
+    for (let community_id = 0; community_id < this.nodes.length; community_id++) {
+      let node = this.nodes[community_id];
+      
+
+      let weighted_degree = 0;
+      let neighbours = this.adjacency.get(node.id)
+
+      for(let edge of neighbours) {
+        weighted_degree += edge.weight;
+      }
+
+      this.weighted_degrees.set(node.id, weighted_degree);
+      node.community_id = community_id; // Assign community ID to the node
+      this.community_weight[community_id] =  weighted_degree;
+      this.internal_weight[community_id] = 0; 
+    }
+  }
+
+  create_communities(){
+    this.basic_communities();
+
+    let delta = Infinity;
+    let score = this.modularity();
+    let tolerance = 1e-6;
+    let node_ids = shuffle(this.node_ids);  
+    let moves = 1;
+
+    for(let i = 0; i < 100; i++) {
+      if(delta < tolerance) { break; }
+      if(moves === 0) { break; }
+
+      moves = 0;
+
+      node_ids = shuffle(node_ids);
+      for(let node_id of node_ids) {
+        let node = this.find(node_id);
+        let community_id = node.community_id;
+        let neighbourhood = this.neighbourhood(node);
+        let shared_weight = neighbourhood.get(community_id) || 0;
+
+        this.remove_node_from_community(node, community_id, shared_weight);
+
+        let best_community_id = community_id;
+        let best_gain = 0;
+        let weighted_degree = this.weighted_degrees.get(node_id) || 0;
+        for(let [other_community_id, weight] of neighbourhood) {
+          if(other_community_id === community_id) continue; // skip current community
+          let gain = this.modularity_gain(weight, other_community_id, weighted_degree);
+          if(gain > best_gain) {
+            best_gain = gain;
+            best_community_id = other_community_id;
           }
         }
-  
-        if (bestCom !== currentCom) {
-          // console.log(`Node ${nodeId} moved from community ${currentCom} to ${bestCom} with gain ${bestGain}`);
-          communityMap[currentCom].delete(nodeId);
-          communityMap[bestCom].add(nodeId);
-          node2com.set(nodeId, bestCom);
-          nbMoves++;
-          improvement = true;
+
+        let best_shared_weight = neighbourhood.get(best_community_id) || 0;
+        console.log()
+        this.add_node_to_community(node, best_community_id, best_shared_weight);
+        if(best_community_id !== community_id) { moves++; }
+      }
+
+
+
+      let new_score = this.modularity();  
+      delta = new_score - score;
+      console.log("Delta: ", delta, "Score: ", new_score, "moves: ", moves);
+      score = new_score;
+    }
+
+    // After the loop, we can finalize the communities
+    this.communities = [];
+    for (let i = 0; i < this.nodes.length; i++) {
+      let node = this.nodes[i];
+      let community_id = node.community_id;
+      
+      if (community_id >= 0) {
+        if(this.communities[community_id] === undefined) {
+          this.communities[community_id] = [];
         }
+
+        this.communities[community_id].push(this.nodes[i]);
       }
     }
-  
-    // Reconstruct new communities
-    const newCommunities = [];
-    const newComMap = new Map();
-    for (const [nodeId, com] of node2com.entries()) {
-      if (!newComMap.has(com)) newComMap.set(com, []);
-      newComMap.get(com).push(this.find(nodeId));
-    }
-    for (const group of newComMap.values()) {
-      newCommunities.push(group);
-    }
-    
-    console.log(`Louvain level completed with ${newCommunities.length} communities and ${nbMoves} moves.`);
-    return { newCommunities, improved: improvement };
+
   }
 
-  _communityDegreeSum(communitySet, degreeMap) {
-    let sum = 0;
-    for (const id of communitySet) {
-      sum += degreeMap.get(id);
-    }
-    return sum;
+  add_node_to_community(node, community_id, shared_links_weight = 0) {
+    node.community_id = community_id;
+    let weighted_degree = this.weighted_degrees.get(node.id) || 0;
+    this.community_weight[community_id] += weighted_degree;
+    this.internal_weight[community_id] += 2 * shared_links_weight;
+
+  }
+
+  remove_node_from_community(node, community_id, shared_links_weight = 0) {
+    node.community_id = -1; 
+    let weighted_degree = this.weighted_degrees.get(node.id) || 0;
+    this.community_weight[community_id] -= weighted_degree;
+    this.internal_weight[community_id] -= 2 * shared_links_weight;
   }
   
+  neighbourhood(node) {
+    let neighbours = this.adjacency.get(node.id);
+
+    let nmap = new Map();
+    let community_id = node.community_id;
+    nmap.set(community_id, 0);
+    
+    for (let edge of neighbours) {
+      // neighbours is a collection of Edges
+      let other_node = edge.grab(node.id);
+      let other_community_id = other_node.community_id;
+      let current = nmap.get(other_community_id) || 0;
+      
+      nmap.set(other_community_id, current + edge.weight);
+    }
+    
+    return nmap
+  }
 
   // Katz centrality algorithm
   // Works better with weighted edges
@@ -409,6 +389,31 @@ class Graph {
   
     return results;
   }
-  
-  
+
+  draw(){
+    push();
+      for (let node of this.nodes) {
+        node.draw();
+      }
+      // for (let edge of this.edges) {
+      //   edge.draw();
+      // }
+      for(let community of this.communities) {
+        console.log(community)
+        if(community === undefined || community.length === 0) continue;
+        let centroid = createVector(0, 0);
+        for(let node of community) {
+          centroid.add(node.position);
+        }
+        centroid.div(community.length);
+        let radius = 0;
+        for(let node of community) {
+          let d = p5.Vector.dist(node.position, centroid);
+          radius = max(radius, d);
+        }
+        noFill()
+        circle(centroid.x, centroid.y, radius * 2);
+      }
+    pop();
+  }
 }
