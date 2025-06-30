@@ -119,54 +119,64 @@ class Graph {
     return null;
   }
 
-  // Use depth-first search to find cycles in the forest of the graph
-  cycles(root) {
+  dfsCycleForest(root) {
     const visited = new Set();
     const parent = {};
-    const cycles = [];
+    const nontreeEdges = [];
     const stack = [root];
-    const nodes = [];
+    const dfsNodes = [];
 
     while (stack.length) {
       const node = stack.pop();
       if (!visited.has(node.id)) {
         visited.add(node.id);
-        nodes.push(node);
+        dfsNodes.push(node);
+        for (const edge of this.adjacency.get(node.id)) {
+          const neighbor = (edge.start_id === node.id) ? edge.end : edge.start;
 
-        let edges = this.adjacency.get(node.id)
-        for (let edge of edges) {
-          const neighbour = edge.grab(node.id)
-
-          if (!visited.has(neighbour.id)) {
-            parent[neighbour.id] = node.id;
-            stack.push(neighbour);
-          } else if (parent[node.id] !== neighbour.id) {
-            cycles.push(edge);
+          if (!visited.has(neighbor.id)) {
+            parent[neighbor.id] = node;
+            stack.push(neighbor);
+          } else if (parent[node.id] !== neighbor.id) {
+            // Non-tree edge (cycle edge)
+            nontreeEdges.push([node.id, neighbor.id].sort().join(","));
           }
         }
       }
     }
-
-    return { parent, cycles, nodes };
+    console.log(nontreeEdges)
+    return { parent, nontreeEdges, dfsNodes };
   }
 
-  decompose() {
+  buildChain(G, u, v, visited) {
+    const chain = [];
+    while (!visited.has(v)) {
+      chain.push([u, v]);
+      visited.add(v);
+      u = v;
+      v = G[u];
+    }
+    chain.push([u, v]);
+    return chain;
+  }
+
+  chainDecomposition() {
     const chains = [];
     const visited = new Set();
 
+    // Loop over all nodes to make sure we process each component
     for (const node of this.nodes) {
       if (!visited.has(node.id)) {
-        const { parent, cycles, nodes } = this.cycles(node);
-        
+        const { parent, nontreeEdges, dfsNodes } = this.dfsCycleForest(node);
+
         // For each node and its non-tree edges, generate the chains
-        for (const other of nodes) {
+        for (const other of dfsNodes) {
           visited.add(other.id);
-          for (const edge of cycles) {
-            let start = edge.start;
-            let end = edge.end;
-            if (start.id === node.id || end.id === node.id) {
+          for (const edge of nontreeEdges) {
+            const [u, v] = edge.split(",").map(Number);
+            if (u === other.id || v === other.id) {
               // Create the cycle or cycle prefix starting with the non-tree edge
-              const chain = this.create_chain(parent, start, end, visited);
+              const chain = this.buildChain(parent, u, v, visited);
               chains.push(chain);
             }
           }
@@ -176,28 +186,130 @@ class Graph {
     return chains;
   }
 
-  create_chain(parent, start, end, visited) {
-    console.log("Creating chain from", start, "to", end, "with parent map:", parent);
-    const chain = [start];  
-    visited.add(start);
-  
-    // Move forwards through the chain using the parent map
-    while (end !== start && !visited.has(end)) {
-      chain.push(end);
-      visited.add(end);
-      
-      if (parent[end.id] === undefined) {
-        break;  // Exit if parent is missing
-      }
+  // Use depth-first search to find cycles in the forest of the graph
+  find_cycles(root) {
+    const visited = new Set();
+    const parent = {};
+    const cycles = [];
+    const stack = [root];
+    const dfs_nodes = [];
 
-      end = parent[end.id]; 
+    while (stack.length) {
+      const node = stack.pop();
+      // console.log("Visiting node: ", node.id);
+      if (!visited.has(node.id)) {
+        visited.add(node.id);
+        dfs_nodes.push(node);
+
+        let edges = this.adjacency.get(node.id)
+        for (let edge of edges) {
+          const neighbour = edge.grab(node.id)
+          // console.log("Checking neighbour: ", neighbour.id);
+          if (!visited.has(neighbour.id)) {
+            // console.log("Visiting neighbour: ", neighbour.id);
+            parent[neighbour.id] = node;
+            stack.push(neighbour);
+          } else if (parent[node.id] !== neighbour.id) {
+            // console.log("Found cycle edge: ", edge);
+            cycles.push(edge);
+          }
+        }
+      }
+    }
+    console.log("Cycles found: ", cycles.length);
+    console.log(cycles);
+    console.log(nodes);
+    return { parent, cycles, dfs_nodes };
+  }
+
+
+  decompose() {
+    this.chains = [];
+    const visited = new Set();
+
+    for (const node of this.nodes) {
+      if (!visited.has(node.id)) {
+        const { parent, cycles, dfs_nodes } = this.find_cycles(node);
+        console.log("Decomposing node: ", node.id);
+        
+        // For each node and its non-tree edges, generate the chains
+        for (const other of dfs_nodes) {
+          visited.add(other.id);
+          console.log("Processing node: ", other.id);
+          for (const edge of cycles) {
+            let start = edge.start;
+            let end = edge.end;
+            if (start.id === other.id || end.id === other.id) {
+              if(start.id === end.id) {console.log("-------- EQUAL")}
+              console.log("Found non-tree edge: ", edge);
+              // Create the cycle or cycle prefix starting with the non-tree edge
+              const chain = this.create_chain(parent, start, end, visited);
+              if(chain.length > 0) {
+                console.log("Created chain: ", chain);
+
+                this.chains.push(chain);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+
+  create_chain(parent, start, end, visited) {
+    const chain = [start];  
+    visited.add(start.id);
+    let current = end;  // Start from the parent of the start node
+    // Move forwards through the chain using the parent map
+    while (current.id !== start.id && !visited.has(current.id)) {
+      chain.push(current);
+      visited.add(current.id);
+      current = parent[current.id]; 
+    }
+
+    if (!current || current.id !== start.id) {
+      return []; // incomplete path, bail
     }
   
-    if (start !== end) {
-      chain.push(start);
-    }
   
     return chain;  // Return the chain of nodes
+  }
+
+  buildChain(G, u, v, visited) {
+    const chain = [];
+    while (!visited.has(v)) {
+      chain.push([u, v]);
+      visited.add(v);
+      u = v;
+      if(u === undefined) { break; }
+      // console.log("Visiting node: ", u);
+      v = G[u.id];
+    }
+    chain.push([u, v]);
+    return chain;
+  }
+
+
+  to_polygon(){
+    let decomposition = this.decompose();
+    let polylines = [];
+    for(let chain of decomposition) {
+      // Skip chains with less than 2 connections
+      // Theses all seem to be duplicates
+      if(chain.length < 3) continue; 
+      let points = []
+      for(let node of chain) {
+        points.push(node.position);
+      }
+      let last_node = chain[chain.length - 1];
+      points.push(last_node.position); 
+      console.log(points)
+      let polyline = new Polyline(points).to_bezier(60).to_polygon(5, 'road');
+      polylines.push(polyline);
+    }
+    return polylines;
   }
 
   modularity() {
@@ -281,7 +393,6 @@ class Graph {
         }
 
         let best_shared_weight = neighbourhood.get(best_community_id) || 0;
-        console.log()
         this.add_node_to_community(node, best_community_id, best_shared_weight);
         if(best_community_id !== community_id) { moves++; }
       }
@@ -290,7 +401,6 @@ class Graph {
 
       let new_score = this.modularity();  
       delta = new_score - score;
-      console.log("Delta: ", delta, "Score: ", new_score, "moves: ", moves);
       score = new_score;
     }
 
@@ -342,7 +452,6 @@ class Graph {
       new_edges.push(new_edge);
     }
 
-    console.log(new_nodes, new_edges);
     let new_graph = new Graph(new_nodes, new_edges);
 
 
@@ -386,10 +495,8 @@ class Graph {
   louvain(n = 2){
     let current = this;
     for(let i = 0; i < n; i++) {
-      console.log("Iteration:", i);
       current.create_communities();
       const nc = current.communities.filter(c => c).length;
-      console.log("Number of communities:", nc);
       if(nc === current.nodes.length) { break }
       current = current.create_graph_from_communities();
     }
@@ -422,7 +529,6 @@ class Graph {
           sum += edge.weight * previous[edge.end.id];
         }
         
-        console.log(sum)
         results[node.id] = beta + alpha * sum;
   
         const change = Math.abs(results[node.id] - previous[node.id]);

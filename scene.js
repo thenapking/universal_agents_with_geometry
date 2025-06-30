@@ -19,7 +19,7 @@ class Scene {
     this.offscreen_lines = [];
     this.offscreen_hotspots = []; 
     this.hotspots = [];
-    this.graph = new Graph(hotspots, connections);
+    this.graph = new Graph(nodes, edges);
     this.focus_roads = []
     this.roads = [];
     this.create_scene();
@@ -27,96 +27,9 @@ class Scene {
 
   create_scene(){
     this.create_lines();
-    this.create_onscreen_foci_from_offscreen_lines()
-    this.offscreen_hotspots = this.find_hotspots(this.offscreen_foci, false);
-    this.hotspots = this.find_hotspots(this.foci, false);
-    let polyline_roads = this.graph.to_polygon()
     
-    this.roads = unionPolygons(polyline_roads);
-    this.create_onscreen_connections();
-    create_coffers(this.potential_coffers, []);
   }
 
-  
-
-
-  create_offscreen_connections(){
-    let roads = [];
-    let selected = this.offscreen_hotspots.concat(this.hotspots);
-
-    // TODO, lines self intersect if the sw > 5
-    for(let h of selected){
-      for(let other of selected){
-        if(h.id === other.id){ continue; }
-        let road_points = this.graph.shortest(h.id, other.id);
-        let polyline = new Polyline(road_points) //.to_bezier(40);
-        let intersects = false;
-        for(let existing of roads){
-          if(polyline.intersects(existing)){
-            intersects = true;
-            break;
-          }
-        }
-        if(intersects){ continue; }
-        roads.push(polyline);
-      }
-    }
-
-    return roads
-  }
-
-  create_onscreen_connections(){
-    for(let i = 0; i < this.hotspots.length; i++){
-      let h = this.hotspots[i];
-      let s = this.sizes[i];
-      let poly = new RegularPolygon(
-        h.position.x, 
-        h.position.y, 
-        s, s, 100, 'city'
-      );
-
-      let p = this.create_onscreen_connection(h, s, poly);
-      this.focus_roads.push(p);
-      
-      this.polycircles.push(poly);
-      let potential_coffers = poly.xor(p);
-      console.log("Potential coffers:", potential_coffers);
-      if(potential_coffers.length > 0){
-        for(let pc of potential_coffers){
-          this.potential_coffers.push(pc);
-        }
-      }
-    }
-  }
-
-  create_onscreen_connection(hotspot, r, poly){
-    let selected = []
-    let f = createVector(hotspot.position.x, hotspot.position.y);
-    for(let connection of connections){
-      let fx = connection.from.position.x;
-      let fy = connection.from.position.y;
-      let tx = connection.to.position.x;
-      let ty = connection.to.position.y;
-      let from = createVector(fx, fy);
-      let to = createVector(tx, ty);
-      if(p5.Vector.dist(from, f) < r || p5.Vector.dist(to, f) < r){
-        
-        let pl = new Polyline([from, to]).to_polygon(10, 'road');
-        selected.push(pl);
-      }
-    }
-
-    let unionized = selected[0];
-    for(let i = 1; i < selected.length; i++){
-      unionized = unionized.union(selected[i])[0];
-    }
-
-    let final = unionPolygons([this.roads, unionized]);
-
-    let intersected = poly.intersection(unionized, true);
-    return intersected[0];
-
-  }
 
   create_lines(){
     this.add_full_line(this.foci[0], this.offscreen_foci[0], createVector(BW + MBW, BW + MBW) );
@@ -125,19 +38,7 @@ class Scene {
     }
   }
 
-  create_onscreen_foci_from_offscreen_lines(){
-    for(let a of this.offscreen_lines){
-      for(let b of this.offscreen_lines){
-        if(a === b) continue; // Avoid self-comparison
-        let intersection = a.intersection(b);
-        if(intersection.length > 0){
-          let x = intersection[0].x - (BW + MBW);
-          let y = intersection[0].y - (BW + MBW);
-          this.foci.push(createVector(x, y));
-        }
-      }
-    }
-  }
+  
 
   find_hotspots(points, major){
     let hotspots = [];

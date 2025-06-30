@@ -94,8 +94,7 @@ function setup(){
       // createVector(W/4 + BW + MBW, 0),
       // createVector(3*W/4 + BW + MBW, 0),
     ]};
-  // scene = new Scene(template)
-  // scene.draw();
+  scene = new Scene(template)
 
   default_setup()
   // piecesE = scene.graph.to_polygon();
@@ -103,9 +102,10 @@ function setup(){
 
 let ctx = 0;
 function draw(){
+  scene.draw();
   
   translate(BW, BW-2*MBW);
-  animation_draw();
+  // animation_draw();
 
   // stroke(255,0,0)
   // let p = piecesE[ctx]
@@ -116,6 +116,7 @@ function draw(){
   // } else{
   //   noLoop();
   // }
+  noLoop();
 }
 
 function animation_draw(){
