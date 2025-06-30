@@ -1,4 +1,3 @@
-// TODO finish off Katz Centrality and Communities and Test
 // Rewrite Scene, so that we find the principal coffer by centrality
 // Identify the other coffers by communities
 // Add in the code to draw convert the graph as polylines, and draw it
@@ -240,60 +239,144 @@ class Graph {
     return communities;
   }
 
-  // I think this doesn't halt
-  find_communities() {
-    let communities = this.base_communitys();
-
-    let highest = this.modularity(communities);
-    console.log(`Initial modularity: ${highest}`);
+  find_communities({ resolution = 1, threshold = 1e-7, maxLevel = 2, seed = Math.random } = {}) {
+    const levels = [];
+    let communities = this.base_communitys(); // initial: each node its own community
+    let mod = this.modularity(communities);
+  
+    let level = 0;
     let improvement = true;
-    let guard = 0
-    while (improvement && guard < 100) {
-      // console.log(`Iteration ${guard}: Current highest modularity: ${highest}`);
-      guard++;
-      improvement = false;
-      let best_i = null;
-      let best_j = null;
-      let best_delta = 0;
   
-      for (let i = 0; i < communities.length; i++) {
-        for (let j = i + 1; j < communities.length; j++) {
-          const merged = [...communities[i], ...communities[j]];
-          
-          const trial = [...communities];  
-          trial[i] = merged;  
-          trial.splice(j, 1);  
+    while (improvement && (maxLevel === null || level < maxLevel)) {
+      const { newCommunities, improved } = this._louvainOneLevel(communities, resolution, seed);
+      const newMod = this.modularity(newCommunities);
+      console.log(`Level ${level}: Modularity = ${newMod}, Improvement = ${improved}`);
+      levels.push(newCommunities);
   
-          const modularity = this.modularity(trial);
-          const delta = modularity - highest;
-  
-          if (delta > best_delta) {
-            console.log(`Found better community merge: ${i} + ${j} with delta ${delta}`);
-            best_delta = delta;
-            best_i = i;
-            best_j = j;
-            improvement = true;
-          }
-        }
+      if (!improved || (newMod - mod < threshold)) {
+        break;
       }
   
-      if (best_i) {
-        communities[best_i] = [...communities[best_i], ...communities[best_j]];
-        communities.splice(j, 1);
-        highest += best_delta;
+      communities = newCommunities;
+      mod = newMod;
+      level += 1;
+    }
+  
+    return 
+  }
+
+  // THIS JUNK METHOD JUST DOESN@T WORK
+  // WE NEED TO BE VERY CAREFUL AND GO BACK TO THE NETWORK X CODE.
+  // THE PREVIOUS FIND COMMUNITIES METHOD FROM NETWORK X WAS ALSO EXTREMELY SLOW
+  // WE'RE ADDING A LOT OF CONCEPTUAL OVERHEAD HERE
+  _louvainOneLevel(communities, resolution, seed = Math.random) {
+    const node2com = new Map();
+    communities.forEach((group, index) => {
+      for (const node of group) {
+        node2com.set(node.id, index);
+      }
+    });
+
+    console.time("community lookup test");
+
+    for (let u of this.nodes) {
+      const neighbors = this.adjacency.get(u.id);
+      for (let edge of neighbors) {
+        const v = edge.start.id === u.id ? edge.end : edge.start;
+        // simulate community lookup
+        const vCommunity = node2com.get(v.id);  // pretend you have a Map
+      }
+    }
+    
+    console.timeEnd("community lookup test");
+  
+    const communityMap = communities.map(group => new Set(group.map(n => n.id)));
+    const degrees = this.degrees;
+    const m2 = this.edges.size * 2;
+  
+    let improvement = false;
+    let nbMoves = 1;
+    const shuffledNodes = shuffle(this.nodes);
+    
+  
+    while (nbMoves > 0) {
+      nbMoves = 0;
+  
+      for (const node of shuffledNodes) {
+        const nodeId = node.id;
+        const currentCom = node2com.get(nodeId);
+        const degree = degrees.get(nodeId);
+  
+        // Track connection weights to each community
+        const neighComWeights = new Map();
+        const edges = this.adjacency.get(nodeId);
+        for (const edge of edges) {
+          const neighbor = edge.grab(nodeId);
+          const neighborCom = node2com.get(neighbor.id);
+          const weight = 1;
+          neighComWeights.set(neighborCom, (neighComWeights.get(neighborCom) || 0) + weight);
+        }
+  
+        let bestCom = currentCom;
+        let bestGain = 0;
+  
+        const totalInCurrent = this._communityDegreeSum(communityMap[currentCom], degrees);
+        const removeCost = -(neighComWeights.get(currentCom) || 0) / m2 +
+          resolution * ((totalInCurrent - degree) * degree) / (m2 * m2);
+  
+        for (const [neighborCom, kiIn] of neighComWeights.entries()) {
+          if (neighborCom === currentCom) continue;
+          const totalInNeighbor = this._communityDegreeSum(communityMap[neighborCom], degrees);
+          const gain = removeCost + (kiIn / m2) -
+            resolution * (totalInNeighbor * degree) / (m2 * m2);
+  
+          if (gain > bestGain) {
+            bestGain = gain;
+            bestCom = neighborCom;
+          }
+        }
+  
+        if (bestCom !== currentCom) {
+          // console.log(`Node ${nodeId} moved from community ${currentCom} to ${bestCom} with gain ${bestGain}`);
+          communityMap[currentCom].delete(nodeId);
+          communityMap[bestCom].add(nodeId);
+          node2com.set(nodeId, bestCom);
+          nbMoves++;
+          improvement = true;
+        }
       }
     }
   
-    return communities;
+    // Reconstruct new communities
+    const newCommunities = [];
+    const newComMap = new Map();
+    for (const [nodeId, com] of node2com.entries()) {
+      if (!newComMap.has(com)) newComMap.set(com, []);
+      newComMap.get(com).push(this.find(nodeId));
+    }
+    for (const group of newComMap.values()) {
+      newCommunities.push(group);
+    }
+    
+    console.log(`Louvain level completed with ${newCommunities.length} communities and ${nbMoves} moves.`);
+    return { newCommunities, improved: improvement };
   }
 
+  _communityDegreeSum(communitySet, degreeMap) {
+    let sum = 0;
+    for (const id of communitySet) {
+      sum += degreeMap.get(id);
+    }
+    return sum;
+  }
+  
+
   // Katz centrality algorithm
-  // Requires edges to be weighted
-  centrality({ alpha = 0.1, beta = 1, guard = 100, tol = 1e-6 } = {}) {
+  // Works better with weighted edges
+  centrality({ alpha = 0.1, beta = 1, guard = 1000, tol = 1e-6 } = {}) {
     const results = {};
     const previous = {};
   
-    // Initialize centrality scores
     for (const node of this.nodes) {
       results[node.id] = 1;
     }
@@ -301,7 +384,6 @@ class Graph {
     for (let i = 0; i < guard; i++) {
       let maximum = 0;
   
-      // Copy previous values
       for (const id in results) {
         previous[id] = results[id];
       }
@@ -311,7 +393,7 @@ class Graph {
         const incoming = this.adjacency.get(node.id);
 
         for (const edge of incoming) {
-          sum += edge.weight * previous[edge.from];
+          sum += edge.weight * previous[edge.end.id];
         }
   
         results[node.id] = beta + alpha * sum;
@@ -321,7 +403,6 @@ class Graph {
       }
   
       if (maximum < tol) {
-        console.log(`Katz converged in ${i + 1} iterations`);
         break;
       }
     }
