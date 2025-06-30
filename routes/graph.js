@@ -1,9 +1,5 @@
-// Rewrite Scene, so that we find the principal coffer by centrality
-// Identify the other coffers by communities
-// Add in the code to draw convert the graph as polylines, and draw it
-// See if we can refactor in the stuff from coffers.
 class Graph {
-  constructor(nodes = [], edges = []) {
+  constructor(edges = []) {
     this.nodes = [];
     this.node_ids = [];
     this.edges = []
@@ -119,6 +115,7 @@ class Graph {
     return null;
   }
 
+  // TO DO REFACTOR THESE UGLY, BUT WORKING METHODS
   dfsCycleForest(root) {
     const visited = new Set();
     const parent = {};
@@ -135,7 +132,7 @@ class Graph {
           const neighbor = (edge.start_id === node.id) ? edge.end : edge.start;
 
           if (!visited.has(neighbor.id)) {
-            parent[neighbor.id] = node;
+            parent[neighbor.id] = node.id;
             stack.push(neighbor);
           } else if (parent[node.id] !== neighbor.id) {
             // Non-tree edge (cycle edge)
@@ -144,7 +141,6 @@ class Graph {
         }
       }
     }
-    console.log(nontreeEdges)
     return { parent, nontreeEdges, dfsNodes };
   }
 
@@ -167,88 +163,20 @@ class Graph {
     // Loop over all nodes to make sure we process each component
     for (const node of this.nodes) {
       if (!visited.has(node.id)) {
+        // console.log("Processing node: ", node.id);
         const { parent, nontreeEdges, dfsNodes } = this.dfsCycleForest(node);
 
         // For each node and its non-tree edges, generate the chains
         for (const other of dfsNodes) {
+          
           visited.add(other.id);
           for (const edge of nontreeEdges) {
             const [u, v] = edge.split(",").map(Number);
             if (u === other.id || v === other.id) {
+              // console.log("Found non-tree edge: ", edge, other.id);
               // Create the cycle or cycle prefix starting with the non-tree edge
               const chain = this.buildChain(parent, u, v, visited);
-              chains.push(chain);
-            }
-          }
-        }
-      }
-    }
-    return chains;
-  }
-
-  // Use depth-first search to find cycles in the forest of the graph
-  find_cycles(root) {
-    const visited = new Set();
-    const parent = {};
-    const cycles = [];
-    const stack = [root];
-    const dfs_nodes = [];
-
-    while (stack.length) {
-      const node = stack.pop();
-      // console.log("Visiting node: ", node.id);
-      if (!visited.has(node.id)) {
-        visited.add(node.id);
-        dfs_nodes.push(node);
-
-        let edges = this.adjacency.get(node.id)
-        for (let edge of edges) {
-          const neighbour = edge.grab(node.id)
-          // console.log("Checking neighbour: ", neighbour.id);
-          if (!visited.has(neighbour.id)) {
-            // console.log("Visiting neighbour: ", neighbour.id);
-            parent[neighbour.id] = node;
-            stack.push(neighbour);
-          } else if (parent[node.id] !== neighbour.id) {
-            // console.log("Found cycle edge: ", edge);
-            cycles.push(edge);
-          }
-        }
-      }
-    }
-    console.log("Cycles found: ", cycles.length);
-    console.log(cycles);
-    console.log(nodes);
-    return { parent, cycles, dfs_nodes };
-  }
-
-
-  decompose() {
-    this.chains = [];
-    const visited = new Set();
-
-    for (const node of this.nodes) {
-      if (!visited.has(node.id)) {
-        const { parent, cycles, dfs_nodes } = this.find_cycles(node);
-        console.log("Decomposing node: ", node.id);
-        
-        // For each node and its non-tree edges, generate the chains
-        for (const other of dfs_nodes) {
-          visited.add(other.id);
-          console.log("Processing node: ", other.id);
-          for (const edge of cycles) {
-            let start = edge.start;
-            let end = edge.end;
-            if (start.id === other.id || end.id === other.id) {
-              if(start.id === end.id) {console.log("-------- EQUAL")}
-              console.log("Found non-tree edge: ", edge);
-              // Create the cycle or cycle prefix starting with the non-tree edge
-              const chain = this.create_chain(parent, start, end, visited);
-              if(chain.length > 0) {
-                console.log("Created chain: ", chain);
-
-                this.chains.push(chain);
-              }
+              this.chains.push(chain);
             }
           }
         }
@@ -256,57 +184,30 @@ class Graph {
     }
   }
 
-
-
-  create_chain(parent, start, end, visited) {
-    const chain = [start];  
-    visited.add(start.id);
-    let current = end;  // Start from the parent of the start node
-    // Move forwards through the chain using the parent map
-    while (current.id !== start.id && !visited.has(current.id)) {
-      chain.push(current);
-      visited.add(current.id);
-      current = parent[current.id]; 
-    }
-
-    if (!current || current.id !== start.id) {
-      return []; // incomplete path, bail
-    }
   
-  
-    return chain;  // Return the chain of nodes
-  }
 
-  buildChain(G, u, v, visited) {
-    const chain = [];
-    while (!visited.has(v)) {
-      chain.push([u, v]);
-      visited.add(v);
-      u = v;
-      if(u === undefined) { break; }
-      // console.log("Visiting node: ", u);
-      v = G[u.id];
-    }
-    chain.push([u, v]);
-    return chain;
-  }
+
 
 
   to_polygon(){
-    let decomposition = this.decompose();
+    this.chainDecomposition();
     let polylines = [];
-    for(let chain of decomposition) {
+    for(let chain of this.chains) {
       // Skip chains with less than 2 connections
       // Theses all seem to be duplicates
-      if(chain.length < 3) continue; 
+      if(chain.length < 3) continue;
       let points = []
-      for(let node of chain) {
+      for(let pair of chain) {
+        let id = pair[0]
+        let node = this.find(id);
         points.push(node.position);
       }
-      let last_node = chain[chain.length - 1];
+      let last_node_id = chain[chain.length - 1][1];
+      let last_node= this.find(last_node_id);
       points.push(last_node.position); 
-      console.log(points)
-      let polyline = new Polyline(points).to_bezier(60).to_polygon(5, 'road');
+  
+      let polyline = new Polyline(points).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
+    
       polylines.push(polyline);
     }
     return polylines;
@@ -362,7 +263,7 @@ class Graph {
     let delta = Infinity;
     let score = this.modularity();
     let tolerance = 1e-6;
-    let node_ids = shuffle(this.node_ids);  
+    let node_ids = deterministic_shuffle(this.node_ids);  
     let moves = 1;
 
     for(let i = 0; i < 100; i++) {
@@ -371,7 +272,7 @@ class Graph {
 
       moves = 0;
 
-      node_ids = shuffle(node_ids);
+      node_ids = deterministic_shuffle(node_ids);
       for(let node_id of node_ids) {
         let node = this.find(node_id);
         let community_id = node.community_id;
@@ -452,7 +353,7 @@ class Graph {
       new_edges.push(new_edge);
     }
 
-    let new_graph = new Graph(new_nodes, new_edges);
+    let new_graph = new Graph(new_edges);
 
 
     return new_graph;
@@ -547,6 +448,15 @@ class Graph {
     push();
       for (let node of this.nodes) {
         node.draw();
+      }
+    pop();
+  }
+
+  draw_polygons(){
+    push();
+      let polygons = this.to_polygon();
+      for(let poly of polygons) {
+        poly.draw();
       }
     pop();
   }

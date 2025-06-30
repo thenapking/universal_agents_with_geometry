@@ -19,16 +19,69 @@ class Scene {
     this.offscreen_lines = [];
     this.offscreen_hotspots = []; 
     this.hotspots = [];
-    this.graph = new Graph(nodes, edges);
-    this.focus_roads = []
+    this.graph = new Graph(edges);
+    this.c_graph = this.graph.louvain(3)
+    
     this.roads = [];
     this.create_scene();
   }
 
   create_scene(){
     this.create_lines();
+    this.roads = this.graph.to_polygon()
+    let potential_circles = this.c_graph.nodes.sort((a, b) => b.radius - a.radius)
+    this.split_circles = []
+    let p = potential_circles[0];
+    this.polycircles = concentric_circle(p.position.x, p.position.y, p.radius/2, 30, 3);
+
+    for(let i = 1; i < potential_circles.length; i++){
+      let p = potential_circles[i];
+      let polyCircle = new RegularPolygon(
+        p.position.x, p.position.y,
+        p.radius/2, p.radius/2, 300, 'city'
+      );
+
+
+      let valid = true;
+      for(let other of this.polycircles){
+        if(other.intersection(polyCircle).length > 0){
+          valid = false;
+          break;
+        }
+      }
+      if(valid){
+        let st = polyCircle.split(this.offscreen_lines[0]);
+        console.log("Split result:", st);
+        for(let s of st){
+          this.polycircles.push(s);
+        }
+      }
+    }
+    // let manual_circle = new RegularPolygon(
+    //   FW/2, FH/2,
+    //   250, 250, 300, 'city'
+    // );
+    // this.polycircles.push(manual_circle);
+    let disjoint_circles = multi_disjoint(this.polycircles);
+
+    this.disjoint_circles = disjoint_circles;
+    for(let dC of disjoint_circles){
+      let selected_roads = intersect_all(dC, this.roads);
+      let unioned_roads = unionPolygons(this.roads);
+      let xC = dC.xor(unioned_roads);
+      console.log("XOR result:", xC);
+      for(let r of xC){
+        this.split_circles.push(r);
+      }
+    }
+
+    create_coffers(this.split_circles);
+
+    colour_coffers();
     
   }
+
+  
 
 
   create_lines(){
@@ -36,38 +89,6 @@ class Scene {
     for(let i = 1; i < this.offscreen_foci.length; i++){
       this.add_crosshairs(this.offscreen_foci[i]);
     }
-  }
-
-  
-
-  find_hotspots(points, major){
-    let hotspots = [];
-    for(let p of points){
-      let nearest = this.find_nearest_hotspot(p, major);
-      if(!nearest) continue; // No nearest hotspot found
-      if(hotspots.some(h => h.id === nearest.id)) continue; // Avoid duplicates
-      hotspots.push(nearest)
-    }
-    return hotspots;
-  }
-
-  find_nearest_hotspot(p, major = true){
-    let nearest = null;
-    let min_dist = Infinity;
-
-    let hotspots = major ? major_hotspots : minor_hotspots; 
-
-    for(let hotspot of hotspots){
-      // TODO: remove this when adding connections
-      let position = createVector(hotspot.position.x, hotspot.position.y).sub(MBW, 3*MBW);
-      let d = p5.Vector.dist(p, position);
-      if(d < min_dist){
-        min_dist = d;
-        nearest = hotspot;
-      }
-    }
-
-    return nearest;
   }
 
   add_full_line(a, b, at = createVector(0, 0), bt = createVector(0, 0)){
@@ -95,7 +116,6 @@ class Scene {
   }
 
   add_crosshairs(a, trans = createVector(0, 0)){
-    console.log(a)
     let a1 = a.copy().add(trans);
     let b1 = a.copy().mult(1,0).add(trans);
     let b2 = a.copy().mult(0,1).add(trans);
@@ -106,41 +126,8 @@ class Scene {
     return [l1, l2];
   }
 
-  perpendicular(l, p){
-    let start = l.points[0];
-    let end = l.points[l.points.length - 1];
-    let lv = p5.Vector.sub(end, start);
-    let pv = p5.Vector.sub(p, start);
-    let projection = lv.copy().mult(pv.dot(lv) / lv.dot(lv));
-    let perpendicular_point = p5.Vector.add(start, projection);
 
-    console.log("Perpendicular point:", perpendicular_point.x, perpendicular_point.y);
-    return perpendicular_point;
-  }
-
-  help(){
-    push()
-    translate(MBW, MBW);
-    translate(BW, BW);
-    let h = this.hotspots[0];
-    let x = h.position.x - MBW;
-    let y = h.position.y - 3*MBW;
-
-    let c = this.focus_roads[0];
-    let pf = c.outer[11]
-    let pt = c.outer[12]
-    let pfx = pf.x - MBW;
-    let pfy = pf.y - 3*MBW;
-    let ptx = pt.x - MBW;
-    let pty = pt.y - 3*MBW;
-
-    fill(0, 255, 0);
-    // circle(x, y, 20);
-    noFill();
-    line(pfx, pfy, ptx, pty);
-    
-    pop();
-  }
+  
 
   draw(){
     push();
@@ -160,79 +147,53 @@ class Scene {
         l.draw();
       }
 
-      fill(255, 0, 0);
-      for(let p of this.offscreen_hotspots){
-        let x = p.position.x - MBW;
-        let y = p.position.y - 3*MBW;
-        circle(x, y, 10);
-        text(p.id, x + 10, y + 10);
+      for(let p of this.polycircles){
+        p.draw();
       }
 
-     
-      
-      
-
-      // visible area
-      noFill();
-      translate(MBW, MBW);
-      rect(VW/2, VH/2, VW, VH); 
-
-     
-      // image area
-      translate(BW, BW);
-      rect(W/2, H/2, W, H);
-
-      
-
-      noFill();
-      for(let f of this.foci){
-        circle(f.x, f.y, 10);
-      }
-
-      
-      
-
-
-      translate(-MBW,-3*MBW)
-      
-      for(let i = 0; i < this.hotspots.length; i++){
-        fill(0, 255, 0);
-        let h = this.hotspots[i];
-        let x = h.position.x ;
-        let y = h.position.y;
-
-        circle(x, y, 10);
-        fill(0)
-        text(h.id, x + 10, y + 10);
+      stroke(0);
+      for(let p of this.roads){
         noFill();
-        this.polycircles[i].draw();
-        
-      }
-
-      fill(0, 0, 255);
-
-      // this.roads.draw()
-      // this.roads[1].draw()
-      // this.roads[2].draw()
-      // this.roads[3].draw()
-      // for(let l of this.roads){
-        // l.draw();
-      // }
-
-
-      for(let r of this.focus_roads){
-        // r.draw();
+        p.draw();
+        fill(0)
+        text(p.id, p.outer[0].x, p.outer[0].y);
       }
       noFill();
+      stroke(0, 0, 255);
+      for(let p of this.split_circles){
+        p.draw();
+      }
 
-
-     
-      
+      translate(BW + MBW, BW + MBW);
+      rect(W/2, H/2, W, H);
 
     pop();
   }
 
   
+}
+
+function recursive_xor(polygons, lines, depth = 0) {
+  if(depth > 10 || lines.length === 0) { return polygons; }
+  let result = polygons;
+  
+  for (i = 0; i < lines.length; i++) {
+      let l = lines.pop();
+      let newResult = [];
+      for (let polygon of result) {
+          let xorResult = polygon.xor(l);
+          if (xorResult.length > 1) {
+            for(let newPoly of xorResult) {
+              let final = recursive_xor([newPoly], lines, depth + 1);
+              console.log(`Depth: ${depth}, Polygons:`, final);
+              newResult.push(...final);
+            }
+          }
+      }
+      result = newResult;
+  }
+  
+  return result;
 }
 
 function unionPolygons(polygons) {
@@ -257,6 +218,18 @@ function mergeDisjointPolygons(polygonArray) {
       result = result.union(polygonArray[i])[0]; // Merge them into one
   }
   return result;
+}
+
+function intersect_all(pcircle, lines){
+  let results = [];
+  for(let l of lines){
+    let intersection = pcircle.intersection(l);
+    if(intersection){
+      results.push(...intersection);
+    }
+  }
+
+  return results;
 }
 
 ////////////////////////////////////////////////////////////////

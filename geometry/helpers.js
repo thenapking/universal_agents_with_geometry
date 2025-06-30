@@ -107,11 +107,9 @@ function from_clipper_paths(paths, parent, other) {
       let p = [point.X / SCALE, point.Y / SCALE]
       scaled.push(p)
     }
-    //TODO: remove type overriding
-    let type = other.type == 'road' || other.type == 'decoration' ? other.type : parent.type;
-    new_paths.push(new MultiPolygon([scaled], type, parent));
-  }
 
+    new_paths.push(new MultiPolygon([scaled], parent.type, parent));
+  }
   new_paths.sort((a, b) => Math.abs(area(b.outer, true)) - Math.abs(area(a.outer, true)));
   let polygons = [];
   let used = new Set();
@@ -137,7 +135,7 @@ function from_clipper_paths(paths, parent, other) {
 
   for (let i = 0; i < new_paths.length; i++) {
     if (!used.has(i)) {
-      console.warn("Unclaimed ring at index", i, "with area", area(new_paths[i].outer, true));
+      // console.warn("Unclaimed ring at index", i, "with area", area(new_paths[i].outer, true));
     }
   }
   

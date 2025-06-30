@@ -1,9 +1,10 @@
 // TODO:
 
+// THIS IS WORKING
+// WE JUST NEED TO BE ABLE TO IDENTIFY THE COFFERS DERIVED FROM ROADS
+// THEN UPDATE THE COLOURING LOGIC
 // fix circle filling
-// eliminate vertical / horizontal fill?
 // fix diagonal shading
-// Intersection - is it just resolution / circle vertices?
 // fix + identify bugs
 
 // new:
@@ -60,7 +61,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(2)
+  load_data(1)
 }
 
 function setup(){
@@ -68,6 +69,7 @@ function setup(){
 
   seed = Math.floor(Math.random() * 1000000);
   console.log("seed = ", seed);
+  // seed = 1; // for testing
   randomSeed(seed);
   noiseSeed(seed);
   
@@ -81,7 +83,7 @@ function setup(){
 
   process_data();
   // test_slime();
-  frameRate(1);
+  frameRate(60);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -97,26 +99,26 @@ function setup(){
   scene = new Scene(template)
 
   default_setup()
-  // piecesE = scene.graph.to_polygon();
+  scene.draw();
 }
 
 let ctx = 0;
 function draw(){
-  scene.draw();
   
-  translate(BW, BW-2*MBW);
-  // animation_draw();
+
+  animation_draw();
 
   // stroke(255,0,0)
-  // let p = piecesE[ctx]
+  // let p = coffers[ctx]
   // if(p){
+  //   fill(random(['blue', 'pink', 'white', 'yellow', 'green', 'orange']));
   //   p.draw();
   //   ctx++
 
   // } else{
+  //   console.log("Done with circles");
   //   noLoop();
   // }
-  noLoop();
 }
 
 function animation_draw(){
@@ -128,6 +130,7 @@ function animation_draw(){
 
       draw_coffers();
       draw_groups();
+      draw_roads()
     pop()
 
 
@@ -145,6 +148,7 @@ function animation_draw(){
       // default_setup()
       draw_coffers();
       final_draw();
+      draw_roads()
     pop()
 
     draw_borders();
@@ -178,6 +182,12 @@ function final_draw(){
 function draw_coffers(){
   for(let coffer of coffers){
     coffer.draw();
+  }
+}
+
+function draw_roads(){
+  for(let r of scene.roads){
+    r.draw();
   }
 }
 

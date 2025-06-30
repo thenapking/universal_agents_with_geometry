@@ -29,6 +29,7 @@ let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'gree
 class Coffer {
   constructor(polygon, type) {
     this.polygon = polygon;
+    this.ancestor_ids = polygon.ancestor_ids || [];
     this.pieces = [];
     this.polygons = [polygon];
     this.type = type || 'default'; // 'default', 'housing', 'park', 'civic', 'road'
@@ -240,23 +241,17 @@ let houses;
 
 let coffers = [];
 
-function create_coffers(list, poly_roads){
-  // let road_points = get_contour(WATER_LEVEL);
-  
-  let potential_coffers = multi_disjoint(list)
-
-  for(let polyline of poly_roads){
-    potential_coffers = split_polygons(potential_coffers, polyline);
+function create_coffers(list){
+  // let potential_coffers = multi_disjoint(list)
+  console.log("Creating coffers from list of polygons", list.length);
+ 
+  for(let shape of list){
+    let coffer = new Coffer(shape);
+    coffers.push(coffer);
   }
+}
 
-  for(let shape of potential_coffers){
-    if(shape.type != 'road'){
-      let coffer = new Coffer(shape);
-      coffers.push(coffer);
-    }
-  }
-
-  
+function colour_coffers(){
   adjacency_map = create_adjacency_map(coffers)
   shared_map = find_shared_vertices(coffers, adjacency_map);
   colour_map = full_recursive_colour_map(coffers);
@@ -328,7 +323,7 @@ function find_shared_vertices(coffers, adjacency_map){
 }
 
 function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
-  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
+  if(depth > 10) { console.log("Recursion depth exceeded for piece", idx);
     results[idx] = 'pink'; // Fallback colour
     return results; 
   } 

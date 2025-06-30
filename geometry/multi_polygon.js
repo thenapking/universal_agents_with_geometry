@@ -7,6 +7,11 @@ class MultiPolygon {
     this.id = MultiPolygon.next_id++;
     this.parent = parent;
     this.type = parent ? parent.type : type;
+    
+    this.ancestor_ids = [this.id];
+    if(parent) {
+      this.ancestor_ids = [...parent.ancestor_ids, this.id];
+    }
 
     if(this.is_contour_array(points)) {
       this.contours = this.find_contours(points);

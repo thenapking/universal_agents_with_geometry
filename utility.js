@@ -40,7 +40,8 @@ function process_data(){
   hotspots = process_file(hotspots)
   for(let i = 0; i < hotspots.length; i++){
     let h = hotspots[i];
-    let node = new Node(h.position.x, h.position.y);
+    // TODO remove this translation
+    let node = new Node(h.position.x, h.position.y - 2*MBW);
     nodes[i] = node;
   }
 
@@ -72,4 +73,13 @@ function process_file(data){
   }
 
   return processed;
+}
+
+function deterministic_shuffle(arr) {
+  let a = [...arr]; 
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = floor(random(i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
