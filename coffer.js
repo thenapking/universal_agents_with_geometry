@@ -1,31 +1,18 @@
 // PLAN
-// 1. One coffer, replicating existing code / 
-// 2. Two non-intersecting coffers /
-// 3. Multiple intersecting coffers /
-// 4. Street fill randomness relative to distance from centre /
-// 5. Adjacent polygons must not have the same fill type or colour /
-// 6. Adjacent polygons can be unioned
-// 7. Three intersecting coffers, plus smaller coffers which may be complete contained within a larger coffer /
-// 8. Outer polygon
-// 9. Data from slime mould
 
 // IMPROVEMENTS / BUG FIXES
-// Spawning does not tessellate fully
-// Find min-hatching size for pens
 // Hatching missing lines bug
-// Hatching spacing
-// Subdivide spacing
-// Minimum area
-// River crazyness DONE
-// Multi intersection Craziness DONE
-// Fix resolution based intersection issues
 
 
 // Set the fill type of each polygon based on its area
-let SMALL =  [ 'solid', 'blank', 'downwards', 'upwards', 'housing','vertical', 'pips' ]
-let MEDIUM = [ 'solid', 'blank', 'downwards', 'upwards',  'circles']
-let LARGE =  [ 'blank',  ];  
-let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
+let SMALL =  [ 'solid', 'blank', 'downwards', 'upwards', 'housing', 'vertical', 'dots' ]
+let MEDIUM = [ 'solid', 'blank', 'downwards', 'upwards',  'circles', 'dots' ]
+let LARGE =  [ 'blank', 'large-dots', 'dots', 'crosses' ];  
+let COUNTRY = [ 'blank', 'large-dots', 'downwards', 'upwards', 'vertical-dashes', 'horizontal-dashes',  'dots', 'crosses', 'solid' ];
+let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
+let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
+let all_colours = [...colours, ...extended_colours];
+
 class Coffer {
   static id = 0;
   constructor(polygon, type) {
@@ -108,14 +95,19 @@ class Coffer {
         area_type = 'large';
         fill_types = LARGE
       }
-      
-      
-      let cidx = colours.indexOf(c);
-      let colour = colours[cidx] || 'grey';
 
+      if(this.type === 'countryside') {
+        area_type = 'countryside';
+        fill_types = COUNTRY;
+      } 
+      
+      
+      let cidx = all_colours.indexOf(c);
+      let colour = all_colours[cidx] || 'grey';
       fill_type = fill_types[cidx] || fill_types[0];
 
-  
+      console.log("COLOUR", cidx, colour, fill_type);
+      
       let pc = polygon.centroid();
       let stD = W/5
       let dst = dist(pc.x, pc.y, W/2, H/2);
@@ -147,6 +139,22 @@ class Coffer {
       if(fill_type === 'ellipses') {
         createEllipseGroups(polygon);
       }
+
+      if(fill_type === 'vertical-dashes' || fill_type === 'horizontal-dashes' || fill_type === 'dots') {
+        fill_object = new Regular(polygon, 5, fill_type, true);
+        fill_object.find_points();
+      }
+
+      if(fill_type === 'large-dots' || fill_type === 'crosses') {
+        fill_object = new Regular(polygon, 10, 'dots', true);
+        fill_object.find_points();
+      }
+
+      if(fill_type === 'crosses') {
+        fill_object = new Regular(polygon, 7, fill_type, true);
+        fill_object.find_points();
+      }
+
   
       if(fill_type !== 'housing') {
         this.add_piece(polygon, fill_type, fill_object, colour, area_type, area, area_ratio, bounding_box_area);
@@ -359,6 +367,14 @@ function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
 
 function full_recursive_colour_map(final) {
   let results = [];
+  // prefil some random colours
+  for(let j = 0; j < 10; j++){
+    let ridx = int(random(final.length));
+    let rc = random(extended_colours)
+    console.log("Prefilling colour", ridx, rc);
+    results[ridx] = rc;
+  }
+
   for (let i = 0; i < final.length; i++) {
     if (results[i] === undefined) {
       recursive_colour_map(0, i, results, colours );

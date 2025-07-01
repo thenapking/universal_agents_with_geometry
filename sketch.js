@@ -104,18 +104,27 @@ function setup(){
 
   default_setup()
   scene.draw();
-  draw_roads()
+  // draw_roads()
+  polyCircleA = new RegularPolygon(
+    W/2, H/2,
+    300, 300, 8, 'city'
+  ); 
 }
 
 let ctx = 0;
 function draw(){
   
-
+  // polyCircleA.draw();
+  // let dd = new Regular(polyCircleA, 10, 'circle', true);
+  // dd.find_points();
+  // dd.draw();
+  // noLoop();
   animation_draw();
 
   // let p = coffers[ctx]
   // if(p){
-  //   p.debug_draw(false);
+  //   // p.debug_draw(false);
+  //   p.draw();
   //   ctx++
 
   // } else{
@@ -126,7 +135,7 @@ function draw(){
 }
 
 function animation_draw(){
-  let active = 0 // update_groups();
+  let active = update_groups();
 
   if(active > 0){
     push()
@@ -163,6 +172,7 @@ function animation_draw(){
     noLoop();
 
     if(exporting){ endRecordSVG(this); }
+    console.log("Finished drawing all groups");
   }
 }
 // For each group, create the polygons and draw them
