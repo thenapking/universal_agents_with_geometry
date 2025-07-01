@@ -71,6 +71,7 @@ function setup(){
   console.log("seed = ", seed);
   // seed = 1; // for testing
   // seed = 68658
+  seed =  10273
   randomSeed(seed);
   noiseSeed(seed);
   
@@ -84,7 +85,7 @@ function setup(){
 
   process_data();
   // test_slime();
-  frameRate(2);
+  frameRate(10);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -101,6 +102,7 @@ function setup(){
 
   default_setup()
   scene.draw();
+  draw_roads()
 }
 
 let ctx = 0;

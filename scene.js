@@ -70,7 +70,7 @@ class Scene {
     for(let dC of disjoint_circles){
       let selected_roads = intersect_all(dC, this.roads);
       let unioned_roads = unionPolygons(this.roads);
-      let xC = dC.xor(unioned_roads);
+      let xC = dC.difference(unioned_roads);
       console.log("XOR result:", xC);
       for(let r of xC){
         this.split_circles.push(r);
