@@ -22,9 +22,9 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL =  [ 'black', 'blank', 'downwards', 'upwards', 'vertical', 'pips' ]
-let MEDIUM = [ 'black', 'blank', 'downwards', 'upwards', 'circles'  ]
-let LARGE =  [ 'blank' ];  
+let SMALL =  [ 'black', 'blank', 'downwards', 'upwards', 'housing','vertical', 'pips' ]
+let MEDIUM = [ 'black', 'blank', 'downwards', 'upwards',  'circles']
+let LARGE =  [ 'blank', 'housing' ];  
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 class Coffer {
   constructor(polygon, type) {
@@ -123,8 +123,7 @@ class Coffer {
       
       
       let fill_object;
-      // && area_ratio < 2 && (area_type == 'large' || area_type == 'medium')
-      if(polygon.type == 'city'  && (area_type != 'tiny') ) { fill_type = 'housing'}
+      if(this.type == 'city'  && (area_type != 'tiny' && area_type != 'small') ) { fill_type = 'housing'}
 
       console.log("FILL", fill_type, colour, area_type);
 
@@ -170,7 +169,13 @@ class Coffer {
     }
   }
 
-   draw(){
+  debug_draw(){
+    let c = this.pieces[0].colour || 'blue';
+    fill(c)
+    this.polygon.draw();
+  }
+
+   draw() {
     for(let piece of this.pieces) {
       if(piece.fill_type === 'housing') { continue }
       piece.polygon.draw();
@@ -183,6 +188,7 @@ class Coffer {
       for(let piece of this.pieces) {
         if(piece.fill_type != 'housing') { continue }
         piece.polygon.draw();
+
         if(piece.fill) {
           piece.fill.draw();
         }
@@ -202,19 +208,36 @@ let houses;
 let coffers = [];
 
 function create_coffers(list){
-  // let potential_coffers = multi_disjoint(list)
   console.log("Creating coffers from list of polygons", list.length);
  
   for(let shape of list){
-    let coffer = new Coffer(shape);
+    let found = false;
+
+    if(shape.area() < 50) {
+      continue;
+    }
+    for(let other of coffers){
+      if(shape.outer === other.polygon.outer){
+        console.log("Found existing coffer for shape", shape.outer);
+        found = true;
+        break;
+      }
+    }
+    if(found) { continue; }
+    let coffer = new Coffer(shape, shape.type);
+    
     coffers.push(coffer);
   }
 }
 
 function colour_coffers(){
+  console.log("Colouring coffers", coffers.length);
   adjacency_map = create_adjacency_map(coffers)
+  console.log("Adjacency map created", adjacency_map);
   shared_map = find_shared_vertices(coffers, adjacency_map);
+  console.log("Shared vertices map created", shared_map);
   colour_map = full_recursive_colour_map(coffers);
+  console.log("Colour map created", colour_map);
 
   for(let i=0; i < coffers.length; i++){
     let c = colour_map[i] || palette.background;
@@ -224,9 +247,19 @@ function colour_coffers(){
 
 }
 
+function split_polygons_by_multiple(polygons, polylines){
+  let results = polygons;
+  for(let polyline of polylines){
+    console.log("Splitting polygons by polyline");
+    results = split_polygons(results, polyline);
+  }
+  return results;
+}
+
 function split_polygons(polygons, polyline){
   let new_polygons = [];
   for(let polygon of polygons){
+    // console.log("Splitting polygon by polyline", polygon, polyline);
     let results = polygon.split(polyline);
 
     for(let result of results){
@@ -283,7 +316,7 @@ function find_shared_vertices(coffers, adjacency_map){
 }
 
 function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
-  if(depth > 50) { console.log("Recursion depth exceeded for piece", idx);
+  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
     results[idx] = 'pink'; // Fallback colour
     return results; 
   } 

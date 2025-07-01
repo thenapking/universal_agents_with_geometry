@@ -17,69 +17,136 @@ class Scene {
     this.offscreen_foci = template.offscreen_foci || [];
     this.offscreen_points = [];
     this.offscreen_lines = [];
+    this.onscreen_foci = [];
+    this.minor_points = []; 
     
     this.graph = new Graph(edges);
+    this.b_graph = this.graph.louvain(2)
     this.c_graph = this.graph.louvain(3)
     this.roads = this.graph.to_polygon()
     this.city_centres =  this.c_graph.nodes.sort((a, b) => b.radius - a.radius)
 
+    this.unioned_roads = unionPolygons(this.roads);
+
     this.create_onscreen_foci()
     this.create_lines();
     
-    this.create_scene();
+    this.create_town();
+    this.create_countryside();
+
+    create_coffers(this.potential_coffers);
+
+    colour_coffers();
   }
 
-  create_scene(){
-    let potential_circles = this.onscreen_foci
-    this.split_circles = []
-    let p = potential_circles[0];
-    this.polycircles = concentric_circle(p.position.x, p.position.y, p.radius/2, 30, 3);
+  create_countryside(){
+    let top_left = createVector(BW + MBW, BW + MBW);
+    let bottom_right = createVector(W + BW + MBW, H + BW + MBW);
+    let top_right = createVector(W + BW + MBW, BW + MBW);
+    let bottom_left = createVector(BW + MBW, H + BW + MBW);
+    let points = [top_left, top_right, bottom_right, bottom_left];
+    let bgp = new MultiPolygon(points, 'countryside');
+    
+    console.log("Removing towns from countryside")
+    for(let dC of this.polycircles){
+      let xC = bgp.difference(dC);
+      bgp = xC[0]
+    }
 
-    for(let i = 1; i < potential_circles.length; i++){
-      let p = potential_circles[i];
+    let bg = [bgp]
+
+    let selected_lines = [
+      this.offscreen_lines[0], 
+      // this.offscreen_lines[2], 
+      this.offscreen_lines[3], 
+      this.offscreen_lines[4],
+      this.offscreen_lines[7],
+      this.offscreen_lines[8],
+      this.offscreen_lines[9],
+      this.offscreen_lines[10],
+      this.offscreen_lines[11],
+      this.offscreen_lines[12],
+      this.offscreen_lines[13],
+      this.offscreen_lines[15],
+      this.offscreen_lines[16],
+      this.offscreen_lines[19],
+
+    ];
+
+    console.log("Splitting countryside by lines")
+    let farms = split_polygons_by_multiple(bg,  selected_lines);
+
+    console.log("Splitting countryside by roads")
+
+    for(let dC of farms){
+      let xC = dC.difference(this.unioned_roads);
+      for(let r of xC){
+        this.potential_coffers.push(r);
+      }
+    }
+    
+  }
+
+  create_town(){
+    this.split_circles = []
+    console.log("Creating polycircles")
+
+    for(let i = 1; i < this.onscreen_foci.length; i++){
+      let p = this.onscreen_foci[i];
+      if(p.radius > 300 || i == 0){
+        let rr = int(p.radius / 100);
+        let circles = concentric_circle(p.position.x, p.position.y, p.radius, 30, rr);
+        for(let circle of circles){
+          this.polycircles.push(circle);
+        }
+      }
       let polyCircle = new RegularPolygon(
         p.position.x, p.position.y,
-        p.radius/2, p.radius/2, 300, 'city'
+        p.radius, p.radius, 300, 'city'
+      ); 
+      this.polycircles.push(polyCircle);
+    }
+    
+    for(let i = 0; i < this.minor_points.length; i++){
+      let p = this.minor_points[i];
+      let polyCircle = new RegularPolygon(
+        p.position.x, p.position.y,
+        p.radius/3, p.radius/3, 300, 'decoration'
       );
+      this.polycircles.push(polyCircle);
+    }
 
+    console.log("Splitting polycircles")
+    let selected_lines = [this.offscreen_lines[0], this.offscreen_lines[2]];
 
-      let valid = true;
-      // for(let other of this.polycircles){
-      //   if(other.intersection(polyCircle).length > 0){
-      //     valid = false;
-      //     break;
-      //   }
-      // }
-      if(valid){
-        let st = polyCircle.split(this.offscreen_lines[0]);
-        let results = [];
-        for(let s of st){
-          results.push(s);
-        }
-        for(let r of results){
-          let stt = r.split(this.offscreen_lines[1]);
-          for(let s of stt){
-            this.polycircles.push(s);
+    this.split_circles = split_polygons_by_multiple(this.polycircles,  selected_lines);
+
+    console.log("Disjointing split circles")
+    this.disjoint_circles = multi_disjoint(this.split_circles);
+
+    console.log("Splitting by roads")
+    for(let dC of this.disjoint_circles){
+      let xC = dC.difference(this.unioned_roads);
+      for(let r of xC){
+        this.potential_coffers.push(r);
+      }
+    }
+
+    console.log("Labelling coffers")
+    for(let p of this.potential_coffers){
+      let centroid = p.centroid();
+      let type;
+      for(let c of this.polycircles){
+        if(c.contains(centroid)){
+          if(c.type != p.type && c.type != 'decoration'){
+            // console.log(`Found ${c.type} which has type ${p.type}`);
+            type = c.type;
           }
         }
       }
-    }
-    let disjoint_circles = multi_disjoint(this.polycircles);
-
-    this.disjoint_circles = disjoint_circles;
-    for(let dC of disjoint_circles){
-      let selected_roads = intersect_all(dC, this.roads);
-      let unioned_roads = unionPolygons(this.roads);
-      let xC = dC.difference(unioned_roads);
-      console.log("XOR result:", xC);
-      for(let r of xC){
-        this.split_circles.push(r);
-      }
+      p.type = type || 'decoration';
     }
 
-    create_coffers(this.split_circles);
-
-    // colour_coffers();
     
   }
 
@@ -107,7 +174,6 @@ class Scene {
           let a = combo[i].point.position;
           let b = combo[j].point.position;
           if (abs(a.x - b.x) < min_x || abs(a.y - b.y) < min_y) {
-            console.log("Invalid combination due to spatial constraints:", a, b);
             valid = false;
             break;
           }
@@ -163,9 +229,13 @@ class Scene {
       let points = this.best_points(potential_foci, this.focus, i, DPI/2, DPI/2);
       if(points) { potential_points = points}
     }
+
     this.onscreen_foci = potential_points
 
-    
+    let potential_minor_points = this.b_graph.nodes.sort((a, b) => b.radius - a.radius).slice();
+    potential_minor_points = potential_minor_points.filter(p => this.onscreen(p.position));
+    this.minor_points = potential_minor_points.slice(0, 10)
+   
   }
 
   create_lines(){

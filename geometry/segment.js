@@ -12,7 +12,12 @@ class Segment {
   constructor(start, end, index, contour_id) {
     this.start = start;
     this.end = end
-
+    if(Array.isArray(start)){
+      console.warn("Segment start should be p5.Vector, not arrays");
+    }
+    if(Array.isArray(end)){
+      console.warn("Segment end should be p5.Vector, not arrays");
+    }
     this.index = index;
     this.next = null;
     this.previous = null;

@@ -71,7 +71,9 @@ function setup(){
   console.log("seed = ", seed);
   // seed = 1; // for testing
   // seed = 68658
-  seed =  10273
+  // seed =  10273
+  // seed =  29003
+  seed =  276306
   randomSeed(seed);
   noiseSeed(seed);
   
@@ -85,7 +87,7 @@ function setup(){
 
   process_data();
   // test_slime();
-  frameRate(10);
+  frameRate(30);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -109,37 +111,35 @@ let ctx = 0;
 function draw(){
   
 
-  // animation_draw();
+  animation_draw();
 
-  stroke(255,0,0)
-  let p = coffers[ctx]
-  if(p){
-    fill(random(['blue', 'pink', 'white', 'yellow', 'green', 'orange']));
-    p.draw();
-    ctx++
+  // let p = coffers[ctx]
+  // if(p){
+  //   p.debug_draw(false);
+  //   ctx++
 
-  } else{
-    console.log("Done with circles");
-    noLoop();
-  }
+  // } else{
+  //   console.log("Done with circles");
+  //   noLoop();
+  // }
   // noLoop();
 }
 
 function animation_draw(){
-  let active = update_groups();
+  let active = 0 // update_groups();
 
   if(active > 0){
     push()
       default_setup()
       scene.draw();
 
-      // draw_coffers();
-      // draw_groups();
-      // draw_roads()
+      draw_coffers();
+      draw_groups();
+      draw_roads()
     pop()
 
 
-    // draw_borders();
+    draw_borders();
 
   } else {
     
@@ -153,12 +153,12 @@ function animation_draw(){
       default_setup()
       scene.draw();
 
-      // draw_coffers();
-      // final_draw();
-      // draw_roads()
+      draw_coffers();
+      final_draw();
+      draw_roads()
     pop()
 
-    // draw_borders();
+    draw_borders();
     
     noLoop();
 

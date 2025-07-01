@@ -176,6 +176,7 @@ class Polyline {
     let idx = segment.junctures.findIndex(j => j === juncture);
     let next_idx = direction === 'with' ? idx + 1 : idx - 1;
     let next_juncture = segment.junctures[next_idx];
+    if(!next_juncture) { return }
     piece.push(next_juncture.point);
     next_juncture.increment();
     return next_juncture;
