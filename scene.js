@@ -21,14 +21,16 @@ class Scene {
     this.graph = new Graph(edges);
     this.c_graph = this.graph.louvain(3)
     this.roads = this.graph.to_polygon()
+    this.city_centres =  this.c_graph.nodes.sort((a, b) => b.radius - a.radius)
+
+    this.create_onscreen_foci()
+    this.create_lines();
     
     this.create_scene();
   }
 
   create_scene(){
-    this.create_lines();
-    
-    let potential_circles = this.c_graph.nodes.sort((a, b) => b.radius - a.radius)
+    let potential_circles = this.onscreen_foci
     this.split_circles = []
     let p = potential_circles[0];
     this.polycircles = concentric_circle(p.position.x, p.position.y, p.radius/2, 30, 3);
@@ -42,17 +44,23 @@ class Scene {
 
 
       let valid = true;
-      for(let other of this.polycircles){
-        if(other.intersection(polyCircle).length > 0){
-          valid = false;
-          break;
-        }
-      }
+      // for(let other of this.polycircles){
+      //   if(other.intersection(polyCircle).length > 0){
+      //     valid = false;
+      //     break;
+      //   }
+      // }
       if(valid){
         let st = polyCircle.split(this.offscreen_lines[0]);
-        console.log("Split result:", st);
+        let results = [];
         for(let s of st){
-          this.polycircles.push(s);
+          results.push(s);
+        }
+        for(let r of results){
+          let stt = r.split(this.offscreen_lines[1]);
+          for(let s of stt){
+            this.polycircles.push(s);
+          }
         }
       }
     }
@@ -71,24 +79,116 @@ class Scene {
 
     create_coffers(this.split_circles);
 
-    colour_coffers();
+    // colour_coffers();
     
   }
 
+  best_points(points, centre, k, min_x = DPI/2, min_y = DPI/2) {
+    // Step 1: compute angle from centre to each point
+    let angle_to_centre = points.map(point => {
+      let dx = point.position.x - centre.x;
+      let dy = point.position.y - centre.y;
+      let angle = atan2(dy, dx);
+      return { point, angle };
+    });
   
+    // Step 3: test all combinations of k points to find max angular spread
+    let best = null;
+    let bestScore = -Infinity;
+  
+    // Brute-force: try all k-combinations
+    let combos = k_combinations(angle_to_centre, k);
+    for (let combo of combos) {
+      let valid = true;
 
+      // Check spatial constraints
+      for (let i = 0; i < k; i++) {
+        for (let j = i + 1; j < k; j++) {
+          let a = combo[i].point.position;
+          let b = combo[j].point.position;
+          if (abs(a.x - b.x) < min_x || abs(a.y - b.y) < min_y) {
+            console.log("Invalid combination due to spatial constraints:", a, b);
+            valid = false;
+            break;
+          }
+        }
+        if (!valid) break;
+      }
+
+      if (!valid) continue;
+
+      let angles = combo.map(obj => obj.angle);
+      angles.sort((a, b) => a - b);
+  
+      // Make it circular: compute angle differences, including wrap-around
+      let diffs = [];
+      for (let i = 0; i < angles.length; i++) {
+        let a1 = angles[i];
+        let a2 = angles[(i + 1) % angles.length];
+        let diff = (a2 - a1 + TWO_PI) % TWO_PI;
+        diffs.push(diff);
+      }
+  
+      // Score: use minimum angle gap
+      let minGap = Math.min(...diffs);
+      if (minGap > bestScore) {
+        bestScore = minGap;
+        best = combo;
+      }
+    }
+    if (!best) {
+      console.warn("No valid combination found");
+      return null;
+    }
+
+    return best.map(obj => obj.point);
+  }
+  
+  onscreen(position){
+    let bwt = BW + MBW
+    return position.x > bwt && position.x < (FW - bwt) &&
+    position.y > bwt && position.y < (FH - bwt)
+  }
+
+  offscreen(position){
+    return !this.onscreen(position);
+  }
+
+  
+  create_onscreen_foci(){
+    let potential_foci = this.c_graph.nodes.sort((a, b) => b.radius - a.radius).slice();
+    potential_foci = potential_foci.filter(p => this.onscreen(p.position))
+    let potential_points = [];
+    for(let i = 2; i < 6; i++){
+      let points = this.best_points(potential_foci, this.focus, i, DPI/2, DPI/2);
+      if(points) { potential_points = points}
+    }
+    this.onscreen_foci = potential_points
+
+    
+  }
 
   create_lines(){
-    this.add_full_line(this.foci[0], this.offscreen_foci[0], createVector(BW + MBW, BW + MBW) );
-    for(let i = 1; i < this.offscreen_foci.length; i++){
-      this.add_crosshairs(this.offscreen_foci[i]);
+    let best_pair = find_closest_to_angle(this.onscreen_foci, PI/4)
+    this.add_full_line(best_pair[0].position, best_pair[1].position);
+    let second_best_pair = find_closest_to_angle(this.onscreen_foci, -PI/4)
+    this.add_full_line(second_best_pair[0].position, second_best_pair[1].position);
+
+    let offset = createVector(BW + MBW, BW + MBW)
+    this.add_full_line(this.foci[0], this.offscreen_foci[0], offset  );
+    this.add_star(this.foci[0], 4, offset);
+    
+
+    for(let i = 0; i < this.onscreen_foci.length; i++){
+      this.add_star(this.onscreen_foci[i].position, 4);
     }
+
+    
   }
 
   add_full_line(a, b, at = createVector(0, 0), bt = createVector(0, 0)){
     let l = this.full_line(a.copy().add(at), b.copy().add(bt));
     this.offscreen_lines.push(l);
-    this.add_crosshairs(a, at);
   }
 
   full_line(a, b){
@@ -120,46 +220,69 @@ class Scene {
     return [l1, l2];
   }
 
+  add_star(a, n, trans = createVector(0, 0)){
+    let angle = TWO_PI / n;
+    let results = [];
+    for(let i = 0; i < n; i++){
+      let x = a.x + cos(i * angle) * 200;
+      let y = a.y + sin(i * angle) * 200;
+      let p = createVector(x, y).add(trans)
+      let aa = a.copy().add(trans)
+      let l = this.full_line(aa, p);
+      l.draw()
+      results.push(l);
+      this.offscreen_lines.push(l);
+    }
+    return results
+  }
+
+
+
 
   
 
   draw(){
     push();
       noFill();
-      stroke(100);
-      strokeWeight(1);
+      let light_pen = color(0,0,0,20);
+      stroke(light_pen);
       rectMode(CENTER)
 
       // full outer box
       rect(FW/2, FH/2, FW, FH);
 
+      draw_grid(DPI/4);
+
       for(let o of this.offscreen_foci){
         circle(o.x, o.y, 10);
       }
+
+      stroke(0,0,0)
 
       for(let l of this.offscreen_lines){
         l.draw();
       }
 
+      stroke(light_pen)
+      draw_connected_network(this.onscreen_foci);
+
       for(let p of this.polycircles){
         p.draw();
       }
 
-      stroke(0);
+      // stroke(0);
       for(let p of this.roads){
-        noFill();
-        p.draw();
-        fill(0)
-        text(p.id, p.outer[0].x, p.outer[0].y);
+        // noFill();
+        // p.draw();
+        // fill(0)
+        // text(p.id, p.outer[0].x, p.outer[0].y);
       }
-      noFill();
-      stroke(0, 0, 255);
-      // for(let p of this.split_circles){
-      //   p.draw();
-      // }
+ 
 
       translate(BW + MBW, BW + MBW);
       rect(W/2, H/2, W, H);
+      circle(this.foci[0].x, this.foci[0].y, 20); 
+
 
     pop();
   }
@@ -252,7 +375,55 @@ function concentric_circle(x, y, r, w, n){
   return pieces
 }
 
+function draw_connected_network(points){
+  push();
+    noFill();
+    for(let p of points){
+      for(let q of points){
+        if (p === q) continue;
+        line(p.position.x, p.position.y, q.position.x, q.position.y);
+      }
+    }
+  pop();
+}
+
+function find_closest_to_angle(points, angle){
+  let closest = null;
+  let closestAngle = Infinity;
+  for (let p of points) {
+    for(let q of points) {
+      if (p === q) continue;
+      let cA = p.position.angleBetween(q.position);
+      let angleDiff = abs(cA - angle);
+      
+      if (angleDiff < closestAngle) {
+        closestAngle = angleDiff;
+        closest = [p,q];
+      }
+    }
+  }
+  return closest;
+}
+
 
 ////////////////////////////////////////////////////////////////
 
 
+function k_combinations(arr, k) {
+  let result = [];
+
+  function combine(temp = [], start = 0) {
+    if (temp.length === k) {
+      result.push([...temp]);
+      return;
+    }
+    for (let i = start; i < arr.length; i++) {
+      temp.push(arr[i]);
+      combine(temp, i + 1);
+      temp.pop();
+    }
+  }
+
+  combine();
+  return result;
+}

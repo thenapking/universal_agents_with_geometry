@@ -20,10 +20,10 @@
 
 
 let DPI= 96;
-let wi = 7;
+let wi = 7.5;
 let hi = 10;
-let bwi = 0.25;
-let mbwi = 1
+let bwi = 0.5;
+let mbwi = 0.75
 let W = wi * DPI;
 let H = hi * DPI;
 let BW = bwi * DPI;
@@ -70,10 +70,11 @@ function setup(){
   seed = Math.floor(Math.random() * 1000000);
   console.log("seed = ", seed);
   // seed = 1; // for testing
+  // seed = 68658
   randomSeed(seed);
   noiseSeed(seed);
   
-  pixelDensity(1);
+  pixelDensity(4);
 
   setup_svg();
 
@@ -83,7 +84,7 @@ function setup(){
 
   process_data();
   // test_slime();
-  frameRate(60);
+  frameRate(2);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -106,19 +107,19 @@ let ctx = 0;
 function draw(){
   
 
-  animation_draw();
+  // animation_draw();
 
-  // stroke(255,0,0)
-  // let p = coffers[ctx]
-  // if(p){
-  //   fill(random(['blue', 'pink', 'white', 'yellow', 'green', 'orange']));
-  //   p.draw();
-  //   ctx++
+  stroke(255,0,0)
+  let p = coffers[ctx]
+  if(p){
+    fill(random(['blue', 'pink', 'white', 'yellow', 'green', 'orange']));
+    p.draw();
+    ctx++
 
-  // } else{
-  //   console.log("Done with circles");
-  //   noLoop();
-  // }
+  } else{
+    console.log("Done with circles");
+    noLoop();
+  }
   // noLoop();
 }
 
@@ -127,15 +128,16 @@ function animation_draw(){
 
   if(active > 0){
     push()
-      // default_setup()
+      default_setup()
+      scene.draw();
 
-      draw_coffers();
-      draw_groups();
-      draw_roads()
+      // draw_coffers();
+      // draw_groups();
+      // draw_roads()
     pop()
 
 
-    draw_borders();
+    // draw_borders();
 
   } else {
     
@@ -146,13 +148,15 @@ function animation_draw(){
     }
 
     push()
-      // default_setup()
-      draw_coffers();
-      final_draw();
-      draw_roads()
+      default_setup()
+      scene.draw();
+
+      // draw_coffers();
+      // final_draw();
+      // draw_roads()
     pop()
 
-    draw_borders();
+    // draw_borders();
     
     noLoop();
 
@@ -219,17 +223,21 @@ function update_groups(){
 }
 
 function default_setup(){
-  background(240);
-  stroke(0,0,0);
+  background(palette.background);
+  stroke(palette.black);
+  strokeWeight(1);
+  fill(palette.background);
+
 }
     
 function draw_borders(){
   push();
     noStroke();
-    fill(240);
-    rect(0, 0, width, BW);
-    rect(0, 0, BW, height);
-    rect(width - BW, 0, BW, height);
-    rect(0, height - BW, width, BW);
+    fill(palette.background);
+    rectMode(CORNERS);
+    rect(0, 0, FW, MBW + BW);
+    rect(0, 0, MBW + BW, FH);
+    rect(FW - MBW - BW, 0, FW, FH);
+    rect(0, FH - MBW - BW, FW, FH);
   pop();
 }

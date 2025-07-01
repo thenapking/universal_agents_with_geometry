@@ -206,4 +206,25 @@ function create_flow_field() {
 }
 
 
+function draw_grid(grid_size, nsq = 5){
+  push()
+    for(let i = 0; i < FW + 1; i+=grid_size){
+      let sw = i%nsq == 0 ? 0.8 : 0.65;
+      strokeWeight(sw);
+      line(0, 0, 0, FH);
+      translate(grid_size, 0)
+    }
+  pop()
+
+  push()
+    for(let j = 0; j < FH + 1; j+=grid_size){
+      let sw = j%nsq == 0 ? 0.8 : 0.65;
+      strokeWeight(sw);
+      line(0, 0, FW, 0);
+      translate(0, grid_size)
+    }
+  pop()
+}
+
+
 

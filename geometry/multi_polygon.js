@@ -348,6 +348,15 @@ class MultiPolygon {
     return true;    
   }
 
+  contains_polygon(other) {
+    for(let other_point of other.outer) {
+      if (!this.contains(other_point)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
    // Adjacency
    adjacent(other) {
     for (let segment of this.segments[0]) {

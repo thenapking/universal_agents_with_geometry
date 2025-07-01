@@ -83,3 +83,19 @@ function deterministic_shuffle(arr) {
   }
   return a;
 }
+
+
+
+function keyPressed(){
+  if(key == 's'){
+    save("cities.png");
+  } 
+
+  if (key.toLowerCase() === "p") {
+    exporting = true;
+  }
+  
+  if (key.toLowerCase() === "-" || key.toLowerCase() === "=") {  
+    change_palette(key)
+  } 
+}

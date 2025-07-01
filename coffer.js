@@ -170,47 +170,7 @@ class Coffer {
     }
   }
 
-  unsplit(){
-    let new_polygons = []
-    for(let polygon of this.polygons) {
-      let found = false;
-      if(polygon.area() < 100) {
-        new_polygons.push(polygon);
-        stroke(0, 0, 255, 50);
-        polygon.draw();
-        continue;
-      }
-      for(let other_coffer of coffers){
-        for(let other_polygon of other_coffer.polygons) {
-          
-          if(polygon.adjacent(other_polygon)) {
-            let found = random(1) < 0.0625;
-            if(!found) { continue; }
-            // console.log("UNSPLITTING POLYGONS", polygon, other_polygon);
-            
-            let new_piece = polygon.union(other_polygon);
-            new_polygons.push(new_piece);
-            let idx = other_coffer.polygons.indexOf(other_polygon);
-            if(idx > -1) {
-              other_coffer.polygons.splice(idx, 1);
-            }
-            break;
-          }
-        }
-      }
-      if(!found) {
-        new_polygons.push(polygon);
-        stroke(0, 0, 255, 50);
-        polygon.draw();
-      }
-    }
-    this.polygons = new_polygons;
-  }
-
-  draw(){
-    stroke(0,0,0,50);
-    strokeWeight(1);
-
+   draw(){
     for(let piece of this.pieces) {
       if(piece.fill_type === 'housing') { continue }
       piece.polygon.draw();
@@ -257,7 +217,7 @@ function colour_coffers(){
   colour_map = full_recursive_colour_map(coffers);
 
   for(let i=0; i < coffers.length; i++){
-    let c = colour_map[i] || 'grey';
+    let c = colour_map[i] || palette.background;
     let coffer = coffers[i];
     coffer.fill(c);
   }

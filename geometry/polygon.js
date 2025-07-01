@@ -162,9 +162,6 @@ class Polygon {
     for (let segment of this.segments) {
       for (let other_segment of other.segments) {
         if(segment.adjacent(other_segment)) {
-          stroke(0, 255, 0);
-          segment.draw();
-          other_segment.draw();
           return true;
         }
       }

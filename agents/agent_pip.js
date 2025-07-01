@@ -50,8 +50,6 @@ class PipAgent extends Agent {
   draw() {
     push()
       translate(this.pos.x, this.pos.y);
-      stroke(0);
-      fill(0)
       rotate(this.angle);
       ellipse(0,0, this.w, this.h);
     pop();
