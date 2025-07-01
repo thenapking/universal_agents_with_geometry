@@ -99,12 +99,13 @@ class Scene {
         for(let circle of circles){
           this.polycircles.push(circle);
         }
+      } else {
+        let polyCircle = new RegularPolygon(
+          p.position.x, p.position.y,
+          p.radius, p.radius, 300, 'city'
+        ); 
+        this.polycircles.push(polyCircle);
       }
-      let polyCircle = new RegularPolygon(
-        p.position.x, p.position.y,
-        p.radius, p.radius, 300, 'city'
-      ); 
-      this.polycircles.push(polyCircle);
     }
     
     for(let i = 0; i < this.minor_points.length; i++){
@@ -134,14 +135,11 @@ class Scene {
 
     console.log("Labelling coffers")
     for(let p of this.potential_coffers){
-      let centroid = p.centroid();
       let type;
       for(let c of this.polycircles){
-        if(c.contains(centroid)){
-          if(c.type != p.type && c.type != 'decoration'){
-            // console.log(`Found ${c.type} which has type ${p.type}`);
-            type = c.type;
-          }
+        if(p.ancestor_ids[0] == c.id){
+          type = c.type;
+          break;
         }
       }
       p.type = type || 'decoration';
@@ -360,28 +358,6 @@ class Scene {
   
 }
 
-function recursive_xor(polygons, lines, depth = 0) {
-  if(depth > 10 || lines.length === 0) { return polygons; }
-  let result = polygons;
-  
-  for (i = 0; i < lines.length; i++) {
-      let l = lines.pop();
-      let newResult = [];
-      for (let polygon of result) {
-          let xorResult = polygon.xor(l);
-          if (xorResult.length > 1) {
-            for(let newPoly of xorResult) {
-              let final = recursive_xor([newPoly], lines, depth + 1);
-              console.log(`Depth: ${depth}, Polygons:`, final);
-              newResult.push(...final);
-            }
-          }
-      }
-      result = newResult;
-  }
-  
-  return result;
-}
 
 function unionPolygons(polygons) {
   let current = polygons[0];
@@ -428,6 +404,7 @@ let polyOuter, polyInner;
 
 function concentric_circle(x, y, r, w, n){
   let pieces = [];
+  console.log("Concentric circle")
 
   for(let i = 0; i <= n; i++){
     let dA = i * w
@@ -438,7 +415,8 @@ function concentric_circle(x, y, r, w, n){
       x, y,
       r - dA, r - dA, 100, type
     );
-   
+    
+    console.log(polyCircle)
     pieces.push(polyCircle);
   }
 

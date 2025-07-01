@@ -16,7 +16,7 @@ class MultiPolygon {
     if(this.is_contour_array(points)) {
       this.contours = this.find_contours(points);
     } else {
-      console.log("MultiPolygon: points is not a contour array, assuming raw array");
+      // console.log("MultiPolygon: points is not a contour array, assuming raw array");
       this.contours = [this.order(points)];
       // console.log(this.contours);
     }
@@ -558,7 +558,7 @@ class MultiPolygon {
     let new_polygons = [];
     for(let piece of pieces) {
       if(piece.length < 3) { continue };
-      let new_polygon = new MultiPolygon([piece], this.type, this.parent);
+      let new_polygon = new MultiPolygon([piece], this.type, this);
       let final = [piece]
       for(let missing of missing_contours) {
         let centroid = missing.centroid();
@@ -566,7 +566,7 @@ class MultiPolygon {
           final.push(missing.points)
         } 
       }
-      let final_polygon = new MultiPolygon(final, this.type, this.parent);
+      let final_polygon = new MultiPolygon(final, this.type, this);
       new_polygons.push(final_polygon);
     }
     return new_polygons;

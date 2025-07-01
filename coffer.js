@@ -22,12 +22,14 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL =  [ 'black', 'blank', 'downwards', 'upwards', 'housing','vertical', 'pips' ]
-let MEDIUM = [ 'black', 'blank', 'downwards', 'upwards',  'circles']
-let LARGE =  [ 'blank', 'housing' ];  
+let SMALL =  [ 'solid', 'blank', 'downwards', 'upwards', 'housing','vertical', 'pips' ]
+let MEDIUM = [ 'solid', 'blank', 'downwards', 'upwards',  'circles']
+let LARGE =  [ 'blank',  ];  
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 class Coffer {
+  static id = 0;
   constructor(polygon, type) {
+    this.id = Coffer.id++;
     this.polygon = polygon;
     this.ancestor_ids = polygon.ancestor_ids || [];
     this.pieces = [];
@@ -127,9 +129,9 @@ class Coffer {
 
       console.log("FILL", fill_type, colour, area_type);
 
-      if(fill_type === 'downwards' || fill_type === 'upwards' || fill_type === 'black') {
-        let sw = fill_type === 'black' ? SMALL_HATCH : MEDIUM_HATCH;
-        let final_fill_type = fill_type === 'black' ? 'downwards' : fill_type;  
+      if(fill_type === 'downwards' || fill_type === 'upwards' || fill_type === 'solid') {
+        let sw = fill_type === 'solid' ? SMALL_HATCH : MEDIUM_HATCH;
+        let final_fill_type = fill_type === 'solid' ? 'downwards' : fill_type;  
         fill_object = new Hatching(polygon, sw, final_fill_type);
         fill_object.hatch(final_fill_type);
       }

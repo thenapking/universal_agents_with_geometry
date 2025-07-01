@@ -11,18 +11,6 @@ function setup_svg(){
 }
 
 
-// NOT USED
-const memo = new Map();
-
-function memoize(op, a, b, fn) {
-  const key = `${op}:${a.id}-${b.id}`;
-  if (memo.has(key)) return memo.get(key);
-
-  const result = fn();
-  memo.set(key, result);
-  return result;
-}
-
 
 let connections = [], emitters = [], journeys = [], hotspots = [], major_hotspots, minor_hotspots;
 function load_data(id){
@@ -98,4 +86,18 @@ function keyPressed(){
   if (key.toLowerCase() === "-" || key.toLowerCase() === "=") {  
     change_palette(key)
   } 
+}
+
+function mousePressed(){
+  if(mouseButton == LEFT){
+    let point = createVector(mouseX, mouseY); 
+    for(let coffer of coffers){
+      if(coffer.polygon.contains(point)){ 
+        console.log(`Clicked on coffer ${coffer.id} with polygon ${coffer.polygon.id}`);
+        console.log(coffer);
+        console.log(coffer.polygon);
+        break;
+      }
+    }
+  }
 }
