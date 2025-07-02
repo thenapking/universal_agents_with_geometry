@@ -61,11 +61,11 @@ function setup(){
   setup_svg();
 
   
-  create_noise_field()
+  // create_noise_field()
  
 
-  process_data();
-  frameRate(60);
+  // process_data();
+  frameRate(30);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -75,7 +75,7 @@ function setup(){
       createVector(W + 2*BW + 2*MBW, H/4 + BW + MBW),
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
     ]};
-  scene = new Scene(template)
+  // scene = new Scene(template)
 
   default_setup()
   // scene.draw();
