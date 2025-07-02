@@ -20,7 +20,7 @@
 
 
 let DPI= 96;
-let wi = 7.5;
+let wi = 8.5;
 let hi = 10;
 let bwi = 0.5;
 let mbwi = 0.75
@@ -73,7 +73,7 @@ function setup(){
   // seed = 68658
   // seed =  10273
   // seed =  29003
-  seed =  276306
+  // seed =  276306
   randomSeed(seed);
   noiseSeed(seed);
   
@@ -123,7 +123,6 @@ function draw(){
 
   // let p = coffers[ctx]
   // if(p){
-  //   // p.debug_draw(false);
   //   p.draw();
   //   ctx++
 
@@ -160,7 +159,7 @@ function animation_draw(){
 
     push()
       default_setup()
-      scene.draw();
+      if(!exporting) { scene.draw(); }
 
       draw_coffers();
       final_draw();

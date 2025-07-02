@@ -55,6 +55,7 @@ class Scene {
 
     let bg = [bgp]
 
+    // TODO remove these pinned item
     let selected_lines = [
       this.offscreen_lines[0], 
       // this.offscreen_lines[2], 
@@ -69,7 +70,7 @@ class Scene {
       this.offscreen_lines[13],
       this.offscreen_lines[15],
       this.offscreen_lines[16],
-      this.offscreen_lines[19],
+      // this.offscreen_lines[19],
 
     ];
 
@@ -93,7 +94,7 @@ class Scene {
 
     for(let i = 1; i < this.onscreen_foci.length; i++){
       let p = this.onscreen_foci[i];
-      if(p.radius > 300 || i == 0){
+      if(i < 2){
         let rr = int(p.radius / 100);
         let circles = concentric_circle(p.position.x, p.position.y, p.radius, 30, rr);
         for(let circle of circles){
@@ -117,7 +118,7 @@ class Scene {
       this.polycircles.push(polyCircle);
     }
 
-    console.log("Splitting polycircles")
+    console.log("Splitting polycircles", this.polycircles)
     let selected_lines = [this.offscreen_lines[0], this.offscreen_lines[2]];
 
     this.split_circles = split_polygons_by_multiple(this.polycircles,  selected_lines);
@@ -416,7 +417,6 @@ function concentric_circle(x, y, r, w, n){
       r - dA, r - dA, 100, type
     );
     
-    console.log(polyCircle)
     pieces.push(polyCircle);
   }
 

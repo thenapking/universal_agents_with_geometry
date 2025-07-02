@@ -90,13 +90,14 @@ function keyPressed(){
 
 function mousePressed(){
   if(mouseButton == LEFT){
+    console.log(`-------------Mouse pressed at (${mouseX}, ${mouseY})`);
     let point = createVector(mouseX, mouseY); 
     for(let coffer of coffers){
       if(coffer.polygon.contains(point)){ 
         console.log(`Clicked on coffer ${coffer.id} with polygon ${coffer.polygon.id}`);
+        console.log(`Coffer is: ${coffer.pieces[0].fill_type}`);
         console.log(coffer);
         console.log(coffer.polygon);
-        break;
       }
     }
   }

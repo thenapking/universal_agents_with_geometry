@@ -6,7 +6,7 @@
 
 // Set the fill type of each polygon based on its area
 let SMALL =  [ 'solid', 'blank', 'downwards', 'upwards', 'housing', 'vertical', 'dots' ]
-let MEDIUM = [ 'solid', 'blank', 'downwards', 'upwards',  'circles', 'dots' ]
+let MEDIUM = [ 'solid', 'blank', 'downwards', 'upwards',   'dots' ] //'circles',
 let LARGE =  [ 'blank', 'large-dots', 'dots', 'crosses' ];  
 let COUNTRY = [ 'blank', 'large-dots', 'downwards', 'upwards', 'vertical-dashes', 'horizontal-dashes',  'dots', 'crosses', 'solid' ];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
@@ -128,17 +128,17 @@ class Coffer {
         fill_object.hatch(final_fill_type);
       }
   
-      if(fill_type === 'circles') {
-        createCircularGroup(polygon);
-      }
+      // if(fill_type === 'circles') {
+      //   createCircularGroup(polygon);
+      // }
   
-      if(fill_type === 'pips') {
-        createPipGroup(polygon);
-      }
+      // if(fill_type === 'pips') {
+      //   createPipGroup(polygon);
+      // }
   
-      if(fill_type === 'ellipses') {
-        createEllipseGroups(polygon);
-      }
+      // if(fill_type === 'ellipses') {
+      //   createEllipseGroups(polygon);
+      // }
 
       if(fill_type === 'vertical-dashes' || fill_type === 'horizontal-dashes' || fill_type === 'dots') {
         fill_object = new Regular(polygon, 5, fill_type, true);
@@ -216,6 +216,7 @@ class Coffer {
 let houses;
 
 let coffers = [];
+let discarded_coffers = [];
 
 function create_coffers(list){
   console.log("Creating coffers from list of polygons", list.length);
@@ -226,15 +227,17 @@ function create_coffers(list){
     if(shape.area() < 50) {
       continue;
     }
+    
+    let coffer = new Coffer(shape, shape.type);
     for(let other of coffers){
-      if(shape.outer === other.polygon.outer){
-        console.log("Found existing coffer for shape", shape.outer);
+      let diff = other.polygon.difference(coffer.polygon);
+      if(diff.length == 0){
+        discarded_coffers.push(coffer);
         found = true;
         break;
       }
     }
     if(found) { continue; }
-    let coffer = new Coffer(shape, shape.type);
     
     coffers.push(coffer);
   }
