@@ -79,7 +79,7 @@ function setup(){
 
   default_setup()
   scene.draw();
-  // draw_roads()
+  draw_roads()
   polyCircleA = new RegularPolygon(
     W/2, H/2,
     300, 300, 4, 'city'
@@ -94,17 +94,17 @@ function draw(){
   // h.divide();
   // h.draw();
   // noLoop();
-  // animation_draw();
+  animation_draw();
   // noFill();
-  let p = coffers[ctx]
-  if(p){
-    p.draw();
-    ctx++
+  // let p = coffers[ctx]
+  // if(p){
+  //   p.draw();
+  //   ctx++
 
-  } else{
-    console.log("Done with circles");
-    noLoop();
-  }
+  // } else{
+  //   console.log("Done with circles");
+  //   noLoop();
+  // }
   // noLoop();
 }
 
@@ -118,7 +118,7 @@ function animation_draw(){
 
       draw_coffers();
       draw_groups();
-      // draw_roads()
+      draw_roads()
     pop()
 
 
@@ -138,7 +138,7 @@ function animation_draw(){
 
       draw_coffers();
       final_draw();
-      // draw_roads()
+      draw_roads()
     pop()
 
     draw_borders();
@@ -177,9 +177,11 @@ function draw_coffers(){
 }
 
 function draw_roads(){
+  fill(0)
   for(let r of scene.roads){
     r.draw();
   }
+  noFill();
 }
 
 
