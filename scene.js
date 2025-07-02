@@ -20,16 +20,16 @@ class Scene {
     this.graph = new Graph(edges);
     this.roads = this.graph.to_polygons();
     this.road_lines = this.graph.to_polylines();
-
+    this.farms = []
     this.unioned_roads = unionPolygons(this.roads);
     this.create_foci();
     this.create_lines();
     
-    this.create_lots();
+    // this.create_lots();
 
-    this.subdivide_lots();
+    // this.subdivide_lots();
 
-    this.create_coffers()
+    // this.create_coffers()
   }
 
   create_foci(){
@@ -48,26 +48,44 @@ class Scene {
     let top_right = createVector(W + BW + MBW, BW + MBW);
     let bottom_left = createVector(BW + MBW, H + BW + MBW);
     let points = [top_left, top_right, bottom_right, bottom_left];
-    let bg = [new MultiPolygon(points, 'countryside')];
+    let bg = new MultiPolygon(points, 'countryside');
     
-    let farms = bg
-    
+    let farms = this.subdivide(bg, 35000);
+    this.farms = farms;
+
     for(let dC of farms){
-      let xC = dC.difference(this.unioned_roads);
-      for(let r of xC){
-        this.polycircles.push(r);
+      let road_which_split = []
+      for(let r of this.roads){
+        let xC = dC.difference(r);
+        if(xC.length > 1){
+          console.log("Found a split, road_id:", r.id, "farm_id:", dC.id);
+          road_which_split.push(r);
+        }
+      }
+
+      let unioned = unionPolygons(road_which_split);
+      console.log(unioned)
+      if(unioned){
+        console.log("Unioned roads:", unioned);
+        let split = dC.difference(unioned);
+        for(let i = 0; i < split.length; i++){
+          let sC = split[i];
+          this.potential_coffers.push(sC);
+        }
+      } else {
+        this.polycircles.push(dC);
       }
     }
 
-    let remainder = new MultiPolygon(points, 'countryside');
-    for(let pC of this.polycircles){
-      let rC = remainder.difference(pC);
-      if(rC.length > 0){
-        remainder = rC[0];
-      }
-    }
-    this.polycircles.push(remainder);
-    console.log("Remaining countryside area after coffers:", remainder);
+    // let remainder = new MultiPolygon(points, 'countryside');
+    // for(let pC of this.polycircles){
+    //   let rC = remainder.difference(pC);
+    //   if(rC.length > 0){
+    //     remainder = rC[0];
+    //   }
+    // }
+    // this.polycircles.push(remainder);
+    // console.log("Remaining countryside area after coffers:", remainder);
     
   }
 

@@ -29,7 +29,7 @@ function process_data(){
   for(let i = 0; i < hotspots.length; i++){
     let h = hotspots[i];
     // TODO remove this translation
-    let node = new Node(h.position.x, h.position.y - 3*MBW);
+    let node = new Node(h.position.x - 2*MBW, h.position.y - 4*MBW);
     nodes[i] = node;
   }
 

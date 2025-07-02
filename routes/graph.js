@@ -115,6 +115,67 @@ class Graph {
     return null;
   }
 
+  dfsLabeledEdges() {
+    const visited = new Set();
+    const nodes = this.nodes;
+    const depthLimit = this.nodes.length;
+
+    let result = [];
+
+    for (let edge of this.edges) {
+      if (visited.has(edge)) continue;
+      
+      result.push({ from: edge.start, to: edge.end, type: "forward" });
+      visited.add(edge);
+      let neighbours = this.sorted_neighbors(edge.end);
+      let stack = [[edge, neighbours]];
+      let depth = 1;
+
+      while (stack.length > 0) {
+        const [parent, children] = stack[stack.length - 1];
+        
+        let childProcessed = false;
+
+        for (let child of children) {
+          // one end of the child edge is the parent end
+          // so get the other end of the child edge
+          let p = parent.end;
+          let q = child.grab(parent.end.id);
+
+          if (visited.has(child)) {
+            result.push({ from: p, to: q, type: "nontree" });
+          } else {
+            result.push({ from: p, to: q, type: "forward" });
+            visited.add(child);
+
+            if (depth < depthLimit) {
+              let neighbours = this.sorted_neighbors(child.end);
+              stack.push([child, neighbours]);
+              depth++;
+              childProcessed = true;
+              break;
+            } else {
+              result.push({ from: p, to: q, type: "reverse-depth_limit" });
+            }
+          }
+        }
+
+        if (!childProcessed) {
+          stack.pop();
+          depth--;
+          if (stack.length > 0) {
+            const [parent, children] = stack[stack.length - 1];
+            result.push({ from: parent.start, to: parent.end, type: "reverse" });
+          }
+        }
+      }
+
+      result.push({ from: edge.end, to: edge.start, type: "reverse" });
+    }
+
+    return result;
+  }
+
   // TO DO REFACTOR THESE UGLY, BUT WORKING METHODS
   dfsCycleForest(root) {
     const visited = new Set();
@@ -159,6 +220,7 @@ class Graph {
   chainDecomposition() {
     const chains = [];
     const visited = new Set();
+    const visitedEdges = new Set();
 
     // Loop over all nodes to make sure we process each component
     for (const node of this.nodes) {
@@ -172,9 +234,10 @@ class Graph {
           visited.add(other.id);
           for (const edge of nontreeEdges) {
             const [u, v] = edge.split(",").map(Number);
-            if (u === other.id || v === other.id) {
+            if ((u === other.id || v === other.id) && !visitedEdges.has(edge)) {
               // console.log("Found non-tree edge: ", edge, other.id);
               // Create the cycle or cycle prefix starting with the non-tree edge
+              visitedEdges.add(edge);
               const chain = this.buildChain(parent, u, v, visited);
               this.chains.push(chain);
             }
@@ -209,7 +272,7 @@ class Graph {
       // For this data, chains of less than 5 in length, are not really loops.
       // This causes the "pinched" polygons.  
       // They are lines which then erroneously have their first point added in again, pulling them back to the start
-      if(chain.length < 5) continue;
+      if(chain.length < 2) continue;
       let points = []
       for(let pair of chain) {
         let id = pair[0]
@@ -385,6 +448,12 @@ class Graph {
     let weighted_degree = this.weighted_degrees.get(node.id) || 0;
     this.community_weight[community_id] -= weighted_degree;
     this.internal_weight[community_id] -= 2 * shared_links_weight;
+  }
+
+  sorted_neighbors(node) {
+    if (!this.adjacency.has(node.id)) return [];
+    const neighbors = this.adjacency.get(node.id);
+    return neighbors.sort((a, b) => a.id - b.id);
   }
   
   neighbourhood(node) {

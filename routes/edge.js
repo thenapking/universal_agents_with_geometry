@@ -24,6 +24,7 @@ class Edge {
     return this.start;
   }
 
+
   draw() {
     line(this.start.position.x, this.start.position.y, 
          this.end.position.x,   this.end.position.y    );

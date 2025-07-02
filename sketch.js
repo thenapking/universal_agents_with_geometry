@@ -65,7 +65,7 @@ function setup(){
  
 
   process_data();
-  frameRate(10);
+  frameRate(60);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -78,8 +78,8 @@ function setup(){
   scene = new Scene(template)
 
   default_setup()
-  scene.draw();
-  draw_roads()
+  // scene.draw();
+  // draw_roads()
   polyCircleA = new RegularPolygon(
     W/2, H/2,
     300, 300, 4, 'city'
@@ -94,18 +94,31 @@ function draw(){
   // h.divide();
   // h.draw();
   // noLoop();
-  animation_draw();
-  // noFill();
-  // let p = coffers[ctx]
+  // animation_draw();
+  // draw_coffers();
+  // draw_roads();
+  // strokeWeight(8)
+  // for(let r of scene.road_lines){
+  //   r.draw();
+  // }
+  // stroke(255,0,0);
+  // strokeWeight(2);
+  // for(let e of scene.graph.edges){
+  //   e.draw();
+  // }
+
+  // let p = scene.potential_coffers[ctx]
   // if(p){
   //   p.draw();
   //   ctx++
 
   // } else{
   //   console.log("Done with circles");
+    
+  //   noFill();
   //   noLoop();
   // }
-  // noLoop();
+  noLoop();
 }
 
 function animation_draw(){
@@ -177,11 +190,9 @@ function draw_coffers(){
 }
 
 function draw_roads(){
-  fill(0)
   for(let r of scene.roads){
     r.draw();
   }
-  noFill();
 }
 
 
