@@ -26,6 +26,7 @@ let edges = [], nodes = [];
 function process_data(){
   connections = process_file(connections);
   hotspots = process_file(hotspots)
+  hotspot_to_node_ids = []
   for(let i = 0; i < hotspots.length; i++){
     let h = hotspots[i];
     // TODO remove this translation
@@ -37,13 +38,14 @@ function process_data(){
     let from = nodes[c.from_id];
     let to = nodes[c.to_id];
     let edge = new Edge(from, to);
+    console.log(`Edge from ${c.from_id} to ${c.to_id} with ${edge.start_id} to ${edge.end_id}`);
     edges.push(edge);
   }
   emitters = process_file(emitters);
   journeys = process_file(journeys);
   major_hotspots = hotspots.filter(h => h.major)
   minor_hotspots = hotspots.filter(h => !h.major)
-  hotspots = hotspots.sort((a, b) => { return b.count - a.count; });
+  // hotspots = hotspots.sort((a, b) => { return b.count - a.count; });
   major_hotspots = major_hotspots.sort((a, b) => { return b.count - a.count; });
   minor_hotspots = minor_hotspots.sort((a, b) => { return b.count - a.count; });
 }

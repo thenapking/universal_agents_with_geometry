@@ -1,5 +1,7 @@
 class Graph {
-  constructor(edges = []) {
+  constructor(edges = [], nodes = []) {
+    this.graphologyGraph = new graphology.Graph()
+
     this.nodes = [];
     this.node_ids = [];
     this.edges = []
@@ -11,40 +13,33 @@ class Graph {
     this.chains = [];
     this.adjacency = new Map();
     this.communities = [];
-    this.initialize(edges);
+    this.initialize(edges, nodes);
   }
 
-  initialize(edges = []) {
+  initialize(edges, nodes) {
     // Initialize the adjacency list for each node
+    for(let node of nodes) {
+      this.add_node(node);
+    }
     for (let edge of edges) {
       this.add_edge(edge);
     }
+
   }
 
   add_node(a){
-    if(!this.adjacency.has(a.id)){
-      this.adjacency.set(a.id, []);
-      this.nodes.push(a);
-      this.node_ids.push(a.id);
-      this.degrees.set(a.id, 0);
-    }
+    this.graphologyGraph.addNode(a.id);
+    this.nodes.push(a);
+    this.node_ids.push(a.id);
   }
 
   add_edge(edge){
     if(edge.start.position === edge.end.position) { return; } // Prevent self-loops
 
-    this.add_node(edge.start);
-    this.add_node(edge.end);
 
     this.edges.push(edge);
 
-    this.adjacency.get(edge.start.id).push(edge);
-    this.adjacency.get(edge.end.id).push(edge);
-
-    this.degrees.set(edge.start.id, this.adjacency.get(edge.start.id).length);
-    this.degrees.set(edge.end.id, this.adjacency.get(edge.end.id).length);
-
-    this.weight += edge.weight;
+    this.graphologyGraph.addEdge(edge.start.id, edge.end.id);
   }
 
 
@@ -52,11 +47,102 @@ class Graph {
     return this.nodes.find(node => node.id === id);
   }
 
-  // NOT REQUIRED:
-  degree(node){
-    if (!this.adjacency.has(node.id)) return 0;
-    return this.adjacency.get(node.id).length;
+  find_edge(from_id, to_id) {
+    for(let edge of this.edges) {
+      if(edge.start.id === from_id && edge.end.id === to_id) {
+        return edge;
+      } else if(edge.start.id === to_id && edge.end.id === from_id) {
+        return edge
+      }
+    }
+    return null;
   }
+
+  find_edges(node_id) {
+    let edges = [];
+    for(let edge of this.edges) {
+      if(edge.start.id === node_id || edge.end.id === node_id) {
+        edges.push(edge);
+      }
+    }
+    return edges;
+  }
+
+  find_chain(start, end, maxDepth = Infinity) {
+    return new graphologyLibrary.simplePath.allSimplePaths(this.graphologyGraph, start.id, end.id, { maxDepth });
+  }
+
+  dfs_from(node_id){
+    let g = new graphologyLibrary.traversal.dfsFromNode(this.graphologyGraph, node_id, function (node_id, attr, depth) {
+      return depth >= 3;
+    });
+
+    return g;
+  }
+
+  find_chain_from_node(start_id, visited) {
+    let chain = [start_id];
+    let current_id = start_id;
+    let neighbors = this.graphologyGraph.neighbors(current_id);
+
+    while (neighbors.length > 0) {
+      let next_id = neighbors[0]
+      if (visited.has(next_id)) { break; } // Stop if we revisit a node
+      chain.push(int(next_id));
+      visited.add(next_id);
+      current_id = next_id;
+      neighbors = this.graphologyGraph.neighbors(current_id);
+    }
+
+
+
+    return chain;
+  }
+
+  find_dfs_chains() {
+    this.chains = [];
+    let visited = new Set();
+
+    // Iterate over all nodes and start DFS traversal
+    for(let node_id of this.node_ids) {
+      if (!visited.has(node_id)) {
+        let chain = [];
+        new graphologyLibrary.traversal.bfsFromNode(this.graphologyGraph, node_id, (node_id, attr, depth) => {
+          if (visited.has(node_id) || depth > 10) return true;
+
+          // Mark node as visited and add to the chain
+          visited.add(node_id);
+          chain.push(int(node_id));
+
+          // Return false to continue DFS
+          return false;
+        });
+
+        if (chain.length > 1) {
+          this.chains.push(chain);
+        }
+      }
+    };
+
+  }
+
+  find_all_chains() {
+    this.chains = [];
+    let visited = new Set();
+    
+    for (let node of this.nodes) {
+      if (!visited.has(node.id)) {
+        // visited.add(node.id);
+        let chain = this.find_chain_from_node(node.id, visited);
+        if (chain.length > 1) {
+          this.chains.push(chain);
+        }
+      }
+    }
+  }
+
+
+ 
 
 
   // Dijkstra
@@ -115,143 +201,38 @@ class Graph {
     return null;
   }
 
-  dfsLabeledEdges() {
-    const visited = new Set();
-    const nodes = this.nodes;
-    const depthLimit = this.nodes.length;
 
-    let result = [];
 
-    for (let edge of this.edges) {
-      if (visited.has(edge)) continue;
-      
-      result.push({ from: edge.start, to: edge.end, type: "forward" });
-      visited.add(edge);
-      let neighbours = this.sorted_neighbors(edge.end);
-      let stack = [[edge, neighbours]];
-      let depth = 1;
 
-      while (stack.length > 0) {
-        const [parent, children] = stack[stack.length - 1];
-        
-        let childProcessed = false;
-
-        for (let child of children) {
-          // one end of the child edge is the parent end
-          // so get the other end of the child edge
-          let p = parent.end;
-          let q = child.grab(parent.end.id);
-
-          if (visited.has(child)) {
-            result.push({ from: p, to: q, type: "nontree" });
-          } else {
-            result.push({ from: p, to: q, type: "forward" });
-            visited.add(child);
-
-            if (depth < depthLimit) {
-              let neighbours = this.sorted_neighbors(child.end);
-              stack.push([child, neighbours]);
-              depth++;
-              childProcessed = true;
-              break;
-            } else {
-              result.push({ from: p, to: q, type: "reverse-depth_limit" });
-            }
-          }
-        }
-
-        if (!childProcessed) {
-          stack.pop();
-          depth--;
-          if (stack.length > 0) {
-            const [parent, children] = stack[stack.length - 1];
-            result.push({ from: parent.start, to: parent.end, type: "reverse" });
-          }
+  draw_chain(id){
+    let chain = this.chains[id];
+    textSize(10);
+    beginShape();
+    let previous = null;
+    for(let node_id of chain) {
+      let neighbors = this.graphologyGraph.neighbors(node_id);
+      console.log(node_id, neighbors);
+      let node = this.find(node_id);
+      if(node) {
+        circle(node.position.x, node.position.y, 5);
+        fill(0)
+        text(node.id, node.position.x + 5, node.position.y + 5);
+        noFill();
+        vertex(node.position.x, node.position.y);
+      }
+      if(previous) {
+        let edge = this.find_edge(previous.id, node.id);
+        if(!edge) {
+          console.log(`No edge found between ${previous.id} and ${node.id}`);
         }
       }
 
-      result.push({ from: edge.end, to: edge.start, type: "reverse" });
+      previous = node;
     }
+    endShape();
 
-    return result;
+   
   }
-
-  // TO DO REFACTOR THESE UGLY, BUT WORKING METHODS
-  dfsCycleForest(root) {
-    const visited = new Set();
-    const parent = {};
-    const nontreeEdges = [];
-    const stack = [root];
-    const dfsNodes = [];
-
-    while (stack.length) {
-      const node = stack.pop();
-      if (!visited.has(node.id)) {
-        visited.add(node.id);
-        dfsNodes.push(node);
-        for (const edge of this.adjacency.get(node.id)) {
-          const neighbor = (edge.start_id === node.id) ? edge.end : edge.start;
-
-          if (!visited.has(neighbor.id)) {
-            parent[neighbor.id] = node.id;
-            stack.push(neighbor);
-          } else if (parent[node.id] !== neighbor.id) {
-            // Non-tree edge (cycle edge)
-            nontreeEdges.push([node.id, neighbor.id].sort().join(","));
-          }
-        }
-      }
-    }
-    return { parent, nontreeEdges, dfsNodes };
-  }
-
-  buildChain(G, u, v, visited) {
-    const chain = [];
-    while (!visited.has(v)) {
-      chain.push([u, v]);
-      visited.add(v);
-      u = v;
-      v = G[u];
-    }
-    chain.push([u, v]);
-    return chain;
-  }
-
-  chainDecomposition() {
-    const chains = [];
-    const visited = new Set();
-    const visitedEdges = new Set();
-
-    // Loop over all nodes to make sure we process each component
-    for (const node of this.nodes) {
-      if (!visited.has(node.id)) {
-        // console.log("Processing node: ", node.id);
-        const { parent, nontreeEdges, dfsNodes } = this.dfsCycleForest(node);
-
-        // For each node and its non-tree edges, generate the chains
-        for (const other of dfsNodes) {
-          
-          visited.add(other.id);
-          for (const edge of nontreeEdges) {
-            const [u, v] = edge.split(",").map(Number);
-            if ((u === other.id || v === other.id) && !visitedEdges.has(edge)) {
-              // console.log("Found non-tree edge: ", edge, other.id);
-              // Create the cycle or cycle prefix starting with the non-tree edge
-              visitedEdges.add(edge);
-              const chain = this.buildChain(parent, u, v, visited);
-              this.chains.push(chain);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  
-
-
-
-
   to_polygons(){
     let polylines = this.to_polylines();
     let polygons = [];
@@ -263,25 +244,17 @@ class Graph {
   }
 
   to_polylines(){
-    this.chainDecomposition();
+    this.find_all_chains();
     let polylines = [];
     for(let chain of this.chains) {
       
-      // TODO
-      // There's a bug in the chain decomposition algorithm
-      // For this data, chains of less than 5 in length, are not really loops.
-      // This causes the "pinched" polygons.  
-      // They are lines which then erroneously have their first point added in again, pulling them back to the start
       if(chain.length < 2) continue;
       let points = []
-      for(let pair of chain) {
-        let id = pair[0]
+
+      for(let id of chain) {
         let node = this.find(id);
         points.push(node.position);
       }
-      let last_node_id = chain[chain.length-1][1];
-      let last_node= this.find(last_node_id);
-      points.push(last_node.position); 
       let polyline = new Polyline(points, false).to_bezier(60)
     
       polylines.push(polyline);

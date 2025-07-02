@@ -17,13 +17,13 @@ class Scene {
     this.offscreen_lines = [];
     this.minor_points = []; 
     
-    this.graph = new Graph(edges);
-    this.roads = this.graph.to_polygons();
+    this.graph = new Graph(edges, nodes);
+    // this.roads = this.graph.to_polygons();
     this.road_lines = this.graph.to_polylines();
-    this.farms = []
-    this.unioned_roads = unionPolygons(this.roads);
-    this.create_foci();
-    this.create_lines();
+    // this.farms = []
+    // this.unioned_roads = unionPolygons(this.roads);
+    // this.create_foci();
+    // this.create_lines();
     
     // this.create_lots();
 

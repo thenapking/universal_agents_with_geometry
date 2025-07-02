@@ -40,7 +40,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(4)
+  load_data(1)
 }
 
 function setup(){
@@ -64,7 +64,7 @@ function setup(){
   // create_noise_field()
  
 
-  // process_data();
+  process_data();
   frameRate(30);
   template = {
     foci: [
@@ -75,7 +75,7 @@ function setup(){
       createVector(W + 2*BW + 2*MBW, H/4 + BW + MBW),
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
     ]};
-  // scene = new Scene(template)
+  scene = new Scene(template)
 
   default_setup()
   // scene.draw();
@@ -107,18 +107,24 @@ function draw(){
   //   e.draw();
   // }
 
-  // let p = scene.potential_coffers[ctx]
-  // if(p){
-  //   p.draw();
-  //   ctx++
+  // stroke(255, 0, 0);  
 
-  // } else{
-  //   console.log("Done with circles");
-    
-  //   noFill();
-  //   noLoop();
+  // for(let e of scene.graph.edges){
+  //   e.draw();
   // }
-  noLoop();
+
+  // noLoop();
+
+  let p = scene.road_lines[ctx]
+  if(p){
+    p.draw();
+    ctx++
+
+  } else{
+    console.log("Done with circles");
+    
+    noLoop();
+  }
 }
 
 function animation_draw(){
