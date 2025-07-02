@@ -65,7 +65,7 @@ function setup(){
  
 
   process_data();
-  frameRate(60);
+  frameRate(10);
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -91,20 +91,20 @@ function draw(){
   
   // polyCircleA.draw();
   // let h = new Housing(polyCircleA);
-  // h.construct();
+  // h.divide();
   // h.draw();
   // noLoop();
-  animation_draw();
+  // animation_draw();
   // noFill();
-  // let p = coffers[ctx]
-  // if(p){
-  //   p.draw();
-  //   ctx++
+  let p = coffers[ctx]
+  if(p){
+    p.draw();
+    ctx++
 
-  // } else{
-  //   console.log("Done with circles");
-  //   noLoop();
-  // }
+  } else{
+    console.log("Done with circles");
+    noLoop();
+  }
   // noLoop();
 }
 
@@ -118,7 +118,7 @@ function animation_draw(){
 
       draw_coffers();
       draw_groups();
-      draw_roads()
+      // draw_roads()
     pop()
 
 
@@ -138,7 +138,7 @@ function animation_draw(){
 
       draw_coffers();
       final_draw();
-      draw_roads()
+      // draw_roads()
     pop()
 
     draw_borders();

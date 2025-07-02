@@ -5,7 +5,7 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL =  [ 'solid', 'blank', 'downwards', 'upwards', 'housing', 'vertical', 'dots' ]
+let SMALL =  [ 'blank', 'downwards', 'upwards', 'dots' ]
 let TOWN = [ 'blank', 'dots', 'downwards', 'upwards' ] 
 let LARGE =  [ 'blank', 'large-dots', 'dots', 'crosses' ];  
 let COUNTRY = [ 'blank', 'large-dots', 'vertical-dashes', 'horizontal-dashes',  'dots', 'crosses' ];
@@ -37,6 +37,7 @@ class Coffer {
 
     if(this.fill_type == 'houses'){
       this.fill_object = new Housing(this.polygon);
+      
       this.fill_object.construct();
     }
 

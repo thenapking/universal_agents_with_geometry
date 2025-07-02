@@ -72,7 +72,27 @@ class Scene {
   }
 
   create_coffers(){
+    let results = []
     for(let p of this.potential_coffers){
+      let centroid = p.centroid();
+      let nearest = null;
+      let nearest_dist = Infinity;
+      for(let c of this.roads) { 
+        let d = p5.Vector.dist(c.centroid(), centroid);
+        if(d < nearest_dist) { 
+          nearest = c; 
+          nearest_dist = d
+        }
+      }
+      if(nearest){
+        let intersection = p.intersection(nearest);
+        if(intersection && intersection.length > 0){ continue }
+          
+        results.push(p);
+      }
+    }
+
+    for(let p of results){
       let centroid = p.centroid();
       let nearest = this.foci[0];
       let nearest_dist = Infinity;
@@ -104,7 +124,7 @@ class Scene {
     this.potential_coffers = results;
   }
 
-  subdivide(polygon, min_area, counter = 0) {
+  subdivide(polygon, min_area, counter = 0, previous_area) {
     let area = polygon.area()
     let centroid = polygon.centroid();
     let nearest = null;
@@ -145,8 +165,8 @@ class Scene {
       return [polygon];
     }
 
-    let p1 = edge[0].start
-    let p2 = edge[edge.length - 1].end;
+    let p1 = edge.start
+    let p2 = edge.end;
     let midpoint = p5.Vector.add(p1, p2).mult(0.5);
 
     // Compute the unit‐vector direction of the longest edge,
@@ -172,7 +192,7 @@ class Scene {
     // 8) Recursively subdivide each piece:
     let result = [];
     for (let piece of pieces) {
-      let pieces = this.subdivide(piece, min_area, counter++);
+      let pieces = this.subdivide(piece, min_area, counter++, area);
       result.push(...pieces);
     }
     return result;
@@ -345,7 +365,6 @@ function split_polygons_by_multiple(polygons, polylines){
 function split_polygons(polygons, polyline){
   let new_polygons = [];
   for(let polygon of polygons){
-    // console.log("Splitting polygon by polyline", polygon, polyline);
     let results = polygon.split(polyline);
 
     for(let result of results){
