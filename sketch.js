@@ -1,27 +1,6 @@
-// TODO:
-
-// THIS IS WORKING
-// WE JUST NEED TO BE ABLE TO IDENTIFY THE COFFERS DERIVED FROM ROADS
-// THEN UPDATE THE COLOURING LOGIC
-// fix circle filling
-// fix diagonal shading
-// fix + identify bugs
-
-// new:
-// add dashed lines
-// add grid lines
-// add network lines
-
-// fills:
-// test filling logic
-// countour fill
-// dots/lines parallel to roads
-// dahsed lines for paths
-
-
 let DPI= 96;
-let wi = 8.5;
-let hi = 10;
+let wi = 7;
+let hi = 10.25;
 let bwi = 0.5;
 let mbwi = 0.75
 let W = wi * DPI;
