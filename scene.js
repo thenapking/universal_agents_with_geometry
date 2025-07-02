@@ -3,7 +3,6 @@
 // SCENE CREATION
 
 let template;
-// {foci: [createVector(W/2, H/2)], offscreen_foci: [createVector(W + 2*BW + 2*MBW, 0)]};
 class Scene {
   constructor(template){
     this.foci = template.foci || [];
@@ -19,28 +18,31 @@ class Scene {
     this.minor_points = []; 
     
     this.graph = new Graph(edges);
-    this.b_graph = this.graph.louvain(2)
-    // this.c_graph = this.graph.louvain(3)
     this.roads = this.graph.to_polygons();
     this.road_lines = this.graph.to_polylines();
-    // this.city_centres =  this.c_graph.nodes.sort((a, b) => b.radius - a.radius)
 
     this.unioned_roads = unionPolygons(this.roads);
-
+    this.create_foci();
     this.create_lines();
     
-    this.create_countryside();
+    this.create_lots();
 
-    this.subdivide_polygons();
+    this.subdivide_lots();
 
-    this.pick_fill()
-
-    // create_coffers(this.potential_coffers);
-
-    // colour_coffers();
+    this.create_coffers()
   }
 
-  create_countryside(){
+  create_foci(){
+    let b_graph = this.graph.louvain(3)
+    let potential_minor_points = b_graph.nodes.sort((a, b) => b.radius - a.radius).slice();
+    potential_minor_points = potential_minor_points.filter(p => this.onscreen(p.position)).slice(0, 3);
+    for(let p of potential_minor_points){
+      this.foci.push(p.position);
+    }
+    
+  }
+
+  create_lots(){
     let top_left = createVector(BW + MBW, BW + MBW);
     let bottom_right = createVector(W + BW + MBW, H + BW + MBW);
     let top_right = createVector(W + BW + MBW, BW + MBW);
@@ -69,25 +71,25 @@ class Scene {
     
   }
 
-  pick_fill(){
+  create_coffers(){
     for(let p of this.potential_coffers){
-      let c = p.centroid();
-      let area = p.area();
-      let d = p5.Vector.dist(c, this.focus);
-      let fill_type = 'houses'
-      console.log("Distance to focus:", d);
-      if(d > 300 || area > 3000){ fill_type = 'blank'}
-      let coffer = new Coffer(p)
-      if(fill_type == 'houses'){
-        let fill_object = new Housing(p);
-        fill_object.construct();
-        coffer.add_piece(p, fill_type, fill_object, 'black')
+      let centroid = p.centroid();
+      let nearest = this.foci[0];
+      let nearest_dist = Infinity;
+      for (let f of this.foci) {
+        let d = p5.Vector.dist(centroid, f);
+        if (d < nearest_dist) {
+          nearest_dist = d;
+          nearest = f;
+        }
       }
+      let coffer = new Coffer(p, nearest)
+      
       coffers.push(coffer);
     }
   }
 
-  subdivide_polygons(){
+  subdivide_lots(){
     let results = [];
     let counter = 0;
     for(let p of this.polycircles){
@@ -105,7 +107,16 @@ class Scene {
   subdivide(polygon, min_area, counter = 0) {
     let area = polygon.area()
     let centroid = polygon.centroid();
-    let d = p5.Vector.dist(centroid, this.focus);
+    let nearest = null;
+    let nearest_dist = Infinity;
+    for (let f of this.foci) {
+      let d = p5.Vector.dist(centroid, f);
+      if (d < nearest_dist) {
+        nearest_dist = d;
+        nearest = f;
+      }
+    }
+    let d = nearest_dist;
     let max_area = 20000
     let max_dist = 200
     let scale = map(d, 0, max_dist, 0, 1);
@@ -115,6 +126,14 @@ class Scene {
 
     if (area < threshold || area < min_area) {
       return [polygon];
+    }
+
+    if(area > PARK  && random(1) < 0.03 && counter > 0){
+      return [polygon]
+    }
+
+    if(area > CIVIC && random(1) < 0.07 && counter > 0){
+      return [polygon]
     }
 
     let stroke_width = area > BLOCK ? MAJOR_ROAD : MINOR_ROAD;
@@ -239,7 +258,6 @@ class Scene {
     let p1 = createVector(W/3, 0)
     let p2 = createVector(W/3, H)
     this.add_full_line(p1, p2, offset);
-    // this.add_star(this.foci[0], 16, offset);
     
   }
 
@@ -266,38 +284,6 @@ class Scene {
     return new Polyline([createVector(x1, y1), createVector(x2, y2)]);
   }
 
-  add_crosshairs(a, trans = createVector(0, 0)){
-    let a1 = a.copy().add(trans);
-    let b1 = a.copy().mult(1,0).add(trans);
-    let b2 = a.copy().mult(0,1).add(trans);
-    let l1 = this.full_line(a1, b1);
-    let l2 = this.full_line(a1, b2);
-    this.offscreen_lines.push(l1);
-    this.offscreen_lines.push(l2);
-    return [l1, l2];
-  }
-
-  add_star(a, n, trans = createVector(0, 0)){
-    let angle = TWO_PI / n;
-    let results = [];
-    for(let i = 0; i < n; i++){
-      let x = a.x + cos(i * angle) * 200;
-      let y = a.y + sin(i * angle) * 200;
-      let p = createVector(x, y).add(trans)
-      let aa = a.copy().add(trans)
-      let l = this.full_line(aa, p);
-      l.draw()
-      results.push(l);
-      this.offscreen_lines.push(l);
-    }
-    return results
-  }
-
-
-
-
-  
-
   draw(){
     push();
       noFill();
@@ -310,30 +296,6 @@ class Scene {
 
       draw_grid(DPI/4);
 
-      for(let o of this.offscreen_foci){
-        circle(o.x, o.y, 10);
-      }
-
-      stroke(0,0,0)
-
-      for(let l of this.offscreen_lines){
-        // l.draw();
-      }
-
-      stroke(light_pen)
-
-      for(let p of this.polycircles){
-        p.draw();
-      }
-
-      // stroke(0);
-      for(let p of this.roads){
-        // noFill();
-        // p.draw();
-        // fill(0)
-        // text(p.id, p.outer[0].x, p.outer[0].y);
-      }
- 
 
       translate(BW + MBW, BW + MBW);
       rect(W/2, H/2, W, H);
@@ -370,6 +332,31 @@ function mergeDisjointPolygons(polygonArray) {
   }
   return result;
 }
+
+function split_polygons_by_multiple(polygons, polylines){
+  let results = polygons;
+  for(let polyline of polylines){
+    console.log("Splitting polygons by polyline");
+    results = split_polygons(results, polyline);
+  }
+  return results;
+}
+
+function split_polygons(polygons, polyline){
+  let new_polygons = [];
+  for(let polygon of polygons){
+    // console.log("Splitting polygon by polyline", polygon, polyline);
+    let results = polygon.split(polyline);
+
+    for(let result of results){
+      new_polygons.push(result);
+    }
+  }
+    
+  return new_polygons;
+}
+
+
 
 function intersect_all(pcircle, lines){
   let results = [];
