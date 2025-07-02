@@ -189,7 +189,17 @@ class Graph {
 
 
 
-  to_polygon(){
+  to_polygons(){
+    let polylines = this.to_polylines();
+    let polygons = [];
+    for(let polyline of polylines) {
+      let polygon = polyline.to_polygon(INTERCITY_ROAD, 'road');
+      polygons.push(polygon);
+    }
+    return polygons;
+  }
+
+  to_polylines(){
     this.chainDecomposition();
     let polylines = [];
     for(let chain of this.chains) {
@@ -209,7 +219,7 @@ class Graph {
       let last_node_id = chain[chain.length-1][1];
       let last_node= this.find(last_node_id);
       points.push(last_node.position); 
-      let polyline = new Polyline(points, false).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
+      let polyline = new Polyline(points, false).to_bezier(60)
     
       polylines.push(polyline);
     }

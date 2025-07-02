@@ -3,9 +3,7 @@ class Housing {
     this.polygon = polygon;
     this.bounds = this.polygon.bounds();
     this.houses = [];
-  }
-
-  construct(){
+ 
     const [minX, minY, maxX, maxY] = this.bounds;
     const width = maxX - minX;
     const height = maxY - minY;
@@ -16,85 +14,55 @@ class Housing {
     this.maxY = minY + size;
     this.centerX = (minX + maxX) / 2;
     this.centerY = (minY + maxY) / 2;
-    
-    this.goldenDivide(this.minX, this.minY, maxX - minX, maxY - minY, true);
+    this.centroid = this.polygon.centroid();
+    this.houses = []
   }
 
-  goldenDivide(x, y, w, h, vertical, count = 0) {
-    PHI = (1 + Math.sqrt(5)) / 2; // WHY THIS CAN'T GET DEFINED IN SETUP I DON'T KNOW
+  construct(){
+    let hW = random(3, 5)
+    let hD = hW * 1.8;
+    let n = this.polygon.outer.length;
+    for(let i = 0; i < n; i++){
+      
+      let a = this.polygon.outer[i];
+      let b = this.polygon.outer[(i + 1) % n];
+      let edge = p5.Vector.sub(b, a);
+      let edgeLen = edge.mag();
+      let dir = edge.copy().normalize();
 
-    const PADDING = 1;
-    x += PADDING;
-    y += PADDING;
-    w -= 2 * PADDING;
-    h -= 2 * PADDING;
+      let midpoint = p5.Vector.add(a, b).div(2);
+      let toCentroid = p5.Vector.sub(this.centroid, midpoint).normalize();
+      let inward = createVector(-dir.y, dir.x);
+      if (inward.dot(toCentroid) < 0) inward.mult(-1);
 
-    if ((min(w, h) < 40 || count > 10 || random(1) < 0.5) && count > 1) {
-      this.add_houses(x, y, w, h);
-      return;
-    }
-  
-    if (vertical) {
-      let sw = w / PHI;
+      let from = 0
+      let to = floor(edgeLen / hW);
+      let offset = (edgeLen - to * hW) / 2;
 
-      this.goldenDivide(x, y, sw, h, !vertical, count + 1);
-      this.goldenDivide(x + sw + 2, y, w - sw - 2, h, !vertical, count + 1);
+      for (let j = from; j < to; j++) {
+        let start = a.copy().add(p5.Vector.mult(dir, offset + j * hW));
+        let end = start.copy().add(p5.Vector.mult(dir, hW));
+        let hd = random(hD - 1, hD + 2)
+        let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
+        let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));
   
-    } else {
-      let sh = h / PHI;
-  
-      this.goldenDivide(x, y, w, sh, !vertical, count + 1);
-      this.goldenDivide(x, y + sh + 2, w, h - sh - 2, !vertical, count + 1);
-  
-    }
-  }
-
-  add_houses(x, y, w, h) {
-    let cols, rows;
-    let padding = 2
-  
-    if (w < h) {
-      // vertical houses
-      cols = 2
-      rows = floor(h / 10);
-  
-    } else {
-  
-      // horizontal houses
-      rows = 2;
-      cols = floor(w / 10);
-  
-    }
-  
-    let houseW = w / cols;
-    let houseH = h / rows;
-  
-    for (let i = 0; i < cols; i++) {
-  
-      for (let j = 0; j < rows; j++) {
-  
-        let hx = x + i * houseW + padding;
-        let hy = y + j * houseH + padding;
-  
-        let hw = houseW - 2 * padding;
-        let hh = houseH - 2 * padding;
-        
-        let house = new Oblong(hx, hy, hw, hh);
-        let final_plot = house.intersection(this.polygon);
-        if(final_plot){
-          this.houses.push(final_plot);
-        }
+        let p1 = createVector(start.x, start.y);
+        let p2 = createVector(end.x, end.y);
+        let p3 = createVector(innerEnd.x, innerEnd.y);
+        let p4 = createVector(innerStart.x, innerStart.y);
+        let points = [p1, p2, p3, p4];
+        let house = new MultiPolygon(points);
+        this.houses.push(house);
       }
-  
     }
-  
   }
 
   draw() {
-    push()
+    push();
     for (let house of this.houses) {
       house.draw();
     }
     pop();
-  }
+  } 
+  
 }

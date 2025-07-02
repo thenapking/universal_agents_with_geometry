@@ -40,7 +40,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(1)
+  load_data(4)
 }
 
 function setup(){
@@ -65,19 +65,15 @@ function setup(){
  
 
   process_data();
-  // test_slime();
-  frameRate(30);
+  frameRate(60);
   template = {
     foci: [
       createVector(W/2, H/2)
     ], 
     offscreen_foci: [
-      // createVector(W + 2*BW + 2*MBW, 0),
       createVector(0, 0),
       createVector(W + 2*BW + 2*MBW, H/4 + BW + MBW),
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
-      // createVector(W/4 + BW + MBW, 0),
-      // createVector(3*W/4 + BW + MBW, 0),
     ]};
   scene = new Scene(template)
 
@@ -86,7 +82,7 @@ function setup(){
   // draw_roads()
   polyCircleA = new RegularPolygon(
     W/2, H/2,
-    300, 300, 8, 'city'
+    300, 300, 4, 'city'
   ); 
 }
 
@@ -94,12 +90,12 @@ let ctx = 0;
 function draw(){
   
   // polyCircleA.draw();
-  // let dd = new Regular(polyCircleA, 10, 'circle', true);
-  // dd.find_points();
-  // dd.draw();
+  // let h = new Housing(polyCircleA);
+  // h.construct();
+  // h.draw();
   // noLoop();
   animation_draw();
-
+  // noFill();
   // let p = coffers[ctx]
   // if(p){
   //   p.draw();
