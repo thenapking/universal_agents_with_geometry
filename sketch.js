@@ -1,3 +1,4 @@
+
 let DPI= 96;
 let wi = 7;
 let hi = 10.25;
@@ -78,12 +79,21 @@ function setup(){
   scene = new Scene(template)
 
   default_setup()
-  // scene.draw();
+  scene.draw();
   // draw_roads()
   polyCircleA = new RegularPolygon(
     W/2, H/2,
     300, 300, 4, 'city'
   ); 
+
+  // textSize(10);
+  // for(let e of scene.graph.edges){
+  //   e.draw();
+  //   fill(0)
+  //   text(e.start.id, e.start.position.x, e.start.position.y);
+  //   noFill()
+  // }
+
 }
 
 let ctx = 0;
@@ -108,14 +118,10 @@ function draw(){
   // }
 
   // stroke(255, 0, 0);  
-
-  // for(let e of scene.graph.edges){
-  //   e.draw();
-  // }
-
+  
   // noLoop();
 
-  let p = scene.road_lines[ctx]
+  let p = coffers[ctx]
   if(p){
     p.draw();
     ctx++

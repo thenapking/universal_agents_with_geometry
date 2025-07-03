@@ -13,33 +13,77 @@ class Scene {
     this.polycircles = [];
     this.potential_coffers = [];
     this.offscreen_foci = template.offscreen_foci || [];
+    this.centres = [];
     this.offscreen_points = [];
     this.offscreen_lines = [];
     this.minor_points = []; 
-    
+    this.roads = [];
     this.graph = new Graph(edges, nodes);
+    this.create_foci();
+    this.create_roads();
     // this.roads = this.graph.to_polygons();
-    this.road_lines = this.graph.to_polylines();
-    // this.farms = []
+    // this.road_lines = this.graph.to_polylines();
+    this.farms = []
     // this.unioned_roads = unionPolygons(this.roads);
-    // this.create_foci();
-    // this.create_lines();
+    this.create_lines();
     
-    // this.create_lots();
+    this.create_lots();
 
-    // this.subdivide_lots();
+    this.subdivide_lots();
 
-    // this.create_coffers()
+    this.create_coffers()
   }
 
   create_foci(){
-    let b_graph = this.graph.louvain(3)
-    let potential_minor_points = b_graph.nodes.sort((a, b) => b.radius - a.radius).slice();
-    potential_minor_points = potential_minor_points.filter(p => this.onscreen(p.position)).slice(0, 3);
-    for(let p of potential_minor_points){
-      this.foci.push(p.position);
+    let a = this.graph.nodes[28]
+    let b = this.graph.nodes[440]
+    let c = this.graph.nodes[1146]
+    let d = this.graph.nodes[73]
+    let e = this.graph.nodes[178]
+    let f = this.graph.nodes[452]
+    let g = this.graph.nodes[1413]
+
+    this.centres.push(a);
+    this.centres.push(b);
+    this.centres.push(c);
+    this.centres.push(d);
+    this.centres.push(e);
+    this.centres.push(f);
+    this.centres.push(g);
+  }
+
+  create_roads(){
+    let a = this.centres[0];
+    let b = this.centres[1];
+    let c = this.centres[2];
+    let d = this.centres[3];
+    let e = this.centres[4];
+    let f = this.centres[5];
+    let g = this.centres[6];
+
+    let r1 = this.graph.shortest(b, a)
+    let r2 = this.graph.shortest(a, c);
+    let r3 = this.graph.shortest(d, a);
+    let r4 = this.graph.shortest(a, e);
+    this.r1 = r1;
+    this.r2 = r2;
+    this.r3 = r3;
+    this.r4 = r4;
+    this.create_road([r1,r2]);
+    this.create_road([r4]);
+  }
+
+  create_road(routes){
+    console.log(routes)
+    let points = [];
+    for(let route of routes){
+      for(let node of route){
+        let p = node.position;
+        points.push(p)
+      }
     }
-    
+    let polyline = new Polyline(points).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
+    this.roads.push(polyline);
   }
 
   create_lots(){
@@ -50,33 +94,15 @@ class Scene {
     let points = [top_left, top_right, bottom_right, bottom_left];
     let bg = new MultiPolygon(points, 'countryside');
     
-    let farms = this.subdivide(bg, 35000);
-    this.farms = farms;
-
-    for(let dC of farms){
-      let road_which_split = []
-      for(let r of this.roads){
-        let xC = dC.difference(r);
-        if(xC.length > 1){
-          console.log("Found a split, road_id:", r.id, "farm_id:", dC.id);
-          road_which_split.push(r);
-        }
-      }
-
-      let unioned = unionPolygons(road_which_split);
-      console.log(unioned)
-      if(unioned){
-        console.log("Unioned roads:", unioned);
-        let split = dC.difference(unioned);
-        for(let i = 0; i < split.length; i++){
-          let sC = split[i];
-          this.potential_coffers.push(sC);
-        }
-      } else {
-        this.polycircles.push(dC);
-      }
-    }
-
+    // let farms = this.subdivide(bg, 35000);
+    this.farms = [bg];
+    let new_bg = bg.difference(this.roads[0]);
+    // this.polycircles = new_bg
+    let new_bg2 = new_bg[0].difference(this.roads[1]);
+    let new_bg3 = new_bg[1].difference(this.roads[1]);
+    this.polycircles = new_bg2.concat(new_bg3);
+    // let new_new_bg = new_bg.difference(this.roads[1])[0];
+    // this.polycircles.push(new_new_bg);
     // let remainder = new MultiPolygon(points, 'countryside');
     // for(let pC of this.polycircles){
     //   let rC = remainder.difference(pC);

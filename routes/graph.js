@@ -1,7 +1,6 @@
 class Graph {
   constructor(edges = [], nodes = []) {
-    this.graphologyGraph = new graphology.Graph()
-
+    this.graphlib = new graphlib.Graph({directed: false});
     this.nodes = [];
     this.node_ids = [];
     this.edges = []
@@ -28,7 +27,7 @@ class Graph {
   }
 
   add_node(a){
-    this.graphologyGraph.addNode(a.id);
+    this.graphlib.setNode(a.id)
     this.nodes.push(a);
     this.node_ids.push(a.id);
   }
@@ -38,8 +37,8 @@ class Graph {
 
 
     this.edges.push(edge);
+    this.graphlib.setEdge(edge.start.id, edge.end.id)
 
-    this.graphologyGraph.addEdge(edge.start.id, edge.end.id);
   }
 
 
@@ -69,21 +68,15 @@ class Graph {
   }
 
   find_chain(start, end, maxDepth = Infinity) {
-    return new graphologyLibrary.simplePath.allSimplePaths(this.graphologyGraph, start.id, end.id, { maxDepth });
+    // return new graphologyLibrary.simplePath.allSimplePaths(this.graphologyGraph, start.id, end.id, { maxDepth });
   }
 
-  dfs_from(node_id){
-    let g = new graphologyLibrary.traversal.dfsFromNode(this.graphologyGraph, node_id, function (node_id, attr, depth) {
-      return depth >= 3;
-    });
-
-    return g;
-  }
+ 
 
   find_chain_from_node(start_id, visited) {
     let chain = [start_id];
     let current_id = start_id;
-    let neighbors = this.graphologyGraph.neighbors(current_id);
+    let neighbors = this.graphlib.neighbors(current_id);
 
     while (neighbors.length > 0) {
       let next_id = neighbors[0]
@@ -91,39 +84,12 @@ class Graph {
       chain.push(int(next_id));
       visited.add(next_id);
       current_id = next_id;
-      neighbors = this.graphologyGraph.neighbors(current_id);
+      neighbors = this.graphlib.neighbors(current_id);
     }
 
 
 
     return chain;
-  }
-
-  find_dfs_chains() {
-    this.chains = [];
-    let visited = new Set();
-
-    // Iterate over all nodes and start DFS traversal
-    for(let node_id of this.node_ids) {
-      if (!visited.has(node_id)) {
-        let chain = [];
-        new graphologyLibrary.traversal.bfsFromNode(this.graphologyGraph, node_id, (node_id, attr, depth) => {
-          if (visited.has(node_id) || depth > 10) return true;
-
-          // Mark node as visited and add to the chain
-          visited.add(node_id);
-          chain.push(int(node_id));
-
-          // Return false to continue DFS
-          return false;
-        });
-
-        if (chain.length > 1) {
-          this.chains.push(chain);
-        }
-      }
-    };
-
   }
 
   find_all_chains() {
@@ -132,7 +98,7 @@ class Graph {
     
     for (let node of this.nodes) {
       if (!visited.has(node.id)) {
-        // visited.add(node.id);
+        visited.add(node.id);
         let chain = this.find_chain_from_node(node.id, visited);
         if (chain.length > 1) {
           this.chains.push(chain);
@@ -142,7 +108,16 @@ class Graph {
   }
 
 
- 
+  components() {
+    let chains =  graphlib.alg.components(this.graphlib);
+    for(let chain of chains){
+      let new_chain = [];
+      for(let id of chain) {
+        new_chain.push(int(id));
+      }
+      this.chains.push(new_chain);
+    }
+  }
 
 
   // Dijkstra
@@ -185,15 +160,16 @@ class Graph {
       }
 
       // Explore the connected edges
-      let edges = this.adjacency.get(current_id)
-      for (let edge of edges) {
-        const edge_id = edge.grab(current_id)
+      let edge_ids = this.graphlib.neighbors(current_id);
+      for (let edge_id of edge_ids) {
+        let edge = this.find_edge(current_id, int(edge_id));
+        const next_edge_id = edge.grab(current_id).id
 
         const distance = distances[current_id] + edge.distance;
 
-        if (distance < distances[edge_id]) {
-          distances[edge_id] = distance;
-          previous[edge_id] = current_id;
+        if (distance < distances[next_edge_id]) {
+          distances[next_edge_id] = distance;
+          previous[next_edge_id] = current_id;
         }
       }
     }
@@ -201,7 +177,52 @@ class Graph {
     return null;
   }
 
+  split(a, b){
+    // a and b are two arrays of node_ids
+    
+    let overlaps = []
+    for (let i = 0; i < a.length; i++) {
+      for (let j = 0; j < b.length; j++) {
+        if (a[i] === b[j]) {
+          let overlapStart = i;
+          let overlapEnd = null;
+          let new_start = i;
+          let new_end = j;
+          
+          // Check for contiguous matching nodes
+          while (new_start < a.length && new_end < b.length && a[new_start] === b[new_end]) {
+            new_start++;
+            new_end++;
+          }
+          
+          if (new_end - j > 1) { // If overlap length is greater than 1
+            overlapStart = i;
+            overlapEnd = new_end - 1;
+          }
 
+          let overlap = [];
+          for(let k = overlapStart; k <= overlapEnd; k++) {
+            overlap.push(b[k]);
+          }
+          overlaps.push(overlap);
+          j = new_end; // Skip to the end of the overlap
+        }
+      }
+    }
+    return overlaps;
+  }
+
+
+
+  draw_route(arr){
+    stroke(255,0,0)
+    for(let i = 0; i < arr.length - 1; i++) {
+      let start = arr[i]
+      let end = arr[i + 1]
+      line(start.position.x, start.position.y, end.position.x, end.position.y);
+    }
+    stroke(0)
+  }
 
 
   draw_chain(id){
@@ -210,8 +231,6 @@ class Graph {
     beginShape();
     let previous = null;
     for(let node_id of chain) {
-      let neighbors = this.graphologyGraph.neighbors(node_id);
-      console.log(node_id, neighbors);
       let node = this.find(node_id);
       if(node) {
         circle(node.position.x, node.position.y, 5);
@@ -244,7 +263,7 @@ class Graph {
   }
 
   to_polylines(){
-    this.find_all_chains();
+    this.components();
     let polylines = [];
     for(let chain of this.chains) {
       
@@ -253,6 +272,7 @@ class Graph {
 
       for(let id of chain) {
         let node = this.find(id);
+        
         points.push(node.position);
       }
       let polyline = new Polyline(points, false).to_bezier(60)

@@ -38,7 +38,6 @@ function process_data(){
     let from = nodes[c.from_id];
     let to = nodes[c.to_id];
     let edge = new Edge(from, to);
-    console.log(`Edge from ${c.from_id} to ${c.to_id} with ${edge.start_id} to ${edge.end_id}`);
     edges.push(edge);
   }
   emitters = process_file(emitters);
