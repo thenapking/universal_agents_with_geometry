@@ -18,7 +18,6 @@ class MultiPolygon {
     } else {
       // console.log("MultiPolygon: points is not a contour array, assuming raw array");
       this.contours = [this.order(points)];
-      // console.log(this.contours);
     }
 
     this.segments = [];
@@ -27,9 +26,6 @@ class MultiPolygon {
     for(let i = 0; i < this.contours.length; i++) {
       let points = this.contours[i];
       this.segments[i] = this.find_segments(points, i);
-      // let clean_points = this.clean_segments(this.segments[i]);
-      // this.contours[i] = this.to_vectors(clean_points);
-      // this.segments[i] = this.find_segments(clean_points, i);
       this.edges[i] = this.find_edges(this.segments[i]);
     }
 
@@ -44,7 +40,6 @@ class MultiPolygon {
     return Array.isArray(points[0]) && points[0].length > 2
   }
 
-  
   count() {
     return this.outer.length;
   }
@@ -100,6 +95,7 @@ class MultiPolygon {
     return results;
   }
 
+  // AREA and other geometry methods
   max_diameter(points = this.outer) {
     let max_dist = 0;
     for (let i = 0; i < points.length; i++) {
@@ -186,6 +182,11 @@ class MultiPolygon {
     return [minX, minY, maxX, maxY];
   }
 
+  bounds_centroid(){
+    const [minX, minY, maxX, maxY] = this.bounds();
+    return createVector((minX + maxX) / 2, (minY + maxY) / 2);
+  }
+
   intersects_bounds(other){
     const [minX, minY, maxX, maxY] = this.bounds();
     const [otherMinX, otherMinY, otherMaxX, otherMaxY] = other.bounds();
@@ -193,6 +194,7 @@ class MultiPolygon {
     return !(maxX < otherMinX || minX > otherMaxX || maxY < otherMinY || minY > otherMaxY);
   }
 
+  // EDGES AND SEGMENTS
   find_contours(points){
     if(!Array.isArray(points[0])){
       return [points];
@@ -248,40 +250,6 @@ class MultiPolygon {
     return segments;
   }
 
-  //TODO: This cleaning method is not fully working
-  clean_segments(segments) {
-    let points = [];
-  
-    // Loop through each segment
-    for (let i = 0; i < segments.length; i++) {
-      let segment = segments[i];
-
-      points.push(segment.start);
-      
-      for (let j = 1; j < i - 1; j++) { 
-        let other = segments[j];
-  
-        let intersections = segment.intersection(other, true);
-  
-        // If an intersection is found
-        if (intersections.length > 0) {
-          // console.log("Intersection found between segments", segment.index, "and", other.index);
-          
-          let intersection_point = intersections[0];
-          for(let k = j; k < i; k++) {
-            points[k] = null;
-          }
-          points.push(intersection_point);
-          
-          break;
-        }
-      }
-    }
-
-  
-    return points.filter(p => p !== null);  
-  }
-
   find_edges(segments) {
     let edges = [];
     let current = [segments[0]];
@@ -334,24 +302,7 @@ class MultiPolygon {
     return shortest[0];
   }
 
-  // Boolean operations using Martinez algorithm
-  intersection(other){
-    return clipper(this, other, 'intersection');
-  }
-
-  xor(other){
-    return clipper(this, other, 'xor');
-  }
-
-  union(other){
-    return clipper(this, other, 'union');
-  }
-
-  difference(other){
-    return clipper(this, other, 'difference');
-  }
-
-
+  // Geometry Tests
   contains(point) {
     let inside = contains(point, this.outer);
     if (!inside) { return false; }
@@ -374,17 +325,11 @@ class MultiPolygon {
     return true;
   }
 
-   // Adjacency
-   adjacent(other) {
-    // console.log("Checking adjacency between polygons", this.id, "and", other.id);
-    // console.log(this.segments[0])
-    // console.log(other.segments[0])
+  // Adjacency
+  adjacent(other) {
     for (let segment of this.segments[0]) {
       for (let other_segment of other.segments[0]) {
         if(segment.adjacent(other_segment)) {
-          // stroke(0, 255, 0);
-          // segment.draw();
-          // other_segment.draw();
           return true;
         }
       }
@@ -392,8 +337,38 @@ class MultiPolygon {
     return false
   }
 
+  // BOOLEAN operations using Clipper
+  intersection(other){
+    return clipper(this, other, 'intersection');
+  }
 
-  // Intersections methods
+  xor(other){
+    return clipper(this, other, 'xor');
+  }
+
+  union(other){
+    return clipper(this, other, 'union');
+  }
+
+  difference(other){
+    return clipper(this, other, 'difference');
+  }
+
+  // MUTATION
+  scale(sf){
+    if(sf <= 0) { return [this]; }
+    let c = this.bounds_centroid();
+    let scaled_points = [];
+    for(let p of this.outer){
+      let dir = p5.Vector.sub(p, c).mult(sf);
+      let scaled = c.copy().add(dir);
+      
+      scaled_points.push(scaled);
+    }
+    return new MultiPolygon(scaled_points, this.type, this.parent);
+  }
+
+  // SPLITTING
   intersect_polyline(polyline) {
     let junctures = [];
     const polyline_bounds = polyline.bounds();
@@ -445,13 +420,12 @@ class MultiPolygon {
     
     return sorted_junctures;
   }
-
+  
   
   split(input_polyline) {
     // Duplicate the polyline to avoid double counting junctures
     let polyline = new Polyline(input_polyline.points);
     let junctures = this.intersect_polyline(polyline);
-    // console.log("Junctures found: ", junctures);
     if (junctures.length === 0) return [this];
 
     let pieces = this.split_into_pieces(polyline, junctures);
