@@ -299,7 +299,7 @@ class MultiPolygon {
         longest = edge;
       }
     }
-    return longest[0];
+    return longest;
   }
 
   find_shortest_edge() {

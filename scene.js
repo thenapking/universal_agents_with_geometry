@@ -1,7 +1,7 @@
 
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
-const THIN_THRESHOLD = 0.18;
+const THIN_THRESHOLD = 0.26;
 let template;
 class Scene {
   constructor(template){
@@ -18,17 +18,14 @@ class Scene {
     this.offscreen_lines = [];
     this.minor_points = []; 
     this.roads = [];
+    this.farms = []
+
     this.graph = new Graph(edges, nodes);
+
     this.create_foci();
     this.create_roads();
-    // this.roads = this.graph.to_polygons();
-    // this.road_lines = this.graph.to_polylines();
-    this.farms = []
-    // this.unioned_roads = unionPolygons(this.roads);
     this.create_lines();
-    
     this.create_lots();
-
     this.subdivide_lots();
 
     this.create_coffers()
@@ -379,8 +376,8 @@ class Scene {
       return [polygon];
     }
 
-    let p1 = edge.start
-    let p2 = edge.end;
+    let p1 = edge[0].start;
+    let p2 = edge[edge.length - 1].end;
     let midpoint = p5.Vector.add(p1, p2).mult(0.5);
 
     // Compute the unit‐vector direction of the longest edge,
