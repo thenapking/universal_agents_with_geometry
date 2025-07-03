@@ -78,12 +78,12 @@ function setup(){
     ]};
   scene = new Scene(template)
 
-  default_setup()
+  // default_setup()
   scene.draw();
   // draw_roads()
   polyCircleA = new RegularPolygon(
     W/2, H/2,
-    300, 300, 4, 'city'
+    300, 300, 12, 'city'
   ); 
 
   // textSize(10);
@@ -99,7 +99,11 @@ function setup(){
 let ctx = 0;
 function draw(){
   
-  // polyCircleA.draw();
+  // // polyCircleA.draw();
+  // polyCircleB = new Park(polyCircleA);
+  // polyCircleB.construct();
+  // polyCircleB.draw()
+  // noLoop();
   // let h = new Housing(polyCircleA);
   // h.divide();
   // h.draw();

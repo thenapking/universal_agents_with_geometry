@@ -1,3 +1,7 @@
+const HOUSE_MIN = 2;
+const HOUSE_MAX = 4;
+const HOUSE_MIN_DIV = 8;
+const HOUSE_MAX_DIV = 10;
 class Housing {
   constructor(polygon) {
     this.polygon = polygon;
@@ -31,10 +35,10 @@ class Housing {
     if(lc < lb) { lidx = 1; }
 
     let is_small = this.area < 400;
-    let hW = random(3, 5)
+    let hW = random(HOUSE_MIN, HOUSE_MAX);
     let hD = hW * 1.8;
 
-    let divs = int(random(3, 6));
+    let divs = int(random(HOUSE_MIN_DIV, HOUSE_MAX_DIV));
 
     if(is_small) {
       hW = lc > lb ? lc : lb ;
@@ -63,6 +67,7 @@ class Housing {
       for (let j = from; j < to; j++) {
         let start = a.copy().add(p5.Vector.mult(dir, offset + j * hW));
         let end = start.copy().add(p5.Vector.mult(dir, hW));
+        
         let hd = is_small ? hD : random(hD - 1, hD + 2)
         let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
         let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));

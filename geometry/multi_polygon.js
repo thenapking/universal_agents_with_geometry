@@ -141,6 +141,17 @@ class MultiPolygon {
     return minWidth;
   }
 
+  perimeter() {
+    let total = 0;
+    let n = this.outer.length;
+    for (let i = 0; i < n; i++) {
+      let p1 = this.outer[i];
+      let p2 = this.outer[(i + 1) % n];
+      total += p1.dist(p2);
+    }
+    return total;
+  }
+
   area(signed = false) {
     return area(this.outer, signed);
   }
