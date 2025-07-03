@@ -83,7 +83,7 @@ function setup(){
   // draw_roads()
   polyCircleA = new RegularPolygon(
     W/2, H/2,
-    300, 300, 12, 'city'
+    40, 50, 12, 'city'
   ); 
 
   // textSize(10);
@@ -99,8 +99,8 @@ function setup(){
 let ctx = 0;
 function draw(){
   
-  // // polyCircleA.draw();
-  // polyCircleB = new Park(polyCircleA);
+  // polyCircleA.draw();
+  // polyCircleB = new Trees(polyCircleA);
   // polyCircleB.construct();
   // polyCircleB.draw()
   // noLoop();
