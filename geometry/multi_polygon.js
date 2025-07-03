@@ -95,6 +95,12 @@ class MultiPolygon {
     return results;
   }
 
+  simplify(factor){
+    let points = simplify(this.outer, factor);
+    if(points.length < 3) { return [this]; }
+    return new MultiPolygon([points], this.type, this.parent);
+  }
+
   // AREA and other geometry methods
   max_diameter(points = this.outer) {
     let max_dist = 0;
@@ -288,6 +294,7 @@ class MultiPolygon {
 
   find_longest_edge() {
     let longest;
+    let previous;
     let max_length = 0;
     for(let edge of this.edges[0]){
       let length = 0
@@ -296,10 +303,29 @@ class MultiPolygon {
       }
       if(length > max_length){
         max_length = length;
+        previous = longest;
         longest = edge;
       }
     }
-    return longest;
+    return longest 
+  }
+
+  find_second_longest_edge() {
+    let longest;
+    let previous;
+    let max_length = 0;
+    for(let edge of this.edges[0]){
+      let length = 0
+      for(let segment of edge){
+        length += segment.length();
+      }
+      if(length > max_length){
+        max_length = length;
+        previous = longest;
+        longest = edge;
+      }
+    }
+    return previous;
   }
 
   find_shortest_edge() {

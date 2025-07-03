@@ -1,10 +1,10 @@
-const HOUSE_MIN = 2;
+const HOUSE_MIN = 3;
 const HOUSE_MAX = 4;
 const HOUSE_MIN_DIV = 8;
 const HOUSE_MAX_DIV = 10;
 class Housing {
   constructor(polygon) {
-    this.polygon = polygon;
+    this.polygon = polygon.outer.length > 5 ? polygon.simplify(3) : polygon;
     this.bounds = this.polygon.bounds();
     this.garden_polygon = this.polygon.scale(0.6)
     this.garden = null;
@@ -25,36 +25,37 @@ class Housing {
     this.houses = []
   }
 
+  construct_polygonal(){
+    let e = this.polygon.find_longest_edge();
+    let f = this.polygon.find_second_longest_edge();
+    console.log("longest edge", e, "second edge", f);
+    let lidx = this.polygon.edges[0].indexOf(e);
 
-  construct(){
-    let n = this.polygon.outer.length;
-    let a = this.polygon.outer[0];
-    let b = this.polygon.outer[1];
-    let c = this.polygon.outer[2];
-    let lb = p5.Vector.sub(b, a).mag();
-    let lc = p5.Vector.sub(c, a).mag();
-    let lidx = 0;
-    if(lc < lb) { lidx = 1; }
-
+    let is_thin = e.length < 21 || f.length < 21;
+    let is_super_thin = e.length < 10 || f.length < 10;
     let is_small = this.area < 400;
-    let hW = random(HOUSE_MIN, HOUSE_MAX);
-    let hD = hW * 1.8;
 
-    let divs = int(random(HOUSE_MIN_DIV, HOUSE_MAX_DIV));
+    console.log("is_thin", is_thin, "is_super_thin", is_super_thin, "is_small", is_small, "lidx", lidx);
+    let travelled = 0;
+    let step = 5
+    let hW = 5
+    let hd = 5
+    let points = this.polygon.outer
+    let house_edges = []
 
-    if(is_small) {
-      hW = lc > lb ? lc : lb ;
-      hW /= divs;
-      hD = lc > lb ? lc : lb;
-      hD /= 2
+    for(let i = 0; i < points.length; i++) {
+      let a = points[i];
+      let b = points[(i + 1) % points.length];
+      let d = p5.Vector.dist(a, b);
+      travelled += d;
+      if(travelled < step) continue; 
+      house_edges.push(b)
     }
 
-    hW = constrain(hW, 2, 10);
-    
-    for(let i = 0; i < n; i++){
-      if(is_small && (i % 2=== lidx)) { continue }
-      let a = this.polygon.outer[i];
-      let b = this.polygon.outer[(i + 1) % n];
+    for(let i = 0; i < house_edges.length; i++) {
+      let a = house_edges[i];
+      let b = house_edges[(i + 1) % house_edges.length];
+
       let edge = p5.Vector.sub(b, a);
       let edgeLen = edge.mag();
       let dir = edge.copy().normalize();
@@ -64,15 +65,79 @@ class Housing {
       let inward = createVector(-dir.y, dir.x);
       if (inward.dot(toCentroid) < 0) inward.mult(-1);
 
+      let start = a.copy().add(p5.Vector.mult(dir, hW));
+      let end = start.copy().add(p5.Vector.mult(dir, hW));
+      
+      let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
+      let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));
+
+      let p1 = createVector(start.x, start.y);
+      let p2 = createVector(end.x, end.y);
+      let p3 = createVector(innerEnd.x, innerEnd.y);
+      let p4 = createVector(innerStart.x, innerStart.y);
+      let points = [p1, p2, p3, p4];
+      let house = new MultiPolygon(points);
+      // this.houses.push(house);
+    }
+  }
+
+  construct(){
+    let n = this.polygon.outer.length;
+    let a = this.polygon.outer[0];
+    let b = this.polygon.outer[1];
+    let c = this.polygon.outer[2];
+    let lb = p5.Vector.sub(b, a).mag();
+    let lc = p5.Vector.sub(c, a).mag();
+
+    let lidx = 0;
+    if(lc < lb) { lidx = 1; }
+
+    let is_thin = lc < 21 || lb < 21
+    let is_super_thin = lc < 10 || lb < 10;
+
+    let is_small = this.area < 400;
+    let hW = random(HOUSE_MIN, HOUSE_MAX);
+    let hD = hW * 1.8;
+
+    let divs = int(random(HOUSE_MIN_DIV, HOUSE_MAX_DIV));
+    let reduced = is_small || is_thin || is_super_thin;
+
+    if(reduced) {
+      hW = lc > lb ? lc : lb ;
+      hW /= divs;
+      hD = lc > lb ? lb : lc;
+      hD /= is_super_thin ? 1 : 2;
+    }
+
+
+    hW = constrain(hW, 2, 10);
+    
+    for(let i = 0; i < n; i++){
+      if(reduced && (i % 2=== lidx)) { continue }
+      let a = this.polygon.outer[i];
+      let b = this.polygon.outer[(i + 1) % n];
+      let edge = p5.Vector.sub(b, a);
+      let edgeLen = edge.mag();
+      if(edgeLen < 5) continue; // skip very short edges
+      let dir = edge.copy().normalize();
+
+      let midpoint = p5.Vector.add(a, b).div(2);
+      let toCentroid = p5.Vector.sub(this.centroid, midpoint).normalize();
+      let inward = createVector(-dir.y, dir.x);
+      if (inward.dot(toCentroid) < 0) inward.mult(-1);
+
       let from = 0
-      let to = is_small ? divs : floor(edgeLen / hW);
-      let offset = is_small ? 0 : (edgeLen - to * hW) / 2;
+      let to = reduced ? divs : floor(edgeLen / hW);
+      to = (i % 2=== lidx) ? to - 4 : to // remove the start and end houses
+      let offset = reduced ? 0 : (edgeLen - to * hW) / 2;
 
       for (let j = from; j < to; j++) {
         let start = a.copy().add(p5.Vector.mult(dir, offset + j * hW));
         let end = start.copy().add(p5.Vector.mult(dir, hW));
         
-        let hd = is_small ? hD : random(hD - 1, hD + 2)
+        let hd = reduced ? hD : random(hD - 1, hD + 1)
+        
+        
         hd = constrain(hd, 2, 10);
         let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
         let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));
@@ -90,7 +155,7 @@ class Housing {
       }
     }
 
-    if(!is_small 
+    if(!reduced 
       && this.garden_polygon.outer.length < 6 
       && this.garden_polygon.area() < 3000 
       ) {
@@ -99,8 +164,13 @@ class Housing {
     }
   }
 
+  add_garden(){
+
+  }
+
   draw() {
     push();
+      noFill()
       for (let house of this.houses) {
         house.draw();
       }
