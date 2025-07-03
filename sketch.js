@@ -121,7 +121,7 @@ function draw(){
   
   // noLoop();
 
-  let p = coffers[ctx]
+  let p = scene.polycircles[ctx]
   if(p){
     p.draw();
     ctx++
