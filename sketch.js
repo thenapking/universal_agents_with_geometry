@@ -103,38 +103,22 @@ function draw(){
   // polyCircleB = new Trees(polyCircleA);
   // polyCircleB.construct();
   // polyCircleB.draw()
-  // noLoop();
-  // let h = new Housing(polyCircleA);
-  // h.divide();
-  // h.draw();
-  // noLoop();
-  // animation_draw();
-  // draw_coffers();
-  // draw_roads();
-  // strokeWeight(8)
-  // for(let r of scene.road_lines){
-  //   r.draw();
-  // }
-  // stroke(255,0,0);
-  // strokeWeight(2);
-  // for(let e of scene.graph.edges){
-  //   e.draw();
-  // }
+ 
+  animation_draw();
 
-  // stroke(255, 0, 0);  
   
   // noLoop();
 
-  let p = coffers[ctx]
-  if(p){
-    p.draw();
-    ctx++
+  // let p = coffers[ctx]
+  // if(p){
+  //   p.draw();
+  //   ctx++
 
-  } else{
-    console.log("Done with circles");
+  // } else{
+  //   console.log("Done with circles");
     
-    noLoop();
-  }
+  //   noLoop();
+  // }
 }
 
 function animation_draw(){
@@ -147,7 +131,6 @@ function animation_draw(){
 
       draw_coffers();
       draw_groups();
-      draw_roads()
     pop()
 
 
@@ -167,7 +150,6 @@ function animation_draw(){
 
       draw_coffers();
       final_draw();
-      draw_roads()
     pop()
 
     draw_borders();

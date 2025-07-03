@@ -31,12 +31,13 @@ class Coffer {
     let centroid = this.polygon.centroid();
     let area = this.polygon.area();
     let d = p5.Vector.dist(centroid, this.focus);
+
     this.fill_type = 'houses'
 
     if(d > 300 || area > 3000){ this.fill_type = random(COUNTRY)}
     if(d < 300 && area > CIVIC){ this.fill_type = random(TOWN)}
 
-    if(this.fill_type == 'civic' && (area < 800 || area > 4000)) { this.fill_type = 'houses' }
+    if(this.fill_type == 'civic' && (area < 800 || area > 2000)) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic') { total_civic_count++ }
     if(this.fill_type == 'park' && this.polygon.outer.length > 5) { this.fill_type = 'houses'}
@@ -44,7 +45,7 @@ class Coffer {
     if(this.fill_type == 'trees' && this.polygon.outer.length > 5) { this.fill_type = 'houses' }
 
     if(area < 100) { this.fill_type = 'blank'}
-    if(area > 8000) { this.fill_type = random(LARGE) }
+    if(area > 3000) { this.fill_type = random(LARGE) }
 
    
 

@@ -40,6 +40,13 @@ function process_data(){
     let edge = new Edge(from, to);
     edges.push(edge);
   }
+
+  //TODO REMOVE THIS MANUAL CONNECTON
+  let from = nodes[315]
+  let to = nodes[192];
+  let edge = new Edge(from, to);
+  edges.push(edge);
+  
   emitters = process_file(emitters);
   journeys = process_file(journeys);
   major_hotspots = hotspots.filter(h => h.major)

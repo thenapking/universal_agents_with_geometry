@@ -1,7 +1,7 @@
 
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
-const THIN_THRESHOLD = 0.15;
+const THIN_THRESHOLD = 0.18;
 let template;
 class Scene {
   constructor(template){
@@ -48,6 +48,8 @@ class Scene {
     let k = this.graph.nodes[309]
     let l = this.graph.nodes[90]
     let m = this.graph.nodes[499]
+    let n = this.graph.nodes[305]
+    let o = this.graph.nodes[200]
 
     this.centres.push(a);
     this.centres.push(b);
@@ -59,6 +61,11 @@ class Scene {
     this.centres.push(h);
     this.centres.push(i);
     this.centres.push(j);
+
+    this.foci.push(a.position);
+    this.foci.push(c.position);
+    // this.foci.push(h.position);
+    this.foci.push(n.position);
     // this.centres.push(k);
     // this.centres.push(l);
     // this.centres.push(m);
@@ -355,11 +362,11 @@ class Scene {
       return [polygon];
     }
 
-    if(area > PARK  && random(1) < 0.03 && counter > 0){
+    if(area > PARK && area < 4000 && random(1) < 0.03 && counter > 0){
       return [polygon]
     }
 
-    if(area > CIVIC && random(1) < 0.07 && counter > 0){
+    if(area > CIVIC && area < 4000 && random(1) < 0.07 && counter > 0){
       return [polygon]
     }
 

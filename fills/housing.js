@@ -48,6 +48,8 @@ class Housing {
       hD = lc > lb ? lc : lb;
       hD /= 2
     }
+
+    hW = constrain(hW, 2, 10);
     
     for(let i = 0; i < n; i++){
       if(is_small && (i % 2=== lidx)) { continue }
@@ -71,6 +73,7 @@ class Housing {
         let end = start.copy().add(p5.Vector.mult(dir, hW));
         
         let hd = is_small ? hD : random(hD - 1, hD + 2)
+        hd = constrain(hd, 2, 10);
         let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
         let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));
   
