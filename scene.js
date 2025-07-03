@@ -45,6 +45,9 @@ class Scene {
     let h = this.graph.nodes[262]
     let i = this.graph.nodes[368]
     let j = this.graph.nodes[479]
+    let k = this.graph.nodes[309]
+    let l = this.graph.nodes[90]
+    let m = this.graph.nodes[499]
 
     this.centres.push(a);
     this.centres.push(b);
@@ -56,6 +59,9 @@ class Scene {
     this.centres.push(h);
     this.centres.push(i);
     this.centres.push(j);
+    // this.centres.push(k);
+    // this.centres.push(l);
+    // this.centres.push(m);
   }
 
   create_roads_automatically(){
@@ -82,40 +88,24 @@ class Scene {
 
   }
 
+  create_connected_network(){
+    let routes = []
+    for(let i = 0; i < this.centres.length; i++){
+      let centre = this.centres[i];
+      for(let j = i + 1; j < this.centres.length; j++){
+        let other = this.centres[j];
+        let route = this.graph.shortest(centre, other);
+        if(route.length > 0){
+          console.log("Adding route between", centre.id, "and", other.id);
+          routes.push(route);
+        }
+      }
+    }
+    return routes
+  }
+
   create_roads(){
-    let a = this.centres[0];
-    let b = this.centres[1];
-    let c = this.centres[2];
-    let d = this.centres[3];
-    let e = this.centres[4];
-    let f = this.centres[5];
-    let g = this.centres[6];
-    let h = this.centres[7];
-    let i = this.centres[8];
-    let j = this.centres[9];
-
-    let r0 = this.graph.shortest(b, a)
-    let r1 = this.graph.shortest(a, c);
-    let r2 = this.graph.shortest(d, a);
-    let r3 = this.graph.shortest(a, e);
-    let r4 = this.graph.shortest(f, a); 
-    let r5 = this.graph.shortest(a, g);
-    let r6 = this.graph.shortest(h, a);
-    let r7 = this.graph.shortest(j, h);
-    let r8 = this.graph.shortest(i, h);
-    let r9 = this.graph.shortest(h, f);
-
-    let routes = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9];
-    this.r0 = this.route_to_points(r0);
-    this.r1 = this.route_to_points(r1);
-    this.r2 = this.route_to_points(r2);
-    this.r3 = this.route_to_points(r3);
-    this.r4 = this.route_to_points(r4);
-    this.r5 = this.route_to_points(r5);
-    this.r6 = this.route_to_points(r6);
-    this.r7 = this.route_to_points(r7);
-    this.r8 = this.route_to_points(r8);
-    this.r9 = this.route_to_points(r9);
+    let routes = this.create_connected_network();
 
     this.split_routes = []
     
@@ -139,45 +129,7 @@ class Scene {
     for(let s of this.split_routes){
       this.create_road(s);
     }
-    // let r1r0 = this.find_intersections(r0, r1);
 
-    // let r2r0 = this.find_intersections(r0, r2);
-    // let r2r1 = this.find_intersections(r1, r2r0[0]);
-
-    // let r3r0 = this.find_intersections(r0, r3);
-    // let r3r1 = this.find_intersections(r1, r3r0[0]);
-    // let r3r2 = this.find_intersections(r2, r3r1[0]);
-
-    // let r4r0 = this.find_intersections(r0, r4);
-    // let r4r1 = this.find_intersections(r1, r4r0[0]);
-    // let r4r2 = this.find_intersections(r2, r4r1[0]);
-    // let r4r3 = this.find_intersections(r3, r4r2[0]);
-
-    // let r5r0 = this.find_intersections(r0, r5);
-    // let r5r1 = this.find_intersections(r1, r5r0[0]);
-    // let r5r2 = this.find_intersections(r2, r5r1[0]);
-    // let r5r3 = this.find_intersections(r3, r5r2[0]);
-    // let r5r4 = this.find_intersections(r4, r5r3[0]);
-    
-
-
-    // this.create_road([r1,r2]);
-    // this.create_road(r3r2);
-    // this.create_road(r4r3);
-    // this.create_road(r5r4)
-    // this.create_road(r6r5);
-    // this.create_road(r7r6);
-    // this.create_road(r8r7);
-    // this.create_road(r9r8);
-    // this.create_road(r10r9);
-
-    // for(let r of r3r5){
-    //   this.create_road([r]);
-    // }
-    // this.create_road([r3, r4]);
-    // this.create_road([r5, r6])
-    // this.create_road([r7, r8]);
-    // this.create_road([r9, r10]);
 
   }
 
@@ -316,25 +268,11 @@ class Scene {
     let points = [top_left, top_right, bottom_right, bottom_left];
     let bg = new MultiPolygon(points, 'countryside');
     
-    // let farms = this.subdivide(bg, 35000);
     this.farms = [bg];
     let unioned_roads = unionPolygons(this.roads);
     let new_bg = bg.difference(unioned_roads);
     this.polycircles = new_bg
-    // let new_bg2 = new_bg[0].difference(this.roads[1]);
-    // let new_bg3 = new_bg[1].difference(this.roads[1]);
-    // this.polycircles = new_bg2.concat(new_bg3);
-    // let new_new_bg = new_bg.difference(this.roads[1])[0];
-    // this.polycircles.push(new_new_bg);
-    // let remainder = new MultiPolygon(points, 'countryside');
-    // for(let pC of this.polycircles){
-    //   let rC = remainder.difference(pC);
-    //   if(rC.length > 0){
-    //     remainder = rC[0];
-    //   }
-    // }
-    // this.polycircles.push(remainder);
-    // console.log("Remaining countryside area after coffers:", remainder);
+    
     
   }
 
@@ -424,7 +362,7 @@ class Scene {
     }
 
     let stroke_width = area > BLOCK ? MAJOR_ROAD : MINOR_ROAD;
-    if(counter === 0) { stroke_width = INTERCITY_ROAD; }
+    if(counter === 0) { stroke_width = MAJOR_ROAD; }
 
     let edge = polygon.find_longest_edge();
     if (!edge) {
