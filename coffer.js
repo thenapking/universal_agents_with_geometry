@@ -7,7 +7,7 @@
 // Set the fill type of each polygon based on its area
 let SMALL =  [ 'blank', 'downwards', 'upwards', 'dots', 'trees' ]
 let TOWN = [ 'blank', 'dots', 'park', 'civic', 'trees'] 
-let LARGE =  [ 'blank', 'large-dots', 'dots'];  
+let LARGE =  [ 'blank', 'large-dots', 'dots', 'downwards', 'upwards' ];  
 let COUNTRY = [ 'blank', 'large-dots', 'vertical-dashes', 'horizontal-dashes',  'dots'];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
@@ -35,7 +35,7 @@ class Coffer {
     this.fill_type = 'houses'
 
     if(d > 300 || area > 3000){ this.fill_type = random(COUNTRY)}
-    if(d < 300 && area > CIVIC){ this.fill_type = random(TOWN)}
+    if(d < 200 && area > CIVIC){ this.fill_type = random(TOWN)}
 
     if(this.fill_type == 'civic' && (area < 800 || area > 2000)) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
@@ -46,8 +46,6 @@ class Coffer {
 
     if(area < 100) { this.fill_type = 'blank'}
     if(area > 3000) { this.fill_type = random(LARGE) }
-
-   
 
     if(this.fill_type == 'park') {
       this.fill_object = new Park(this.polygon, 0.2, 0);
@@ -90,8 +88,11 @@ class Coffer {
   }
 
   draw() {
+    noFill();
     this.polygon.draw();
-    
+  }
+
+  fill(){
     if(this.fill_object) {
       this.fill_object.draw();
     }

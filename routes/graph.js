@@ -527,6 +527,18 @@ class Graph {
     pop();
   }
 
+  draw_edges(){
+    push();
+      for(let edge of this.edges) {
+        edge.draw();
+        fill(0);
+        textSize(10);
+        text(edge.start.id, edge.start.position.x + 5, edge.start.position.y + 5);
+        noFill()
+      }
+    pop();
+  }
+
   draw_polygons(){
     push();
       let polygons = this.to_polygon();

@@ -60,7 +60,7 @@ class Scene {
     this.centres.push(j);
 
     this.foci.push(a.position);
-    this.foci.push(c.position);
+    // this.foci.push(c.position);
     // this.foci.push(h.position);
     this.foci.push(n.position);
     // this.centres.push(k);
@@ -71,23 +71,23 @@ class Scene {
   create_roads_automatically(){
     let routes = [];
     for(let i = 0; i < 3; i++){
-      console.log("---------------")
+      // console.log("---------------")
       let a = this.centres[i];
       let b = this.centres[(i + 1)];
       let r = this.graph.shortest(a, b);
       if(i === 0){  routes = [r]; continue; }
       let reduced = r;
       for(let other of routes){
-        console.log("Finding intersections between", reduced, "and", other);
+        // console.log("Finding intersections between", reduced, "and", other);
         reduced = this.find_intersections(reduced, other);
       }
-      console.log("Reduced route:", reduced);
+      // console.log("Reduced route:", reduced);
       for(let remaining of reduced){
         routes.push(remaining);
       }
     }
 
-    console.log("Created routes:", routes);
+    // console.log("Created routes:", routes);
     return routes
 
   }
@@ -100,7 +100,7 @@ class Scene {
         let other = this.centres[j];
         let route = this.graph.shortest(centre, other);
         if(route.length > 0){
-          console.log("Adding route between", centre.id, "and", other.id);
+          // console.log("Adding route between", centre.id, "and", other.id);
           routes.push(route);
         }
       }
@@ -114,12 +114,12 @@ class Scene {
     this.split_routes = []
     
     for(let i  = 0; i < routes.length; i++){
-      console.log("----------- REAL")
+      // console.log("----------- REAL")
       let ri = routes[i]
       let r0 = routes[0];
       let base = this.find_intersections(r0, ri)
       let previous = base
-      console.log(base)
+      // console.log(base)
       for(let j = 1; j < i; j++){
         let rj = routes[j]
         let carried = previous[0]
@@ -149,7 +149,7 @@ class Scene {
   find_intersections(a, b){
     let forward = this.find_forward_intersections(a, b);
     if(forward.length > 0){ return forward }
-    console.log("Reversing b to find intersections with a");
+    // console.log("Reversing b to find intersections with a");
     let reverse_b = b.slice().reverse();
     let reverse = this.find_forward_intersections(a, reverse_b);
     if(reverse.length > 0){
@@ -211,17 +211,17 @@ class Scene {
         }
 
         highest_index = max(highest_index, subsequence_end_idx);
-        console.log(previous_idx)
+        // console.log(previous_idx)
         subsequences.push([previous_idx, ib[subsequence_start_idx]]);
 
         subsequences.push([ib[subsequence_start_idx], ib[subsequence_end_idx]]);
         previous_idx = ib[subsequence_end_idx];
-        console.log("previous increase", previous_idx)
+        // console.log("previous increase", previous_idx)
       }
     }
 
     if(previous_idx < ib.length){
-      console.log("Adding last subsequence from", previous_idx, "to", ib.length);
+      // console.log("Adding last subsequence from", previous_idx, "to", ib.length);
       subsequences.push([previous_idx, ib.length]);
     }
 
@@ -243,11 +243,11 @@ class Scene {
     }
 
 
-    console.log(ia);
-    console.log(ib);
-    console.log(points)
-    console.log(subsequences)
-    console.log("Found intersections:", results);
+    // console.log(ia);
+    // console.log(ib);
+    // console.log(points)
+    // console.log(subsequences)
+    // console.log("Found intersections:", results);
     return results;
   }
 
@@ -353,7 +353,7 @@ class Scene {
     let scale = map(d, 0, max_dist, 0, 1);
     let inv = pow(scale, 2);
     let threshold = min_area + (max_area - min_area) * inv;
-    threshold *= 0.1
+    threshold *= 0.05
 
     if (area < threshold || area < min_area ) {
       return [polygon];

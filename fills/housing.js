@@ -25,61 +25,6 @@ class Housing {
     this.houses = []
   }
 
-  construct_polygonal(){
-    let e = this.polygon.find_longest_edge();
-    let f = this.polygon.find_second_longest_edge();
-    console.log("longest edge", e, "second edge", f);
-    let lidx = this.polygon.edges[0].indexOf(e);
-
-    let is_thin = e.length < 21 || f.length < 21;
-    let is_super_thin = e.length < 10 || f.length < 10;
-    let is_small = this.area < 400;
-
-    console.log("is_thin", is_thin, "is_super_thin", is_super_thin, "is_small", is_small, "lidx", lidx);
-    let travelled = 0;
-    let step = 5
-    let hW = 5
-    let hd = 5
-    let points = this.polygon.outer
-    let house_edges = []
-
-    for(let i = 0; i < points.length; i++) {
-      let a = points[i];
-      let b = points[(i + 1) % points.length];
-      let d = p5.Vector.dist(a, b);
-      travelled += d;
-      if(travelled < step) continue; 
-      house_edges.push(b)
-    }
-
-    for(let i = 0; i < house_edges.length; i++) {
-      let a = house_edges[i];
-      let b = house_edges[(i + 1) % house_edges.length];
-
-      let edge = p5.Vector.sub(b, a);
-      let edgeLen = edge.mag();
-      let dir = edge.copy().normalize();
-
-      let midpoint = p5.Vector.add(a, b).div(2);
-      let toCentroid = p5.Vector.sub(this.centroid, midpoint).normalize();
-      let inward = createVector(-dir.y, dir.x);
-      if (inward.dot(toCentroid) < 0) inward.mult(-1);
-
-      let start = a.copy().add(p5.Vector.mult(dir, hW));
-      let end = start.copy().add(p5.Vector.mult(dir, hW));
-      
-      let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
-      let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));
-
-      let p1 = createVector(start.x, start.y);
-      let p2 = createVector(end.x, end.y);
-      let p3 = createVector(innerEnd.x, innerEnd.y);
-      let p4 = createVector(innerStart.x, innerStart.y);
-      let points = [p1, p2, p3, p4];
-      let house = new MultiPolygon(points);
-      // this.houses.push(house);
-    }
-  }
 
   construct(){
     let n = this.polygon.outer.length;
@@ -126,19 +71,20 @@ class Housing {
       let inward = createVector(-dir.y, dir.x);
       if (inward.dot(toCentroid) < 0) inward.mult(-1);
 
+      // calculate the number of houses to place along the edge
+      // We're going to offset and skip some on alternate sides
       let from = 0
       let to = reduced ? divs : floor(edgeLen / hW);
       to = (i % 2=== lidx) ? to - 4 : to // remove the start and end houses
       let offset = reduced ? 0 : (edgeLen - to * hW) / 2;
 
       for (let j = from; j < to; j++) {
+        let hd = reduced ? hD : random(hD - 1, hD + 1)
+        hd = constrain(hd, 2, 10);
+
+        // calculate the corners of the house
         let start = a.copy().add(p5.Vector.mult(dir, offset + j * hW));
         let end = start.copy().add(p5.Vector.mult(dir, hW));
-        
-        let hd = reduced ? hD : random(hD - 1, hD + 1)
-        
-        
-        hd = constrain(hd, 2, 10);
         let innerStart = start.copy().add(p5.Vector.mult(inward, hd));
         let innerEnd = end.copy().add(p5.Vector.mult(inward, hd));
   
@@ -148,10 +94,21 @@ class Housing {
         let p4 = createVector(innerStart.x, innerStart.y);
         let points = [p1, p2, p3, p4];
         let house = new MultiPolygon(points);
-        let final_plot = house.intersection(this.polygon);
-        if(final_plot && final_plot.length > 0) {
+        
+        // ensure the house is within the polygon
+        let fitted_plot = house.intersection(this.polygon);
+        if(!fitted_plot || fitted_plot.length === 0) { continue; }
+
+        // if this is the first house, just add it
+        if(this.houses.length == 0) { this.houses.push(fitted_plot[0]); continue; }
+
+        // ensure the house does not overlap with existing houses
+        let other_houses = unionPolygons(this.houses);
+        let final_plot = fitted_plot[0].difference(other_houses);
+        if(final_plot && final_plot.length > 0 && final_plot[0].area() > 10) {
           this.houses.push(final_plot[0]);
         }
+
       }
     }
 

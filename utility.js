@@ -41,12 +41,8 @@ function process_data(){
     edges.push(edge);
   }
 
-  //TODO REMOVE THIS MANUAL CONNECTON
-  let from = nodes[315]
-  let to = nodes[192];
-  let edge = new Edge(from, to);
-  edges.push(edge);
-  
+ 
+
   emitters = process_file(emitters);
   journeys = process_file(journeys);
   major_hotspots = hotspots.filter(h => h.major)
@@ -78,6 +74,13 @@ function deterministic_shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function set_seeds(){
+  seed = Math.floor(Math.random() * 1000000);
+  console.log("seed = ", seed);
+  randomSeed(seed);
+  noiseSeed(seed);
 }
 
 

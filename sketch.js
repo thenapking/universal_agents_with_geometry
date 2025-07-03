@@ -27,9 +27,6 @@ let LARGE_HATCH = 10;
 
 
 let PHI;
-
-
-
 let exporting = false;
 
 
@@ -45,28 +42,17 @@ function preload() {
 }
 
 function setup(){
-  createCanvas(FW, FH);
+  set_seeds()
+  process_data();
 
-  seed = Math.floor(Math.random() * 1000000);
-  console.log("seed = ", seed);
-  // seed = 1; // for testing
-  // seed = 68658
-  // seed =  10273
-  // seed =  29003
-  // seed =  276306
-  randomSeed(seed);
-  noiseSeed(seed);
-  
+  createCanvas(FW, FH);
   pixelDensity(4);
 
   setup_svg();
 
-  
-  // create_noise_field()
- 
-
   process_data();
   frameRate(60);
+  
   template = {
     foci: [
       createVector(W/2, H/2)
@@ -77,14 +63,7 @@ function setup(){
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
     ]};
   scene = new Scene(template)
-
-  // default_setup()
   scene.draw();
-  // draw_roads()
-  polyCircleA = new RegularPolygon(
-    W/2, H/2,
-    40, 50, 12, 'city'
-  ); 
 
   // textSize(10);
   // for(let e of scene.graph.edges){
@@ -99,17 +78,17 @@ function setup(){
 let ctx = 0;
 function draw(){
   
+  // polyCircleA = new MultiPolygon(points);
   // polyCircleA.draw();
-  // polyCircleB = new Trees(polyCircleA);
+  // polyCircleB = new Housing(polyCircleA);
   // polyCircleB.construct();
   // polyCircleB.draw()
- 
-  animation_draw();
+  // noLoop()
 
   
   // noLoop();
 
-  // let p = coffers[ctx]
+  // let p = scene.potential_coffers[ctx]
   // if(p){
   //   p.draw();
   //   ctx++
@@ -119,104 +98,52 @@ function draw(){
     
   //   noLoop();
   // }
-}
 
-function animation_draw(){
-  let active = update_groups();
-
-  if(active > 0){
-    push()
-      default_setup()
-      scene.draw();
-
-      draw_coffers();
-      draw_groups();
-    pop()
-
-
-    draw_borders();
-
-  } else {
-    
-    if(exporting){ 
-      let file_name = `output_${seed}.svg`;
-      console.log("Exporting to: ", file_name);
-      beginRecordSVG(this, file_name); 
-    }
-
-    push()
-      default_setup()
-      if(!exporting) { scene.draw(); }
-
-      draw_coffers();
-      final_draw();
-    pop()
-
-    draw_borders();
-    
-    noLoop();
-
-    if(exporting){ endRecordSVG(this); }
-    console.log("Finished drawing all groups");
+  if(exporting){ 
+    let file_name = `output_${seed}.svg`;
+    console.log("Exporting to: ", file_name);
+    beginRecordSVG(this, file_name); 
   }
+
+  push()
+    default_setup()
+    if(!exporting) { scene.draw(); }
+
+    draw_coffers();
+  pop()
+
+  draw_borders();
+
+  if(exporting) alignment_guide();
+  
+  noLoop();
+
+  if(exporting){ endRecordSVG(this); }
+  console.log("Finished drawing all groups");
+  
 }
-// For each group, create the polygons and draw them
-function final_draw(){
-  push();
-  for(group of groups){
-    let results = group.create_polygons();
-    push();
-      group.boundaries[0].draw();
-      push();
-      for(let poly of results){
-        poly.draw();
-      }
-      pop();
-    pop();
-  }
-  pop();
-}
-
-
-
-
 
 function draw_coffers(){
-  for(let coffer of coffers){
-    coffer.draw();
-  }
+  push();
+    stroke(palette.black);
+    for(let coffer of coffers){
+      coffer.fill();
+    }
+  pop();
+
+  push()
+    stroke(palette.white);
+    for(let coffer of coffers){
+      coffer.draw();
+    }
+  pop()
+  
 }
 
 function draw_roads(){
   for(let r of scene.roads){
     r.draw();
   }
-}
-
-
-function draw_groups(){
-  push();
-    for (let group of groups) {
-      group.draw();
-    }
-  pop();
-}
-
-function update_groups(){
-  if(groups.length === 0) { return 0; }
-  let active_group = groups[active_group_id];
-  active_group.update();
-
-  if(!active_group.active) {
-    active_group_id++;
-    if(active_group_id >= groups.length) {
-      return 0;
-    } else {
-      active_group = groups[active_group_id];
-    }
-  }
-  
-  return 1
 }
 
 function default_setup(){
@@ -236,5 +163,31 @@ function draw_borders(){
     rect(0, 0, MBW + BW, FH);
     rect(FW - MBW - BW, 0, FW, FH);
     rect(0, FH - MBW - BW, FW, FH);
+  pop()
+  push();
+    stroke(palette.black);
+    noFill();
+    rectMode(CENTER)
+    rect(MBW + BW + W/2, MBW + BW + H/2, VW - 1.5*BW, VH - 1.5*BW); 
+    rect(MBW + BW + W/2, MBW + BW + H/2, VW - 1.5*BW + 10, VH - 1.5*BW + 10); 
+
   pop();
+}
+
+function alignment_guide(){
+  push();
+    stroke(palette.black);
+    noFill();
+    let sz = 20;
+    target(MBW, MBW, sz)
+    target(FW - MBW, MBW, sz);
+    target(MBW, FH - MBW, sz);
+    target(FW - MBW, FH - MBW, sz);
+  pop();
+}
+
+function target(x, y, r){
+  circle(x, y, r);
+  line(x - r, y, x + r, y);
+  line(x, y - r, x, y + r);
 }

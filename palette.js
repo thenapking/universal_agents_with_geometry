@@ -69,7 +69,7 @@ let palettes = {
 
 let palette_names = Object.keys(palettes);
 let palette_name = palette_names[Math.floor(Math.random() * palette_names.length)];
-palette_name = "Fabricworm"; // For testing
+palette_name = "Pumpkin II"; // For testing
 let palette = palettes[palette_name];
 
 
