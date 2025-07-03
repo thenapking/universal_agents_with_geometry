@@ -38,10 +38,12 @@ class Trees{
     }
   }
 
-  draw(){
-    this.polygon.draw();
-    for(let c of this.circles){
-      circle(c.x, c.y, c.r);
-    }
+  draw(border = true){
+    push();
+      if(border) { this.polygon.draw(); }
+      for(let c of this.circles){
+        circle(c.x, c.y, c.r);
+      }
+    pop();
   }
 }

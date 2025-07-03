@@ -96,12 +96,13 @@ class Park {
   
 
   draw(){
-    noFill();
-    this.inner_polygon.draw();
-    for(let l of this.lines){
-      l.draw();
-    }
-    
+    push()
+      noFill();
+      this.inner_polygon.draw();
+      for(let l of this.lines){
+        l.draw();
+      }
+    pop();
 
   }
 }

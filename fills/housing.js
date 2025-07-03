@@ -6,6 +6,8 @@ class Housing {
   constructor(polygon) {
     this.polygon = polygon;
     this.bounds = this.polygon.bounds();
+    this.garden_polygon = this.polygon.scale(0.6)
+    this.garden = null;
     this.houses = [];
  
     const [minX, minY, maxX, maxY] = this.bounds;
@@ -84,13 +86,24 @@ class Housing {
         }
       }
     }
+
+    if(!is_small 
+      && this.garden_polygon.outer.length < 6 
+      && this.garden_polygon.area() < 5000 
+      ) {
+      this.garden = new Trees(this.garden_polygon);
+      this.garden.construct();
+    }
   }
 
   draw() {
     push();
-    for (let house of this.houses) {
-      house.draw();
-    }
+      for (let house of this.houses) {
+        house.draw();
+      }
+      if(this.garden) {
+        this.garden.draw(false);
+      }
     pop();
   } 
   

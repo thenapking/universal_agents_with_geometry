@@ -14,9 +14,10 @@ class Civic {
   }
  
   draw(){
+    push();
     noFill();
     this.hatch.draw();
     this.inner_polygon.draw();
-
+    pop();
   }
 }
