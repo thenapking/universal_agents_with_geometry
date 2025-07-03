@@ -1,7 +1,7 @@
 
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
-
+const THIN_THRESHOLD = 0.15;
 let template;
 class Scene {
   constructor(template){
@@ -331,9 +331,11 @@ class Scene {
 
   subdivide(polygon, min_area, counter = 0, previous_area) {
     let area = polygon.area()
-    let centroid = polygon.centroid();
+    let centroid = polygon.bounds_centroid();
+    
     let nearest = null;
     let nearest_dist = Infinity;
+
     for (let f of this.foci) {
       let d = p5.Vector.dist(centroid, f);
       if (d < nearest_dist) {
@@ -349,7 +351,7 @@ class Scene {
     let threshold = min_area + (max_area - min_area) * inv;
     threshold *= 0.1
 
-    if (area < threshold || area < min_area) {
+    if (area < threshold || area < min_area ) {
       return [polygon];
     }
 
@@ -394,7 +396,19 @@ class Scene {
     let pieces = polygon.difference(new_street);
 
     if (pieces.length === 0) { return [polygon]; }
-    // 8) Recursively subdivide each piece:
+    
+    let valid = true;
+    for (let piece of pieces) {
+      let bounding_box_area = piece.bounds_area();
+      let area = piece.area();
+      let is_thin = area / bounding_box_area < THIN_THRESHOLD;
+      if (is_thin) {
+        valid = false;
+        break;
+      }
+    }
+    if (!valid) { return [polygon]; }
+
     let result = [];
     for (let piece of pieces) {
       let pieces = this.subdivide(piece, min_area, counter++, area);

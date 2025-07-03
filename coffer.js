@@ -44,7 +44,7 @@ class Coffer {
     if(this.fill_type == 'trees' && this.polygon.outer.length > 5) { this.fill_type = 'houses' }
 
     if(area < 100) { this.fill_type = 'blank'}
-    if(area > 40000) { this.fill_type = random(LARGE) }
+    if(area > 8000) { this.fill_type = random(LARGE) }
 
    
 

@@ -198,6 +198,11 @@ class MultiPolygon {
     return createVector((minX + maxX) / 2, (minY + maxY) / 2);
   }
 
+  bounds_area() {
+    const [minX, minY, maxX, maxY] = this.bounds();
+    return (maxX - minX) * (maxY - minY);
+  }
+
   intersects_bounds(other){
     const [minX, minY, maxX, maxY] = this.bounds();
     const [otherMinX, otherMinY, otherMaxX, otherMaxY] = other.bounds();

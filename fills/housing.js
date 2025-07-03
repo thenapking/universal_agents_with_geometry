@@ -89,7 +89,7 @@ class Housing {
 
     if(!is_small 
       && this.garden_polygon.outer.length < 6 
-      && this.garden_polygon.area() < 5000 
+      && this.garden_polygon.area() < 3000 
       ) {
       this.garden = new Trees(this.garden_polygon);
       this.garden.construct();

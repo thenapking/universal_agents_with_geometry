@@ -66,7 +66,7 @@ function setup(){
  
 
   process_data();
-  frameRate(30);
+  frameRate(60);
   template = {
     foci: [
       createVector(W/2, H/2)
