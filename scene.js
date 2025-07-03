@@ -65,12 +65,99 @@ class Scene {
     let r2 = this.graph.shortest(a, c);
     let r3 = this.graph.shortest(d, a);
     let r4 = this.graph.shortest(a, e);
-    this.r1 = r1;
-    this.r2 = r2;
-    this.r3 = r3;
-    this.r4 = r4;
+    let r3f = this.find_intersections(r2, r3);
+    this.r1 = this.route_to_points(r1);
+    this.r2 = this.route_to_points(r2);
+    this.r3 = this.route_to_points(r3);
+    this.r4 = this.route_to_points(r4);
+    this.r3f = this.route_to_points(r3f[0]);
+
     this.create_road([r1,r2]);
+    this.create_road([r3f[0]]);
     this.create_road([r4]);
+  }
+
+  route_to_points(route){
+    let points = [];
+    for(let node of route){
+      let p = node.id;
+      points.push(p)
+    }
+    return points;
+  }
+
+  find_intersections(a,b){
+    //a,b are two routes of ids
+    let ia = [];
+    let ib = []
+    let points = []
+    for(let i = 0; i < a.length; i++){
+      let node = a[i];
+      for(let j = 0; j < b.length; j++){
+        let other = b[j];
+        if(node === other){
+          points.push(node);
+          ia.push(i);
+          ib.push(j);
+        }
+      }
+    }
+    ia = ia.sort((x, y) => x - y);
+    ib = ib.sort((x, y) => x - y);
+    let highest_index = 0;
+    let subsequences = [];
+    let previous_idx = 0;
+    for(let k = 0; k < ib.length - 1; k++){
+      if(k < highest_index) { continue }
+      let current = ib[k];
+      let next = ib[k + 1];
+      let found = false
+      if(current + 1 === next){
+        // found a matching index
+        found = true;
+        let subsequence_start_idx = k;
+        let subsequence_end_idx = k + 1;
+        
+        let sa_idx = k;
+        let sb_idx = k + 1;
+        let subsequence_a = ib[sa_idx];
+        let subsequence_b = ib[sb_idx];
+        while(subsequence_a + 1 === subsequence_b && sb_idx < ib.length - 1){
+          sa_idx++;
+          sb_idx++;
+          subsequence_a = ib[sa_idx];
+          subsequence_b = ib[sb_idx];
+          subsequence_end_idx = sb_idx;
+        }
+
+        highest_index = max(highest_index, subsequence_end_idx);
+        console.log(previous_idx)
+        subsequences.push([previous_idx, ib[subsequence_start_idx]]);
+
+        subsequences.push([ib[subsequence_start_idx], ib[subsequence_end_idx]]);
+        previous_idx = ib[subsequence_end_idx];
+      }
+    }
+
+    if(previous_idx < ib.length){
+      subsequences.push([previous_idx, ib.length]);
+    }
+
+    let results = []
+    for(let i = 0; i < subsequences.length; i++){
+      let indices = subsequences[i];
+      let start = indices[0];
+      let end = indices[1];
+      let new_route = b.slice(start, end + 1);
+      results.push(new_route);
+    }
+
+
+    console.log(ia);
+    console.log(ib);
+    console.log(points)
+    console.log(subsequences)
+    return results;
   }
 
   create_road(routes){
@@ -96,11 +183,12 @@ class Scene {
     
     // let farms = this.subdivide(bg, 35000);
     this.farms = [bg];
-    let new_bg = bg.difference(this.roads[0]);
-    // this.polycircles = new_bg
-    let new_bg2 = new_bg[0].difference(this.roads[1]);
-    let new_bg3 = new_bg[1].difference(this.roads[1]);
-    this.polycircles = new_bg2.concat(new_bg3);
+    let unioned_roads = unionPolygons(this.roads);
+    let new_bg = bg.difference(unioned_roads);
+    this.polycircles = new_bg
+    // let new_bg2 = new_bg[0].difference(this.roads[1]);
+    // let new_bg3 = new_bg[1].difference(this.roads[1]);
+    // this.polycircles = new_bg2.concat(new_bg3);
     // let new_new_bg = new_bg.difference(this.roads[1])[0];
     // this.polycircles.push(new_new_bg);
     // let remainder = new MultiPolygon(points, 'countryside');

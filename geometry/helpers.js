@@ -141,3 +141,5 @@ function from_clipper_paths(paths, parent, other) {
   
   return polygons;
 }
+
+
