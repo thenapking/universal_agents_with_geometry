@@ -143,3 +143,28 @@ function from_clipper_paths(paths, parent, other) {
 }
 
 
+function unionPolygons(polygons) {
+  let current = polygons[0];
+  
+  for (let i = 1; i < polygons.length; i++) {
+      let unionResult = current.union(polygons[i]);
+      
+      if (unionResult.length === 1) {
+          current = unionResult[0];
+      } else {
+          // If multiple polygons are returned, handle recursively or by iterating
+          current = mergeDisjointPolygons(unionResult);
+      }
+  }
+  return current;
+}
+
+function mergeDisjointPolygons(polygonArray) {
+  let result = polygonArray[0];
+  for (let i = 1; i < polygonArray.length; i++) {
+      result = result.union(polygonArray[i])[0]; // Merge them into one
+  }
+  return result;
+}
+
+

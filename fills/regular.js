@@ -30,7 +30,7 @@ class Regular {
     this.minY = centerY - size / 2;
   }
 
-  find_points(){
+  construct(){
     this.points = [];
     let row = 0;
     for (let y = this.minY; y <= this.maxY; y += this.spacing) {
@@ -38,7 +38,19 @@ class Regular {
 
       for (let x = this.minX; x <= this.maxX; x += this.spacing) {
         let p = createVector(x + loff, y);
-        if (this.polygon.contains(p)) {
+        let end;
+        switch(this.type){
+          case 'vertical-dashes':
+            end = createVector(x + loff, y + this.spacing * 0.5);
+            break;
+          case 'horizontal-dashes':
+            end = createVector(x + loff + this.spacing * 0.5, y);
+            break;
+          default:
+            end = createVector(x + loff, y);
+        }
+          
+        if (this.polygon.contains(p) && this.polygon.contains(end)) {
           this.points.push(p);
         }
       }
@@ -60,18 +72,11 @@ class Regular {
       case 'dots':
         point(x, y);
         break;
-      case 'circles':
-        circle(x, y, this.spacing * 0.5);
-        break;
       case 'vertical-dashes':
         line(x, y, x, y + this.spacing * 0.5);
         break;
       case 'horizontal-dashes':
         line(x, y, x + this.spacing * 0.5, y);
-        break;
-      case 'crosses':
-        line(x - this.spacing * 0.25, y - this.spacing * 0.25, x + this.spacing * 0.25, y + this.spacing * 0.25);
-        line(x - this.spacing * 0.25, y + this.spacing * 0.25, x + this.spacing * 0.25, y - this.spacing * 0.25);
         break;
       default:
         fill(100);

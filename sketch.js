@@ -29,6 +29,7 @@ let LARGE_HATCH = 10;
 let PHI;
 let exporting = false;
 
+let coffers = [];
 
 let groups = [];
 let active_group_id = 0;
@@ -65,25 +66,17 @@ function setup(){
   scene = new Scene(template)
   scene.draw();
 
-  // textSize(10);
-  // for(let e of scene.graph.edges){
-  //   e.draw();
-  //   fill(0)
-  //   text(e.start.id, e.start.position.x, e.start.position.y);
-  //   noFill()
-  // }
-
 }
 
 let ctx = 0;
 function draw(){
-  
-  // polyCircleA = new MultiPolygon(points);
-  // polyCircleA.draw();
-  // polyCircleB = new Housing(polyCircleA);
-  // polyCircleB.construct();
-  // polyCircleB.draw()
-  // noLoop()
+  let points = [[[100,100],[100,200],[200,200],[200,100]]];
+  polyCircleA = new MultiPolygon(points);
+  polyCircleA.draw();
+  polyCircleB = new Regular(polyCircleA, 7, 'vertical-dashes', true);
+  polyCircleB.construct();
+  polyCircleB.draw()
+  noLoop()
 
   
   // noLoop();

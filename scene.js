@@ -21,14 +21,16 @@ class Scene {
     this.farms = []
 
     this.graph = new Graph(edges, nodes);
-
+    console.log("--------")
+    console.log("Creating roads")
     this.create_foci();
     this.create_roads();
     this.create_lines();
+    console.log("Subdividing Lots")
     this.create_lots();
     this.subdivide_lots();
-
-    this.create_coffers()
+    console.log("Creating coffers")
+    // this.create_coffers()
   }
 
   create_foci(){
@@ -68,30 +70,6 @@ class Scene {
     // this.centres.push(m);
   }
 
-  create_roads_automatically(){
-    let routes = [];
-    for(let i = 0; i < 3; i++){
-      // console.log("---------------")
-      let a = this.centres[i];
-      let b = this.centres[(i + 1)];
-      let r = this.graph.shortest(a, b);
-      if(i === 0){  routes = [r]; continue; }
-      let reduced = r;
-      for(let other of routes){
-        // console.log("Finding intersections between", reduced, "and", other);
-        reduced = this.find_intersections(reduced, other);
-      }
-      // console.log("Reduced route:", reduced);
-      for(let remaining of reduced){
-        routes.push(remaining);
-      }
-    }
-
-    // console.log("Created routes:", routes);
-    return routes
-
-  }
-
   create_connected_network(){
     let routes = []
     for(let i = 0; i < this.centres.length; i++){
@@ -100,7 +78,6 @@ class Scene {
         let other = this.centres[j];
         let route = this.graph.shortest(centre, other);
         if(route.length > 0){
-          // console.log("Adding route between", centre.id, "and", other.id);
           routes.push(route);
         }
       }
@@ -114,18 +91,18 @@ class Scene {
     this.split_routes = []
     
     for(let i  = 0; i < routes.length; i++){
-      // console.log("----------- REAL")
       let ri = routes[i]
       let r0 = routes[0];
       let base = this.find_intersections(r0, ri)
       let previous = base
-      // console.log(base)
+
       for(let j = 1; j < i; j++){
         let rj = routes[j]
         let carried = previous[0]
         let current = this.find_intersections(rj, carried)
         previous = current;
       }
+      
       this.split_routes.push(previous);
     }
 
@@ -160,7 +137,7 @@ class Scene {
 
 
   find_forward_intersections(a,b){
-    //a,b are two routes of ids
+    // a,b are two routes of ids
     // this splits line b into subsections which are not included in a
     let ia = [];
     let ib = []
@@ -181,7 +158,7 @@ class Scene {
 
     // only one intersection
     if(ib.length < 2) { 
-      console.log("Only one intersection found, returning original");
+      // console.log("Only one intersection found, returning original");
       return [b];
     }
 
@@ -252,7 +229,6 @@ class Scene {
   }
 
   create_road(routes){
-    console.log(routes)
     let points = [];
     for(let route of routes){
       for(let node of route){
@@ -316,6 +292,9 @@ class Scene {
       
       coffers.push(coffer);
     }
+
+    console.log("Created", coffers.length, "coffers");
+    console.log(civil_statistics)
   }
 
   subdivide_lots(){
@@ -493,11 +472,8 @@ class Scene {
     return !this.onscreen(position);
   }
 
-
-
   create_lines(){
     let offset = createVector(BW + MBW, BW + MBW)
-    // this.add_full_line(this.foci[0], this.offscreen_foci[0], offset);
     let p1 = createVector(W/3, 0)
     let p2 = createVector(W/3, H)
     this.add_full_line(p1, p2, offset);
@@ -552,65 +528,11 @@ class Scene {
 }
 
 
-function unionPolygons(polygons) {
-  let current = polygons[0];
-  
-  for (let i = 1; i < polygons.length; i++) {
-      let unionResult = current.union(polygons[i]);
-      
-      if (unionResult.length === 1) {
-          current = unionResult[0];
-      } else {
-          // If multiple polygons are returned, handle recursively or by iterating
-          current = mergeDisjointPolygons(unionResult);
-      }
-  }
-  return current;
-}
-
-function mergeDisjointPolygons(polygonArray) {
-  let result = polygonArray[0];
-  for (let i = 1; i < polygonArray.length; i++) {
-      result = result.union(polygonArray[i])[0]; // Merge them into one
-  }
-  return result;
-}
-
-function split_polygons_by_multiple(polygons, polylines){
-  let results = polygons;
-  for(let polyline of polylines){
-    console.log("Splitting polygons by polyline");
-    results = split_polygons(results, polyline);
-  }
-  return results;
-}
-
-function split_polygons(polygons, polyline){
-  let new_polygons = [];
-  for(let polygon of polygons){
-    let results = polygon.split(polyline);
-
-    for(let result of results){
-      new_polygons.push(result);
-    }
-  }
-    
-  return new_polygons;
-}
 
 
 
-function intersect_all(pcircle, lines){
-  let results = [];
-  for(let l of lines){
-    let intersection = pcircle.intersection(l);
-    if(intersection){
-      results.push(...intersection);
-    }
-  }
 
-  return results;
-}
+
 
 ////////////////////////////////////////////////////////////////
 let polylines = []
@@ -619,55 +541,7 @@ let polygonA, polygonB, polylineA, polylineB, polyCircle;
 let polyOuter, polyInner;
 
 
-function concentric_circle(x, y, r, w, n){
-  let pieces = [];
-  console.log("Concentric circle")
 
-  for(let i = 0; i <= n; i++){
-    let dA = i * w
-    if(dA >= r) { break;}
-    let type = i < n ? 'decoration' : 'city';
-
-    let polyCircle = new RegularPolygon(
-      x, y,
-      r - dA, r - dA, 100, type
-    );
-    
-    pieces.push(polyCircle);
-  }
-
-  return pieces
-}
-
-function draw_connected_network(points){
-  push();
-    noFill();
-    for(let p of points){
-      for(let q of points){
-        if (p === q) continue;
-        line(p.position.x, p.position.y, q.position.x, q.position.y);
-      }
-    }
-  pop();
-}
-
-function find_closest_to_angle(points, angle){
-  let closest = null;
-  let closestAngle = Infinity;
-  for (let p of points) {
-    for(let q of points) {
-      if (p === q) continue;
-      let cA = p.position.angleBetween(q.position);
-      let angleDiff = abs(cA - angle);
-      
-      if (angleDiff < closestAngle) {
-        closestAngle = angleDiff;
-        closest = [p,q];
-      }
-    }
-  }
-  return closest;
-}
 
 
 ////////////////////////////////////////////////////////////////
