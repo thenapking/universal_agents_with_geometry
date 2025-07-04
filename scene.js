@@ -30,7 +30,7 @@ class Scene {
     this.create_lots();
     this.subdivide_lots();
     console.log("Creating coffers")
-    // this.create_coffers()
+    this.create_coffers()
   }
 
   create_foci(){

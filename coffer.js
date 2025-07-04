@@ -50,7 +50,7 @@ class Coffer {
 
     if(this.fill_type == 'trees' && area > 2000) { this.fill_type = 'houses' }
 
-    if(this.fill_type == 'civic' && (area < 800 || area > 2000)) { this.fill_type = 'houses' }
+    if(this.fill_type == 'civic' && (area < 600 || area > 3000)) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic') { total_civic_count++ }
 

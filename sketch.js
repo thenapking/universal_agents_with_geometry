@@ -70,13 +70,13 @@ function setup(){
 
 let ctx = 0;
 function draw(){
-  let points = [[[100,100],[100,200],[200,200],[200,100]]];
-  polyCircleA = new MultiPolygon(points);
-  polyCircleA.draw();
-  polyCircleB = new Regular(polyCircleA, 7, 'vertical-dashes', true);
-  polyCircleB.construct();
-  polyCircleB.draw()
-  noLoop()
+  // let points = [[[100,100],[100,200],[200,200],[200,100]]];
+  // polyCircleA = new MultiPolygon(points);
+  // polyCircleA.draw();
+  // polyCircleB = new Regular(polyCircleA, 7, 'vertical-dashes', true);
+  // polyCircleB.construct();
+  // polyCircleB.draw()
+  // noLoop()
 
   
   // noLoop();
