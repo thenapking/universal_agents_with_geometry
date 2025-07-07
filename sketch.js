@@ -64,8 +64,17 @@ function setup(){
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
     ]};
   scene = new Scene(template)
-  scene.river[0].draw();
-  // scene.draw();
+
+  // scene.graph.edges[666].draw()
+  // scene.graph.edges[667].draw()
+  // scene.graph.edges[668].draw()
+  // scene.graph.edges[669].draw()
+  // scene.graph.edges[670].draw()
+  // scene.graph.edges[671].draw()
+
+  scene.draw();
+  noFill();
+  // scene.graph.draw_edges()
 
 }
 
@@ -87,7 +96,7 @@ function draw(){
   // translate(0, 150)
   // scene.roads[0].to_polygon(20, 'road', 1, 0).draw()
 
-  let p = scene.roads[ctx]
+  let p = scene.potential_coffers[ctx]
   if(p){
     p.draw();
     ctx++

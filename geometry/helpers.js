@@ -54,7 +54,6 @@ function moving_average(input_points, windowSize){
     let sumX = 0;
     let sumY = 0;
     let count = 0;
-    // console.log(input_points.length, start, end)
 
     for (let j = start; j <= end; j++) {
       sumX += input_points[j].x;
@@ -65,12 +64,9 @@ function moving_average(input_points, windowSize){
     points.push(createVector(sumX / count, sumY / count));
   }
 
-  
-  // points.unshift(input_points[0]); // Ensure first point is preserved
-  // points.push(input_points[input_points.length - 1]); // Ensure last point is preserved
-  console.log(input_points, points)
+  points.unshift(input_points[0]); // Ensure first point is preserved
+  points.push(input_points[input_points.length - 1]); // Ensure last point is preserved
   return points
-
 }
 
 

@@ -10,12 +10,15 @@ class Edge {
     this.weight = weight || 1; 
     this.v = this.end.position.copy().sub(this.start.position);
     this.distance = this.v.mag();
-    this.direction = this.v.heading();
+    this.heading = this.v.heading();
+    this.direction = this.v.normalize();
   }
 
   draw(){
     line(this.start.position.x, this.start.position.y, 
          this.end.position.x,   this.end.position.y    );
+
+    circle(this.start.position.x, this.start.position.y, 5);
   }
 
   // get one end or the other
@@ -24,11 +27,6 @@ class Edge {
     return this.start;
   }
 
-
-  draw() {
-    line(this.start.position.x, this.start.position.y, 
-         this.end.position.x,   this.end.position.y    );
-  }
 
   
 }

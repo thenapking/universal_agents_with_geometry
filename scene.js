@@ -14,6 +14,7 @@ class Scene {
     this.potential_coffers = [];
     this.offscreen_foci = template.offscreen_foci || [];
     this.centres = [];
+    this.secondary_centres = [];  
     this.offscreen_points = [];
     this.offscreen_lines = [];
     this.minor_points = []; 
@@ -21,18 +22,23 @@ class Scene {
     this.farms = []
     this.filtered_roads = [];
     this.river = []
+    this.river_lines = []
     this.graph = new Graph(edges, nodes);
     console.log("--------")
     console.log("Creating roads")
+
+    this.river_width = 80;
     this.create_foci();
-    this.create_river();
-    this.create_roads();
+    // this.create_river();
+
+    this.create_roads(this.centres, false, 8);
+    this.create_roads(this.secondary_centres);
     this.create_lines();
     // console.log("Subdividing Lots")
-    // this.create_lots();
-    // this.subdivide_lots();
+    this.create_lots();
+    this.subdivide_lots();
     // console.log("Creating coffers")
-    // this.create_coffers()
+    this.create_coffers()
   }
 
   create_river(){
@@ -45,9 +51,77 @@ class Scene {
       let p = node.position;
       points.push(p)
     }
-    let polyline = new Polyline(points).to_bezier(40).filter(30).to_polygon(80, 'river', 1, 30);
-    this.river.push(polyline);
+    let polyline = new Polyline(points).to_bezier(40).filter(30)
+    this.river_lines.push(polyline);
+    
+    let polygon = polyline.to_polygon(this.river_width, 'river', 1, 30);
+
+    this.river.push(polygon);
   }
+
+  find_nodes_in_river(){
+    let nodes_in_river = [];
+    for(let node of this.graph.nodes){
+      for(let poly of this.river){
+        if(poly.contains(node.position)){
+          nodes_in_river.push(node);
+        }
+      }
+    }
+    return nodes_in_river;
+  }
+
+  find_nodes_on_land(){
+    let nodes_on_land = this.graph.nodes.slice();
+    let nodes_in_river = this.find_nodes_in_river();
+    for(let node of nodes_in_river){
+      let index = nodes_on_land.findIndex(n => n.id === node.id);
+      if(index !== -1){
+        nodes_on_land.splice(index, 1);
+      }
+    }
+    return nodes_on_land;
+  }
+
+  traverse_river(){
+    let polyline = this.river_lines[0]
+    let polygon = this.river[0]
+    let visited = new Set();
+
+    for(let i = 0; i < polyline.points.length - 1; i++){
+      let start = polyline.points[i];
+      let end = polyline.points[i + 1];
+      let direction = p5.Vector.sub(end, start).normalize();
+      let perpendicular = direction.copy().rotate(HALF_PI);
+      let dist = p5.Vector.dist(start, end) * 2;
+      for(let edge of this.graph.edges){
+        let node = edge.start;
+        
+        let d = p5.Vector.dist(node.position, start);
+        if(d < dist){
+          let offset = perpendicular.copy().mult(20 + this.river_width / 2);
+          node.position.add(offset);
+          this.move_node_out_of_river(visited, node, offset, polygon)
+        } 
+      }
+    }
+  }
+
+  move_node_out_of_river(visited, node, offset, river){
+    if(visited.has(node.id)){ return }
+    offset = offset.copy().mult(0.5);
+    if(offset.mag() < 1){ return }
+    if(!river.contains(node.position)){ 
+      visited.add(node.id);
+      node.position.add(offset);  
+    }
+    let neighbours = this.graph.neighbours.get(node.id)
+    for(let neighbour_id of neighbours){
+      let neighbour = this.graph.find(neighbour_id);
+      this.move_node_out_of_river(visited, neighbour, offset, river);
+    }
+  }
+
 
   create_foci(){
     let a = this.graph.nodes[28]
@@ -65,30 +139,37 @@ class Scene {
     let m = this.graph.nodes[499]
     let n = this.graph.nodes[305]
     let o = this.graph.nodes[200]
+    let p = this.graph.nodes[938]
 
     // this.centres.push(e);
     // this.centres.push(b);
 
     this.centres.push(a);
     this.centres.push(c);
-    this.centres.push(f);
-    this.centres.push(g);
-    this.centres.push(h);
-    this.centres.push(j);
+    this.centres.push(p);
+    // this.centres.push(h);
 
-    // this.centres.push(i);
-    // this.centres.push(d);
 
+    // this.secondary_centres.push(a);
+    // this.secondary_centres.push(c);
+    // this.secondary_centres.push(e);
+    // this.secondary_centres.push(f);
+    // this.secondary_centres.push(h);
+    // this.secondary_centres.push(j);
+
+    this.foci.push(a.position)
+    // this.foci.push(n.position);
 
   }
 
-  create_connected_network(){
+  create_connected_network(points){
     let routes = []
-    for(let i = 0; i < this.centres.length; i++){
-      let centre = this.centres[i];
-      for(let j = i + 1; j < this.centres.length; j++){
-        let other = this.centres[j];
+    for(let i = 0; i < points.length; i++){
+      let centre = points[i];
+      for(let j = i + 1; j < points.length; j++){
+        let other = points[j];
         let route = this.graph.shortest(centre, other);
+        console.log(route)
         if(route.length > 0){
           routes.push(route);
         }
@@ -97,8 +178,8 @@ class Scene {
     return routes
   }
 
-  create_roads(){
-    let routes = this.create_connected_network();
+  create_roads(points, filter = false, sw = INTERCITY_ROAD){
+    let routes = this.create_connected_network(points);
 
     this.split_routes = []
     
@@ -119,7 +200,7 @@ class Scene {
     }
 
     for(let s of this.split_routes){
-      this.create_road(s);
+      this.create_road(s, filter, sw);
     }
   }
 
@@ -143,7 +224,6 @@ class Scene {
     }
     return [b]
   }
-
 
   find_forward_intersections(a,b){
     // a,b are two routes of ids
@@ -237,7 +317,7 @@ class Scene {
     return results;
   }
 
-  create_road(routes){
+  create_road(routes, filter = false, sw = INTERCITY_ROAD){
     let points = [];
     for(let route of routes){
       for(let node of route){
@@ -245,7 +325,12 @@ class Scene {
         points.push(p)
       }
     }
-    let polyline = new Polyline(points).to_bezier(40).to_polygon(INTERCITY_ROAD, 'road', 1, 0);
+    let polyline;
+    if(filter){
+      polyline = new Polyline(points).to_bezier(40).filter(sw).simplify(1).to_polygon(sw, 'road', 1, 0);
+    } else {
+      polyline = new Polyline(points).to_bezier(40).to_polygon(sw, 'road', 1, 0);
+    }
     this.roads.push(polyline);
   }
 
@@ -384,7 +469,10 @@ class Scene {
     let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
 
     let new_line = new Polyline([A, B]);
+    console.log("Subdividing polygon with area:", area, "at counter:", counter, "with stroke width:", stroke_width);
+    console.log(A, B)
     let new_street = new_line.to_polygon(stroke_width);
+    console.log(new_street);
     let pieces = polygon.difference(new_street);
 
     if (pieces.length === 0) { return [polygon]; }

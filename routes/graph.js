@@ -30,6 +30,21 @@ class Graph {
     }
   }
 
+  remove_node(a){
+    if(!this.neighbours.has(a.id)) return; // Node not found
+    // Remove all edges connected to this node
+    this.edges = this.edges.filter(edge => edge.start.id !== a.id && edge.end.id !== a.id);
+    this.neighbours.delete(a.id);
+
+    this.nodes = this.nodes.filter(node => node.id !== a.id);
+    this.node_ids = this.node_ids.filter(id => id !== a.id);
+
+    // Remove the node from the neighbours of other nodes
+    for (let [key, neighbours] of this.neighbours) {
+      this.neighbours.set(key, neighbours.filter(id => id !== a.id));
+    }
+  }
+
   add_edge(edge){
     if(edge.start.position === edge.end.position) { return; } // Prevent self-loops
 
@@ -41,6 +56,12 @@ class Graph {
 
   }
 
+  remove_edge(edge) { 
+    this.edges = this.edges.filter(e => e.id !== edge.id);
+    this.neighbours.get(edge.start.id).splice(this.neighbours.get(edge.start.id).indexOf(edge.end.id), 1);
+    this.neighbours.get(edge.end.id).splice(this.neighbours.get(edge.end.id).indexOf(edge.start.id), 1);
+  }
+  
   find(id){
     return this.nodes.find(node => node.id === id);
   }
@@ -246,8 +267,8 @@ class Graph {
       for(let edge of this.edges) {
         edge.draw();
         fill(0);
-        textSize(10);
-        text(edge.start.id, edge.start.position.x + 5, edge.start.position.y + 5);
+        // textSize(10);
+        // text(edge.start.id, edge.start.position.x + 5, edge.start.position.y - 5);
         noFill()
       }
     pop();

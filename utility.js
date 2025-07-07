@@ -111,5 +111,12 @@ function mousePressed(){
         console.log(coffer.polygon);
       }
     }
+
+    for(let node of scene.graph.nodes){
+      if(p5.Vector.dist(node.position, point) < 10){ // 10 is the radius of the click area
+        console.log(`Clicked on node ${node.id} at (${node.position.x}, ${node.position.y})`);
+        console.log(node);
+      }
+    }
   }
 }
