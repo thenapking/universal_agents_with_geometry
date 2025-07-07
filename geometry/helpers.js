@@ -41,6 +41,7 @@ function calculate_bezier(p0, p1, p2, p3, t) {
 }
 
 
+
 function clipper(poly, other, op) {
   const clipper = new ClipperLib.Clipper();
   if (!poly || !other) {
@@ -141,7 +142,6 @@ function from_clipper_paths(paths, parent, other) {
   
   return polygons;
 }
-
 
 function unionPolygons(polygons) {
   let current = polygons[0];

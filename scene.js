@@ -19,18 +19,18 @@ class Scene {
     this.minor_points = []; 
     this.roads = [];
     this.farms = []
-
+    this.filtered_roads = [];
     this.graph = new Graph(edges, nodes);
     console.log("--------")
     console.log("Creating roads")
     this.create_foci();
     this.create_roads();
     this.create_lines();
-    console.log("Subdividing Lots")
-    this.create_lots();
-    this.subdivide_lots();
-    console.log("Creating coffers")
-    this.create_coffers()
+    // console.log("Subdividing Lots")
+    // this.create_lots();
+    // this.subdivide_lots();
+    // console.log("Creating coffers")
+    // this.create_coffers()
   }
 
   create_foci(){
@@ -90,7 +90,7 @@ class Scene {
 
     this.split_routes = []
     
-    for(let i  = 0; i < routes.length; i++){
+    for(let i  = 1; i < 2; i++){ //routes.length
       let ri = routes[i]
       let r0 = routes[0];
       let base = this.find_intersections(r0, ri)
@@ -106,12 +106,14 @@ class Scene {
       this.split_routes.push(previous);
     }
 
-    
     for(let s of this.split_routes){
       this.create_road(s);
     }
 
-
+    for(let i = 0; i < this.split_routes.length; i++){
+      let nsr = this.roads[i].applyMovingAverage(30)
+      this.filtered_roads.push(nsr);
+    }
   }
 
   route_to_points(route){
@@ -236,7 +238,7 @@ class Scene {
         points.push(p)
       }
     }
-    let polyline = new Polyline(points).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
+    let polyline = new Polyline(points).to_bezier(60) //.to_polygon(INTERCITY_ROAD, 'road');
     this.roads.push(polyline);
   }
 

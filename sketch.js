@@ -64,7 +64,7 @@ function setup(){
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
     ]};
   scene = new Scene(template)
-  scene.draw();
+  // scene.draw();
 
 }
 
@@ -79,9 +79,14 @@ function draw(){
   // noLoop()
 
   
-  // noLoop();
+  noLoop();
+  noFill();
 
-  // let p = scene.potential_coffers[ctx]
+  scene.filtered_roads[0].to_polygon(20).draw()
+  translate(0, 50)
+  scene.roads[0].to_polygon(20).draw()
+
+  // let p = scene.filted_roads[ctx]
   // if(p){
   //   p.draw();
   //   ctx++
@@ -92,27 +97,27 @@ function draw(){
   //   noLoop();
   // }
 
-  if(exporting){ 
-    let file_name = `output_${seed}.svg`;
-    console.log("Exporting to: ", file_name);
-    beginRecordSVG(this, file_name); 
-  }
+  // if(exporting){ 
+  //   let file_name = `output_${seed}.svg`;
+  //   console.log("Exporting to: ", file_name);
+  //   beginRecordSVG(this, file_name); 
+  // }
 
-  push()
-    default_setup()
-    if(!exporting) { scene.draw(); }
+  // push()
+  //   default_setup()
+  //   if(!exporting) { scene.draw(); }
 
-    draw_coffers();
-  pop()
+  //   draw_coffers();
+  // pop()
 
-  draw_borders();
+  // draw_borders();
 
-  if(exporting) alignment_guide();
+  // if(exporting) alignment_guide();
   
-  noLoop();
+  // noLoop();
 
-  if(exporting){ endRecordSVG(this); }
-  console.log("Finished drawing all groups");
+  // if(exporting){ endRecordSVG(this); }
+  // console.log("Finished drawing all groups");
   
 }
 
