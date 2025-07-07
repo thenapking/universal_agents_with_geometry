@@ -111,5 +111,13 @@ function mousePressed(){
         console.log(coffer.polygon);
       }
     }
+
+    for(let node of nodes){
+      if(p5.Vector.dist(point, node.position) < 5){
+        console.log(`Clicked on node at (${node.position.x}, ${node.position.y})`);
+        console.log(`Node ID: ${node.id}, index: ${scene.graph.nodes.indexOf(node)}`);
+        console.log(node);
+      }
+    }
   }
 }

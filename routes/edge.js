@@ -16,6 +16,9 @@ class Edge {
   draw(){
     line(this.start.position.x, this.start.position.y, 
          this.end.position.x,   this.end.position.y    );
+
+    circle(this.start.position.x, this.start.position.y, 5);
+    circle(this.end.position.x, this.end.position.y, 5);
   }
 
   // get one end or the other
@@ -25,10 +28,4 @@ class Edge {
   }
 
 
-  draw() {
-    line(this.start.position.x, this.start.position.y, 
-         this.end.position.x,   this.end.position.y    );
-  }
-
-  
 }

@@ -133,6 +133,13 @@ class Polyline {
   
     return new Polyline(points);
   }
+
+  // apply a moving average filter 
+  filter(windowSize) {
+    let points = moving_average(this.points, windowSize);
+
+    return new Polyline(points);
+  }
   
   intersects(other){
     for (let segment of this.segments) {

@@ -16,6 +16,9 @@ class Graph {
 
   initialize(edges, nodes) {
     // Initialize the adjacency list for each node
+    for(let node of nodes) {
+      this.add_node(node);
+    }
     for (let edge of edges) {
       this.add_edge(edge);
     }
@@ -245,10 +248,10 @@ class Graph {
     push();
       for(let edge of this.edges) {
         edge.draw();
-        fill(0);
-        textSize(10);
-        text(edge.start.id, edge.start.position.x + 5, edge.start.position.y + 5);
-        noFill()
+        // fill(0);
+        // textSize(10);
+        // text(edge.start.id, edge.start.position.x + 5, edge.start.position.y + 5);
+        // noFill()
       }
     pop();
   }

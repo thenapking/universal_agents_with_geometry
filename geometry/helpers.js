@@ -40,6 +40,35 @@ function calculate_bezier(p0, p1, p2, p3, t) {
   return p;
 }
 
+function moving_average(input_points, windowSize){
+  if (windowSize < 2) return; 
+  if (input_points.length <= windowSize) return input_points;
+
+  let half = Math.floor(windowSize / 2);
+  let points = [];
+  
+  for (let i = 0; i < input_points.length; i++) {
+    let start = Math.max(0, i - half); 
+    let end =   Math.min(input_points.length - 1, i + half); 
+
+    let sumX = 0;
+    let sumY = 0;
+    let count = 0;
+
+    for (let j = start; j <= end; j++) {
+      sumX += input_points[j].x;
+      sumY += input_points[j].y;
+      count++;
+    }
+
+    points.push(createVector(sumX / count, sumY / count));
+  }
+
+  points.unshift(input_points[0]); // Ensure first point is preserved
+  points.push(input_points[input_points.length - 1]); // Ensure last point is preserved
+  return points
+}
+
 
 function clipper(poly, other, op) {
   const clipper = new ClipperLib.Clipper();

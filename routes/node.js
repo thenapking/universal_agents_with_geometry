@@ -26,11 +26,9 @@ class Node {
   draw() {
     noFill();
     circle(this.position.x, this.position.y, this.radius);
-
-    if(this.radius > 5) {
-      for(let member of this.members) {
-        circle(member.position.x, member.position.y, 5);
-      }
-    }
+    fill(0);
+    textSize(20);
+    text(this.id, this.position.x + 5, this.position.y + 5);
+    noFill()
   }  
 }
