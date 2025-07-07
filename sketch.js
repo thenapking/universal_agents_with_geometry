@@ -64,6 +64,7 @@ function setup(){
       createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
     ]};
   scene = new Scene(template)
+  scene.river[0].draw();
   // scene.draw();
 
 }
@@ -79,23 +80,23 @@ function draw(){
   // noLoop()
 
   
-  noLoop();
-  noFill();
+  // noLoop();
+  // noFill();
 
-  scene.filtered_roads[0].to_polygon(20).draw()
-  translate(0, 50)
-  scene.roads[0].to_polygon(20).draw()
+  // scene.filtered_roads[0].to_polygon(60, 'road', 1, 30).draw()
+  // translate(0, 150)
+  // scene.roads[0].to_polygon(20, 'road', 1, 0).draw()
 
-  // let p = scene.filted_roads[ctx]
-  // if(p){
-  //   p.draw();
-  //   ctx++
+  let p = scene.roads[ctx]
+  if(p){
+    p.draw();
+    ctx++
 
-  // } else{
-  //   console.log("Done with circles");
+  } else{
+    console.log("Done with circles");
     
-  //   noLoop();
-  // }
+    noLoop();
+  }
 
   // if(exporting){ 
   //   let file_name = `output_${seed}.svg`;

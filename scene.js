@@ -20,10 +20,12 @@ class Scene {
     this.roads = [];
     this.farms = []
     this.filtered_roads = [];
+    this.river = []
     this.graph = new Graph(edges, nodes);
     console.log("--------")
     console.log("Creating roads")
     this.create_foci();
+    this.create_river();
     this.create_roads();
     this.create_lines();
     // console.log("Subdividing Lots")
@@ -31,6 +33,20 @@ class Scene {
     // this.subdivide_lots();
     // console.log("Creating coffers")
     // this.create_coffers()
+  }
+
+  create_river(){
+    let b = this.graph.nodes[440]
+    let e = this.graph.nodes[178]
+    let route = this.graph.shortest(b, e);
+
+    let points = [];
+    for(let node of route){
+      let p = node.position;
+      points.push(p)
+    }
+    let polyline = new Polyline(points).to_bezier(40).filter(30).to_polygon(80, 'river', 1, 30);
+    this.river.push(polyline);
   }
 
   create_foci(){
@@ -50,24 +66,20 @@ class Scene {
     let n = this.graph.nodes[305]
     let o = this.graph.nodes[200]
 
+    // this.centres.push(e);
+    // this.centres.push(b);
+
     this.centres.push(a);
-    this.centres.push(b);
     this.centres.push(c);
-    this.centres.push(d);
-    this.centres.push(e);
     this.centres.push(f);
     this.centres.push(g);
     this.centres.push(h);
-    this.centres.push(i);
     this.centres.push(j);
 
-    this.foci.push(a.position);
-    // this.foci.push(c.position);
-    // this.foci.push(h.position);
-    this.foci.push(n.position);
-    // this.centres.push(k);
-    // this.centres.push(l);
-    // this.centres.push(m);
+    // this.centres.push(i);
+    // this.centres.push(d);
+
+
   }
 
   create_connected_network(){
@@ -90,7 +102,7 @@ class Scene {
 
     this.split_routes = []
     
-    for(let i  = 1; i < 2; i++){ //routes.length
+    for(let i  = 0; i < routes.length; i++){ //routes.length
       let ri = routes[i]
       let r0 = routes[0];
       let base = this.find_intersections(r0, ri)
@@ -108,11 +120,6 @@ class Scene {
 
     for(let s of this.split_routes){
       this.create_road(s);
-    }
-
-    for(let i = 0; i < this.split_routes.length; i++){
-      let nsr = this.roads[i].applyMovingAverage(30)
-      this.filtered_roads.push(nsr);
     }
   }
 
@@ -238,7 +245,7 @@ class Scene {
         points.push(p)
       }
     }
-    let polyline = new Polyline(points).to_bezier(60) //.to_polygon(INTERCITY_ROAD, 'road');
+    let polyline = new Polyline(points).to_bezier(40).to_polygon(INTERCITY_ROAD, 'road', 1, 0);
     this.roads.push(polyline);
   }
 

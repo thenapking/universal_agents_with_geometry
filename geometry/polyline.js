@@ -63,9 +63,10 @@ class Polyline {
     }
   }
 
-  to_polygon(stroke_width, type) {
+  to_polygon(stroke_width, type, min_curvature = 1, smoothing = 20) {
     let tops = [];
     let bottoms = [];
+    let normals = [];
 
     for (let i = 0; i < this.segments.length; i++) {
       let segment = this.segments[i];
@@ -79,25 +80,29 @@ class Polyline {
         curvature_factor = Math.pow(1 - Math.abs(angle) / Math.PI, 2)
       }
 
+      curvature_factor = Math.max(curvature_factor, min_curvature); 
+      // Ensure curvature factor is not too small
       let sw = stroke_width * curvature_factor / 2;
       let normal = segment.normal().mult(sw);
-
+      normals.push(normal);
       
-      let top = segment.start.copy().add(normal);
-      let bottom = segment.start.copy().sub(normal);
-  
-      tops.push(top);
-      bottoms.push(bottom);
     }
   
     let last_segment = this.segments[this.segments.length - 1];
     let last_normal = last_segment.normal().mult(stroke_width / 2);
-    let last_top = last_segment.end.copy().add(last_normal);
-    let last_bottom = last_segment.end.copy().sub(last_normal);
+    normals.push(last_normal);
 
-    tops.push(last_top);
-    bottoms.push(last_bottom);
+    let smoothed_normals = smoothing > 3 ? moving_average(normals, smoothing) : normals;
+    for(let i = 0; i < this.segments.length; i++) {
+      let segment = this.segments[i];
+      let normal = smoothed_normals[i];
+      let top = segment.start.copy().add(normal);
+      let bottom = segment.start.copy().sub(normal);
   
+      tops.push(top);
+      bottoms.push(bottom); 
+    }
+
     // Concatenate tops and bottoms to form the polygon
     let points = tops.concat(bottoms.reverse());
     return new MultiPolygon(points, type);
@@ -134,141 +139,13 @@ class Polyline {
     return new Polyline(points);
   }
 
-  applySavitzkyGolayFilter(options = {}) {
-    const { windowSize = 21, derivativeOrder = 0, polynomialDegree = 2, pad = 'none', padValue = 'replicate' } = options;
+  // apply a moving average filter 
+  filter(windowSize) {
+    let points = moving_average(this.points, windowSize);
 
-    // Extract the y and x values from the points
-    const yValues = this.points.map(point => point.y);  // Vertical (y) values for smoothing
-    const xValues = this.points.map(point => point.x);  // Horizontal (x) values for spacing
-
-    // Calculate spacing between points
-    const h = xValues[1] - xValues[0];  // Assuming uniform spacing for simplicity
-
-    // Apply the Savitzky-Golay filter to the y-values
-    const smoothedY = savitzkyGolay(yValues, h, {
-      windowSize,
-      derivative: derivativeOrder,
-      polynomial: polynomialDegree,
-      pad,
-      padValue
-    });
-
-    // Update the polyline points with the smoothed y-values
-    let newPoints = [];
-    for (let i = 0; i < this.points.length-4; i++) {
-      console.log(smoothedY[i], this.points[i].y);
-      let y = smoothedY[i]||0
-      newPoints.push(createVector(this.points[i].x, y));
-    }
-
-    return new Polyline(newPoints);
+    return new Polyline(points);
   }
 
-  applyMovingAverage(windowSize) {
-    if (windowSize < 2) return; // A window size of 1 or less doesn't make sense
-
-    let smoothedPoints = [];
-    
-    for (let i = 0; i < this.points.length; i++) {
-      let start = Math.max(0, i - Math.floor(windowSize / 2));  // Start index for averaging
-      let end = Math.min(this.points.length - 1, i + Math.floor(windowSize / 2));  // End index for averaging
-
-      let sumX = 0, sumY = 0, count = 0;
-      for (let j = start; j <= end; j++) {
-        sumX += this.points[j].x;
-        sumY += this.points[j].y;
-        count++;
-      }
-
-      // Calculate the average for the current point
-      smoothedPoints.push(createVector(sumX / count, sumY / count));
-    }
-
-    return new Polyline(smoothedPoints);
-    
-  }
-
-  filter(options = {}) {
-    const { windowSize = 19, derivativeOrder = 0, polynomialDegree = 4 } = options;
-
-    // Extract y and x values from the points
-    const vertical_points = this.points.map(point => point.y);  // Extract vertical (y) values for smoothing
-    const horizontal_points = this.points.map(point => point.x);  // Extract horizontal (x) values for smoothing
-
-    // Validate input parameters
-    if (windowSize % 2 === 0 || windowSize < 5 || !Number.isInteger(windowSize)) {
-      throw new RangeError('Invalid window size: should be odd and at least 5');
-    }
-
-    if (!Array.isArray(vertical_points)) {
-      throw new TypeError('Y values must be an array');
-    }
-
-    if (typeof horizontal_points === 'undefined') {
-      throw new TypeError('X values must be defined');
-    }
-
-    if (windowSize > vertical_points.length) {
-      throw new RangeError(`Window size is larger than data length: ${windowSize} > ${vertical_points.length}`);
-    }
-
-    // Initialize the result array for smoothed values
-    const n = vertical_points.length;
-    const smoothedValues = new Float64Array(n);
-    const weightMatrix = generateFullWeights(windowSize, polynomialDegree, derivativeOrder);
-    let scalingFactor = 0;
-    let isConstantH = true;
-
-    if (Array.isArray(horizontal_points)) {
-      isConstantH = false;
-    } else {
-      scalingFactor = horizontal_points ** derivativeOrder;
-    }
-
-    // Process border points
-    const halfWindowSize = Math.floor(windowSize / 2);
-    for (let i = 0; i < halfWindowSize; i++) {
-      const weightLeft = weightMatrix[halfWindowSize - i - 1];
-      const weightRight = weightMatrix[halfWindowSize + i + 1];
-      let smoothedLeft = 0;
-      let smoothedRight = 0;
-      for (let j = 0; j < windowSize; j++) {
-        smoothedLeft += weightLeft[j] * vertical_points[j];
-        smoothedRight += weightRight[j] * vertical_points[n - windowSize + j];
-      }
-      if (isConstantH) {
-        smoothedValues[halfWindowSize - i - 1] = smoothedLeft / scalingFactor;
-        smoothedValues[n - halfWindowSize + i] = smoothedRight / scalingFactor;
-      } else {
-        scalingFactor = calculateScalingFactor(horizontal_points, halfWindowSize - i - 1, halfWindowSize, derivativeOrder);
-        smoothedValues[halfWindowSize - i - 1] = smoothedLeft / scalingFactor;
-        scalingFactor = calculateScalingFactor(horizontal_points, n - halfWindowSize + i, halfWindowSize, derivativeOrder);
-        smoothedValues[n - halfWindowSize + i] = smoothedRight / scalingFactor;
-      }
-    }
-
-    // Process internal points
-    const weightInternal = weightMatrix[halfWindowSize];
-    for (let i = windowSize; i <= n; i++) {
-      let smoothedValue = 0;
-      for (let j = 0; j < windowSize; j++) smoothedValue += weightInternal[j] * vertical_points[j + i - windowSize];
-      if (!isConstantH) {
-        scalingFactor = calculateScalingFactor(horizontal_points, i - halfWindowSize - 1, halfWindowSize, derivativeOrder);
-      }
-      smoothedValues[i - halfWindowSize - 1] = smoothedValue / scalingFactor;
-    }
-
-    let new_points = [];
-    for (let i = 0; i < this.points.length; i++) {
-      let y = smoothedValues[i]+50;
-      let x = this.points[i].x;
-      new_points.push(createVector(x, y));
-      
-    }
-
-    return new Polyline(new_points, false);
-  }
-  
   intersects(other){
     for (let segment of this.segments) {
       for (let other_segment of other.segments) {
