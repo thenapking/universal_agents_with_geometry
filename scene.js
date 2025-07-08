@@ -14,6 +14,9 @@ class Scene {
     this.potential_coffers = [];
     this.offscreen_foci = template.offscreen_foci || [];
     this.centres = [];
+    this.river_points = [];
+    this.secondary_centres = [];  
+
     this.offscreen_points = [];
     this.offscreen_lines = [];
     this.minor_points = []; 
@@ -23,14 +26,21 @@ class Scene {
     this.graph = new Graph(edges, nodes);
     console.log("--------")
     console.log("Creating roads")
+    this.split_routes = []
+
     this.create_foci();
-    this.create_roads();
+    this.river_outer = this.create_paths(this.river_points, true, 64, 97);
+    this.river_inner = this.create_paths(this.river_points, true, 51, 87);
+    this.main_roads = this.create_paths(this.centres, true, 40);
+    this.minor_roads = this.create_paths(this.secondary_centres, true, 25, 15);
+    this.roads = this.main_roads.concat(this.minor_roads).concat(this.river_outer)
+    // this.manually_create_routes();
     this.create_lines();
-    console.log("Subdividing Lots")
-    this.create_lots();
-    this.subdivide_lots();
-    console.log("Creating coffers")
-    this.create_coffers()
+    // console.log("Subdividing Lots")
+    // this.create_lots();
+    // this.subdivide_lots();
+    // console.log("Creating coffers")
+    // this.create_coffers()
   }
 
   create_foci(){
@@ -48,18 +58,44 @@ class Scene {
     let l = this.graph.nodes[90]
     let m = this.graph.nodes[499]
     let n = this.graph.nodes[305]
-    let o = this.graph.nodes[200]
+    let o = this.graph.nodes[78]
+    let p = this.graph.nodes[246]
+    let q = this.graph.nodes[1365]
+    let r = this.graph.nodes[1275]
 
-    this.centres.push(a);
-    this.centres.push(b);
-    this.centres.push(c);
-    this.centres.push(d);
-    this.centres.push(e);
-    this.centres.push(f);
-    this.centres.push(g);
-    this.centres.push(h);
+    // this.river_points.push(a);
+    this.river_points.push(c);
+    this.river_points.push(p);
+
+    // this.centres.push(a);
+    this.centres.push(o);
+    this.centres.push(q);
+    // this.centres.push(r);
+    // this.centres.push(p);
     this.centres.push(i);
-    this.centres.push(j);
+
+    this.secondary_centres.push(a);
+    this.secondary_centres.push(c);
+    this.secondary_centres.push(i);
+    this.secondary_centres.push(q);
+
+    
+    // this.secondary_centres.push(b);
+    // this.secondary_centres.push(d);
+    // this.secondary_centres.push(e);
+    // this.secondary_centres.push(f);
+    // this.secondary_centres.push(g);
+    // this.secondary_centres.push(h);
+    // this.secondary_centres.push(j);
+    // this.secondary_centres.push(p);
+
+    // this.centres.push(d);
+    // this.centres.push(e);
+    // this.centres.push(f);
+    // this.centres.push(g);
+    // this.centres.push(h);
+    // this.centres.push(i);
+    // this.centres.push(j);
 
     this.foci.push(a.position);
     // this.foci.push(c.position);
@@ -70,12 +106,12 @@ class Scene {
     // this.centres.push(m);
   }
 
-  create_connected_network(){
+  create_connected_network(points){
     let routes = []
-    for(let i = 0; i < this.centres.length; i++){
-      let centre = this.centres[i];
-      for(let j = i + 1; j < this.centres.length; j++){
-        let other = this.centres[j];
+    for(let i = 0; i < points.length; i++){
+      let centre = points[i];
+      for(let j = i + 1; j < points.length; j++){
+        let other = points[j];
         let route = this.graph.shortest(centre, other);
         if(route.length > 0){
           routes.push(route);
@@ -85,33 +121,96 @@ class Scene {
     return routes
   }
 
-  create_roads(){
-    let routes = this.create_connected_network();
+  create_paths(points, filter, stroke_width_start, stroke_width_end){
+    let routes = this.create_connected_network(points);
 
-    this.split_routes = []
-    
+    let paths = []
     for(let i  = 0; i < routes.length; i++){
       let ri = routes[i]
       let r0 = routes[0];
       let base = this.find_intersections(r0, ri)
       let previous = base
-
+      console.log(i,0)
       for(let j = 1; j < i; j++){
+        console.log(i,j)
         let rj = routes[j]
         let carried = previous[0]
         let current = this.find_intersections(rj, carried)
         previous = current;
       }
-      
+
       this.split_routes.push(previous);
     }
 
     
     for(let s of this.split_routes){
-      this.create_road(s);
+      let path = this.create_road(s, filter, stroke_width_start, stroke_width_end);
+      paths.push(path);
     }
 
+    return paths;
+  }
 
+  manually_create_routes(){
+    let routes = this.create_connected_network(this.secondary_centres);
+    let r0 = routes[0];
+    let r1 = routes[1];
+    let r2 = routes[2];
+    let r3 = routes[3];
+    
+    let r0r1 = this.find_intersections(r0, r1);
+    // let r0r2 = this.find_intersections(r0, r2);
+    let r0r3 = this.find_intersections(r0, r3);
+    console.log("THIS SHOUD")
+    let help = this.find_intersections(r0r3[0], r0r1[0]);
+
+    // let r1r2 = this.find_intersections(r1, r2);
+    // let r1r3 = this.find_intersections(r1, r3);
+
+    // let r2r3 = this.find_intersections(r2, r3);
+
+    // let potential = [r0r1[0], r0r2[0], r0r3[0], r1r2[0], r1r3[0], r2r3[0]];
+    // let final = []
+
+    // for(let i = 0; i < potential.length; i++){  
+    //   let found = false
+    //   let p = potential[i];
+    //   for(let j = 0; j < final.length; j++){
+    //     let other = final[j];
+    //     console.log(i,j)
+    //     if( this.fully_equal_routes(p, other)){
+    //       console.log("Found equal routes", i, j);
+    //       found = true;
+    //       break;
+    //     }
+    //   }
+    //   if(!found){
+    //     console.log("Adding route", i);
+    //     final.push(p);
+    //   }
+    // }
+
+    // console.log(final)
+
+    // for(let r of final){
+    //   this.create_road([r], false, 10);
+    // }
+  
+
+  }
+
+  fully_equal_routes(a, b){
+    if(a.length !== b.length){ return false; }
+    return this.equal_routes(a, b) || this.equal_routes(b, a);
+  }
+
+
+  equal_routes(a, b){
+    if(a.length !== b.length){ return false; }
+    for(let i = 0; i < a.length; i++){
+      if(a[i].id !== b[i].id){ return false; }
+    }
+    return true;
   }
 
   route_to_points(route){
@@ -126,11 +225,11 @@ class Scene {
   find_intersections(a, b){
     let forward = this.find_forward_intersections(a, b);
     if(forward.length > 0){ return forward }
-    // console.log("Reversing b to find intersections with a");
+    console.log("Reversing b to find intersections with a");
     let reverse_b = b.slice().reverse();
     let reverse = this.find_forward_intersections(a, reverse_b);
     if(reverse.length > 0){
-      return reverse;
+      return reverse 
     }
     return [b]
   }
@@ -139,9 +238,15 @@ class Scene {
   find_forward_intersections(a,b){
     // a,b are two routes of ids
     // this splits line b into subsections which are not included in a
+
+    // ia is list of indices of intersections in a
+    // ib is list of indices of intersections in b
+    console.log("--------Finding intersections");
+    console.log(a, b)
     let ia = [];
     let ib = []
     let points = []
+
     for(let i = 0; i < a.length; i++){
       let node = a[i];
       for(let j = 0; j < b.length; j++){
@@ -153,12 +258,14 @@ class Scene {
         }
       }
     }
-    ia = ia.sort((x, y) => x - y);
-    ib = ib.sort((x, y) => x - y);
+
+    // NOT SURE WHY WE SORT
+    // ia = ia.sort((x, y) => x - y);
+    // ib = ib.sort((x, y) => x - y);
 
     // only one intersection
     if(ib.length < 2) { 
-      // console.log("Only one intersection found, returning original");
+      console.log("Only one intersection found, returning original", [b]);
       return [b];
     }
 
@@ -166,12 +273,15 @@ class Scene {
     let subsequences = [];
     let previous_idx = 0;
 
+    console.log("Found intersections at indices:", ia, ib);
+    // now we find subsequences between the intersection points
     for(let k = 0; k < ib.length - 1; k++){
       if(k < highest_index) { continue }
       let current = ib[k];
       let next = ib[k + 1];
       if(current + 1 === next){
         // found a matching index
+        console.log("Found matching indices", current, next);
         let subsequence_start_idx = k;
         let subsequence_end_idx = k + 1;
         
@@ -188,17 +298,19 @@ class Scene {
         }
 
         highest_index = max(highest_index, subsequence_end_idx);
-        // console.log(previous_idx)
-        subsequences.push([previous_idx, ib[subsequence_start_idx]]);
 
+        console.log("Found subsequence from", previous_idx, "to", ib[subsequence_start_idx]);
+        console.log("Subsequence from", ib[subsequence_start_idx], "to", ib[subsequence_end_idx]);
+
+        subsequences.push([previous_idx, ib[subsequence_start_idx]]);
         subsequences.push([ib[subsequence_start_idx], ib[subsequence_end_idx]]);
         previous_idx = ib[subsequence_end_idx];
-        // console.log("previous increase", previous_idx)
+        console.log("previous increase", previous_idx)
       }
     }
 
     if(previous_idx < ib.length){
-      // console.log("Adding last subsequence from", previous_idx, "to", ib.length);
+      console.log("Adding last subsequence from", previous_idx, "to", ib.length);
       subsequences.push([previous_idx, ib.length]);
     }
 
@@ -207,10 +319,15 @@ class Scene {
       let indices = subsequences[i];
       let start = indices[0];
       let end = indices[1];
+
       let new_route = b.slice(start, end + 1);
+      console.log("potential subsequence", new_route);
+
       let found = false;
       for(let k = 0; k < ib.length; k++){
+        // if ib[k] already contains this index then this isn't new ???
         if(ib[k] === start){
+          console.log("Found existing subsequence in ib at", k);
           found = true;
           break;
         }
@@ -220,15 +337,15 @@ class Scene {
     }
 
 
-    // console.log(ia);
-    // console.log(ib);
-    // console.log(points)
-    // console.log(subsequences)
-    // console.log("Found intersections:", results);
+    console.log("ia", ia);
+    console.log("ib", ib);
+    console.log("point", points)
+    console.log("Subseq", subsequences)
+    console.log("Found intersections:", results);
     return results;
   }
 
-  create_road(routes){
+  create_road(routes, filter, stroke_width_start, stroke_width_end){
     let points = [];
     for(let route of routes){
       for(let node of route){
@@ -236,8 +353,14 @@ class Scene {
         points.push(p)
       }
     }
-    let polyline = new Polyline(points).to_bezier(60).to_polygon(INTERCITY_ROAD, 'road');
-    this.roads.push(polyline);
+    let polyline 
+    if(filter){
+      polyline = new Polyline(points).to_bezier(60).filter(stroke_width_start*2).to_polygon(stroke_width_start, stroke_width_end);
+    } else {
+      polyline = new Polyline(points).to_bezier(60).to_polygon(stroke_width_start, stroke_width_end);
+    }
+
+    return polyline
   }
 
   create_lots(){
@@ -249,7 +372,7 @@ class Scene {
     let bg = new MultiPolygon(points, 'countryside');
     
     this.farms = [bg];
-    let unioned_roads = unionPolygons(this.roads);
+    let unioned_roads = unionPolygons(this.roads)
     let new_bg = bg.difference(unioned_roads);
     this.polycircles = new_bg
     

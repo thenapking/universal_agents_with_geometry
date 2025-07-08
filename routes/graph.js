@@ -137,7 +137,7 @@ class Graph {
     let polylines = this.to_polylines();
     let polygons = [];
     for(let polyline of polylines) {
-      let polygon = polyline.to_polygon(INTERCITY_ROAD, 'road');
+      let polygon = polyline.to_polygon(INTERCITY_ROAD);
       polygons.push(polygon);
     }
     return polygons;

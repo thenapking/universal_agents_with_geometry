@@ -27,6 +27,14 @@ class Polyline {
     return this.points.length;
   }
 
+  length(){
+    let total = 0;
+    for(let segment of this.segments){
+      total += segment.length();
+    }
+    return total;
+  }
+
   bounds(){
     if (this.points.length === 0) return [0, 0, 0, 0];
 
@@ -63,9 +71,13 @@ class Polyline {
     }
   }
 
-  to_polygon(stroke_width, type) {
+  to_polygon(stroke_width_start, stroke_width_end) {
     let tops = [];
     let bottoms = [];
+    stroke_width_end = stroke_width_end || stroke_width_start;
+    let length = 0;
+    let total_length = this.length();
+    let stroke_width = stroke_width_start;
 
     for (let i = 0; i < this.segments.length; i++) {
       let segment = this.segments[i];
@@ -79,6 +91,9 @@ class Polyline {
         curvature_factor = Math.pow(1 - Math.abs(angle) / Math.PI, 2)
       }
 
+      length += segment.length();
+      let ratio = length / total_length;
+      stroke_width = lerp(stroke_width_start, stroke_width_end, ratio);
       let sw = stroke_width * curvature_factor / 2;
       let normal = segment.normal().mult(sw);
 
@@ -97,10 +112,12 @@ class Polyline {
 
     tops.push(last_top);
     bottoms.push(last_bottom);
-  
+    
+    let topline = new Polyline(tops).remove_self_intersections().simplify(0.001).filter(4);
+    let bottomline = new Polyline(bottoms).remove_self_intersections().simplify(0.001).filter(4);
     // Concatenate tops and bottoms to form the polygon
-    let points = tops.concat(bottoms.reverse());
-    return new MultiPolygon(points, type);
+    let points = topline.points.concat(bottomline.points.reverse());
+    return new MultiPolygon(points);
   }
 
   to_bezier(detail = 10, curviness = 0.5) {
@@ -134,6 +151,7 @@ class Polyline {
     return new Polyline(points);
   }
 
+  
   // apply a moving average filter 
   filter(windowSize) {
     let points = moving_average(this.points, windowSize);
@@ -164,6 +182,31 @@ class Polyline {
       }
     }
     return intersections;
+  }
+
+  // This is not perfect
+  remove_self_intersections() {
+    let new_segments = [];  
+    let points = [];
+    for (let segment of this.segments) {
+      let has_intersection = false;
+      for (let other_segment of new_segments) {
+        if (segment === other_segment) continue;
+        let intersection = segment.intersection(other_segment, false);
+        if (intersection.length > 0) {
+          console.log('Self-intersection found:', segment, other_segment);
+          has_intersection = true;
+          break;
+        }
+      }
+      if (!has_intersection) {
+        points.push(segment.start);
+        points.push(segment.end);
+        new_segments.push(segment);
+      }
+    }
+    
+    return new Polyline(points);
   }
 
 

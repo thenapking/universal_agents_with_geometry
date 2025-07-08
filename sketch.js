@@ -18,9 +18,10 @@ let BORDER_MARGIN = 5;
 let POLYGONAL_DETAIL = 360;
 let SF = 0.9
 
-let INTERCITY_ROAD = 6
-let MAJOR_ROAD = 4.5;
-let MINOR_ROAD = 3;
+let RIVER = 80;
+let INTERCITY_ROAD = 9
+let MAJOR_ROAD = 6;
+let MINOR_ROAD = 4;
 let SMALL_HATCH = 4
 let MEDIUM_HATCH = 6;
 let LARGE_HATCH = 10;
@@ -39,7 +40,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(1)
+  load_data(6)
 }
 
 function setup(){
@@ -65,6 +66,11 @@ function setup(){
     ]};
   scene = new Scene(template)
   scene.draw();
+  // scene.graph.draw_edges()
+  for(let i = 0; i < scene.centres.length; i++){
+    let node = scene.centres[i];
+    node.draw();
+  }
 
 }
 
@@ -81,7 +87,7 @@ function draw(){
   
   // noLoop();
 
-  // let p = scene.potential_coffers[ctx]
+  // let p = scene.roads[ctx]
   // if(p){
   //   p.draw();
   //   ctx++
