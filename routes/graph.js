@@ -26,6 +26,7 @@ class Graph {
   }
 
   add_node(a){
+    if(!a) { return;}
     if(!this.neighbours.has(a.id)) {
       this.nodes.push(a);
       this.node_ids.push(a.id);
@@ -78,6 +79,7 @@ class Graph {
   
   // Dijkstra
   shortest(a, b) {
+    console.log("Finding shortest path from", a.id, "to", b.id);
     const distances = {};
     const previous = {};
     const queue = [];

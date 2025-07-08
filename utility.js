@@ -23,22 +23,36 @@ function load_data(id){
 }
 
 let edges = [], nodes = [];
+let minor_edges = [], minor_nodes = []; 
 function process_data(){
   connections = process_file(connections);
   hotspots = process_file(hotspots)
   hotspot_to_node_ids = []
+  
   for(let i = 0; i < hotspots.length; i++){
     let h = hotspots[i];
-    // TODO remove this translation
-    let node = new Node(h.position.x - 2*MBW, h.position.y - 4*MBW);
-    nodes[i] = node;
+    let node = new Node(h.position.x, h.position.y);
+
+    if(h.group.id == 0){
+      nodes[i] = node;
+    } else {
+      minor_nodes[i] = node;
+    }
   }
 
   for(let c of connections){
-    let from = nodes[c.from_id];
-    let to = nodes[c.to_id];
-    let edge = new Edge(from, to);
-    edges.push(edge);
+    if(c.group.id == 0){
+      let from = nodes[c.from_id];
+      let to = nodes[c.to_id];
+      let edge = new Edge(from, to);
+      edges.push(edge);
+    } else {
+      let from = minor_nodes[c.from_id];
+      let to = minor_nodes[c.to_id];
+      let edge = new Edge(from, to);
+      minor_edges.push(edge);
+    }
+    
   }
 
  
@@ -116,6 +130,17 @@ function mousePressed(){
       if(p5.Vector.dist(point, node.position) < 5){
         console.log(`Clicked on node at (${node.position.x}, ${node.position.y})`);
         console.log(`Node ID: ${node.id}, index: ${scene.graph.nodes.indexOf(node)}`);
+        console.log(node);
+      }
+    }
+
+    for(let node of minor_nodes){
+      if(!node) {
+        continue;
+      } 
+      if(p5.Vector.dist(point, node.position) < 5){
+        console.log(`Clicked on node at (${node.position.x}, ${node.position.y})`);
+        console.log(`Node ID: ${node.id}, index: ${scene.secondary_graph.nodes.indexOf(node)}`);
         console.log(node);
       }
     }

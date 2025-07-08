@@ -24,18 +24,20 @@ class Scene {
     this.farms = []
 
     this.graph = new Graph(edges, nodes);
+    this.secondary_graph = new Graph(minor_edges, minor_nodes);
     console.log("--------")
     console.log("Creating roads")
     this.split_routes = []
 
     this.create_foci();
-    this.river_outer = this.create_paths(this.river_points, true, 64, 97);
-    this.river_inner = this.create_paths(this.river_points, true, 51, 87);
-    this.main_roads = this.create_paths(this.centres, true, 40);
-    this.minor_roads = this.create_paths(this.secondary_centres, true, 25, 15);
-    this.roads = this.main_roads.concat(this.minor_roads).concat(this.river_outer)
-    // this.manually_create_routes();
-    this.create_lines();
+    this.river_outer = this.create_paths(this.river_points, this.graph, true, 64, 80);
+    // this.river_inner = this.create_paths(this.river_points, true, 51, 60);
+    this.main_roads = this.create_paths(this.centres, this.graph, true, 20);
+    // console.log("Main roads created", this.main_roads.length, "paths");
+    this.minor_roads = this.create_paths(this.secondary_centres, this.secondary_graph, true, 12, 10);
+    this.roads = this.minor_roads //.concat(this.main_roads) //.concat(this.river_outer)
+    // // this.manually_create_routes();
+    // this.create_lines();
     // console.log("Subdividing Lots")
     // this.create_lots();
     // this.subdivide_lots();
@@ -43,76 +45,71 @@ class Scene {
     // this.create_coffers()
   }
 
+  
   create_foci(){
-    let a = this.graph.nodes[28]
-    let b = this.graph.nodes[440]
-    let c = this.graph.nodes[1146]
-    let d = this.graph.nodes[73]
-    let e = this.graph.nodes[178]
-    let f = this.graph.nodes[452]
-    let g = this.graph.nodes[1413]
-    let h = this.graph.nodes[262]
-    let i = this.graph.nodes[368]
-    let j = this.graph.nodes[479]
-    let k = this.graph.nodes[309]
-    let l = this.graph.nodes[90]
-    let m = this.graph.nodes[499]
-    let n = this.graph.nodes[305]
-    let o = this.graph.nodes[78]
-    let p = this.graph.nodes[246]
-    let q = this.graph.nodes[1365]
-    let r = this.graph.nodes[1275]
+    for(let i = 0; i < emitters.length; i++){
+      let emitter = emitters[i];
+      if(!emitter.principal){ continue; }
+      let position = createVector(emitter.position.x, emitter.position.y);
+      this.foci.push(position);
 
-    // this.river_points.push(a);
-    this.river_points.push(c);
+    }
+
+    let q = this.graph.find(728)
+    let p = this.graph.find(700)
+    let r = this.graph.find(723)
+    let s = this.graph.find(714)
+    let t = this.graph.find(754)
+
+    let a = this.secondary_graph.find(911)
+    let b = this.secondary_graph.find(1111)
+    let c = this.secondary_graph.find(936)
+    let d = this.secondary_graph.find(980)
+    let e = this.secondary_graph.find(916)
+    let f = this.secondary_graph.find(1108)
+    let g = this.secondary_graph.find(1089)
+    let h = this.secondary_graph.find(1099)
+    let i = this.secondary_graph.find(1102)
+    let j = this.secondary_graph.find(1058)
+
+
+
     this.river_points.push(p);
+    this.river_points.push(q);
+    this.river_points.push(r);
 
-    // this.centres.push(a);
-    this.centres.push(o);
-    this.centres.push(q);
-    // this.centres.push(r);
+    // this.centres.push(q);
     // this.centres.push(p);
-    this.centres.push(i);
-
+    // this.centres.push(r);
+    // this.centres.push(s);
+    // this.centres.push(t);
+    // this.centres.push(potential_centres[8]);
+    // this.centres.push(potential_centres[7]);
+    // this.centres.push(d);
     this.secondary_centres.push(a);
-    this.secondary_centres.push(c);
-    this.secondary_centres.push(i);
-    this.secondary_centres.push(q);
-
-    
     // this.secondary_centres.push(b);
+    this.secondary_centres.push(c);
     // this.secondary_centres.push(d);
-    // this.secondary_centres.push(e);
-    // this.secondary_centres.push(f);
+    this.secondary_centres.push(e);
+    this.secondary_centres.push(f);
     // this.secondary_centres.push(g);
     // this.secondary_centres.push(h);
+    // this.secondary_centres.push(i);
     // this.secondary_centres.push(j);
-    // this.secondary_centres.push(p);
 
-    // this.centres.push(d);
-    // this.centres.push(e);
-    // this.centres.push(f);
-    // this.centres.push(g);
-    // this.centres.push(h);
-    // this.centres.push(i);
-    // this.centres.push(j);
+    
 
-    this.foci.push(a.position);
-    // this.foci.push(c.position);
-    // this.foci.push(h.position);
-    this.foci.push(n.position);
-    // this.centres.push(k);
-    // this.centres.push(l);
-    // this.centres.push(m);
+    // this.foci.push(a.position);
+    // this.foci.push(n.position);
   }
 
-  create_connected_network(points){
+  create_connected_network(points, graph){
     let routes = []
     for(let i = 0; i < points.length; i++){
       let centre = points[i];
       for(let j = i + 1; j < points.length; j++){
         let other = points[j];
-        let route = this.graph.shortest(centre, other);
+        let route = graph.shortest(centre, other);
         if(route.length > 0){
           routes.push(route);
         }
@@ -121,10 +118,12 @@ class Scene {
     return routes
   }
 
-  create_paths(points, filter, stroke_width_start, stroke_width_end){
-    let routes = this.create_connected_network(points);
+  create_paths(points, graph, filter, stroke_width_start, stroke_width_end){
+    console.log(points)
+    let routes = this.create_connected_network(points, graph);
 
     let paths = []
+    let split_routes = [];
     for(let i  = 0; i < routes.length; i++){
       let ri = routes[i]
       let r0 = routes[0];
@@ -139,11 +138,11 @@ class Scene {
         previous = current;
       }
 
-      this.split_routes.push(previous);
+      split_routes.push(previous);
     }
 
     
-    for(let s of this.split_routes){
+    for(let s of split_routes){
       let path = this.create_road(s, filter, stroke_width_start, stroke_width_end);
       paths.push(path);
     }

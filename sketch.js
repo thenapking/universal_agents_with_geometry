@@ -67,10 +67,17 @@ function setup(){
   scene = new Scene(template)
   scene.draw();
   // scene.graph.draw_edges()
-  for(let i = 0; i < scene.centres.length; i++){
-    let node = scene.centres[i];
-    node.draw();
-  }
+  // scene.secondary_graph.draw_edges()
+  // stroke(255,0,0)
+  scene.river_outer[0].draw()
+  scene.river_outer[1].draw()
+  scene.river_outer[2].draw()
+
+  // for(let i = 0; i < scene.foci.length; i++){
+  //   circle(scene.foci[i].x, scene.foci[i].y, 20);
+  //   text(i, scene.foci[i].x + 5, scene.foci[i].y + 5);
+  // }
+
 
 }
 
@@ -87,38 +94,38 @@ function draw(){
   
   // noLoop();
 
-  // let p = scene.roads[ctx]
-  // if(p){
-  //   p.draw();
-  //   ctx++
+  let p = scene.roads[ctx]
+  if(p){
+    p.draw();
+    ctx++
 
-  // } else{
-  //   console.log("Done with circles");
+  } else{
+    console.log("Done with circles");
     
-  //   noLoop();
-  // }
-
-  if(exporting){ 
-    let file_name = `output_${seed}.svg`;
-    console.log("Exporting to: ", file_name);
-    beginRecordSVG(this, file_name); 
+    noLoop();
   }
 
-  push()
-    default_setup()
-    if(!exporting) { scene.draw(); }
+  // if(exporting){ 
+  //   let file_name = `output_${seed}.svg`;
+  //   console.log("Exporting to: ", file_name);
+  //   beginRecordSVG(this, file_name); 
+  // }
 
-    draw_coffers();
-  pop()
+  // push()
+  //   default_setup()
+  //   if(!exporting) { scene.draw(); }
 
-  draw_borders();
+  //   draw_coffers();
+  // pop()
 
-  if(exporting) alignment_guide();
+  // draw_borders();
+
+  // if(exporting) alignment_guide();
   
-  noLoop();
+  // noLoop();
 
-  if(exporting){ endRecordSVG(this); }
-  console.log("Finished drawing all groups");
+  // if(exporting){ endRecordSVG(this); }
+  // console.log("Finished drawing all groups");
   
 }
 
