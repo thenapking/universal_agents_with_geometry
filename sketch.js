@@ -66,7 +66,7 @@ function setup(){
     ]};
   scene = new Scene(template)
   scene.draw();
-  // draw_edges();
+  draw_edges();
 }
 
 let ctx = 0;
@@ -76,8 +76,8 @@ function draw(){
 }
 
 function draw_edges(){
-  // scene.graph.draw_edges()
-  scene.secondary_graph.draw_edges()
+  scene.graph.draw_edges()
+  // scene.secondary_graph.draw_edges()
 }
 
 function test_draw(collection){
@@ -91,6 +91,7 @@ function test_draw(collection){
     
     noLoop();
   }
+
 }
 
 function final_draw(){
@@ -105,6 +106,8 @@ function final_draw(){
     if(!exporting) { scene.draw(); }
 
     draw_coffers();
+    draw_road_lines()
+
   pop()
 
   draw_borders();
@@ -138,6 +141,20 @@ function draw_roads(){
   for(let r of scene.roads){
     r.draw();
   }
+}
+
+function draw_road_lines(){
+  push()
+    noFill();
+    stroke(palette.black);
+    for(let r of scene.minor_road_lines){
+      r.draw()
+    }
+    strokeWeight(4);
+    for(let r of scene.main_road_lines){
+      r.draw()
+    }
+  pop();
 }
 
 function default_setup(){

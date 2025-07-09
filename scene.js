@@ -3,7 +3,7 @@
 // SCENE CREATION
 const THIN_THRESHOLD = 0.26;
 let template;
-let r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15;
+let r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, r26, r27, r28;
 class Scene {
   constructor(template){
     this.foci = template.foci || [];
@@ -31,23 +31,17 @@ class Scene {
     this.split_routes = []
 
     this.create_foci();
-    // this.river_outer = this.create_paths(this.river_points, this.graph, true, 64, 80);
-    // this.river_inner = this.create_paths(this.river_points, true, 51, 60);
-    // this.main_roads = this.create_paths(this.centres, this.graph, true, 30);
-    // console.log("Main roads created", this.main_roads.length, "paths");
-    // this.minor_roads = this.create_paths(this.secondary_centres, this.secondary_graph, true, 12, 10);
-    this.minor_roads = this.manually_create_routes();
-    this.roads = this.minor_roads;
-    // this.minor_roads = this.secondary_graph.kruskal();
-    // for(let r of this.minor_roads){
-    //   let pts = [r.start.position, r.end.position];
-    //   let l = new Polyline(pts).to_bezier(60).filter(12).to_polygon(12, 12);
-    //   this.roads.push(l);
-    // }
-    //   let path = this.create_road([r], false, 12, 12);
-    //   this.roads.push(path);
-    // }
-    this.create_lines();
+    this.main_paths = this.create_paths(this.centres, this.graph);
+    this.minor_paths = this.create_paths(this.secondary_centres, this.secondary_graph);
+    this.main_roads = this.create_roads(this.main_paths, 16);
+    this.minor_roads = this.create_roads(this.minor_paths, 8);
+    this.main_road_lines = this.create_roads(this.main_paths);
+    this.minor_road_lines = this.create_roads(this.minor_paths);
+    this.roads = this.minor_roads.concat(this.main_roads);
+    this.road_lines = this.minor_road_lines.concat(this.main_road_lines);
+    // this.create_lines();
+
+    
     console.log("Subdividing Lots")
     this.create_lots();
     this.subdivide_lots();
@@ -67,9 +61,10 @@ class Scene {
 
     let q = this.graph.find(728)
     let p = this.graph.find(700)
-    let r = this.graph.find(723)
-    let s = this.graph.find(714)
-    let t = this.graph.find(754)
+    let r = this.graph.find(703)
+    let s = this.graph.find(787)
+    let t = this.graph.find(720)
+    let u = this.graph.find(726)
 
     let a = this.secondary_graph.find(911)
     let b = this.secondary_graph.find(916)
@@ -92,15 +87,17 @@ class Scene {
     // this.river_points.push(q);
     // this.river_points.push(r);
 
-    this.centres.push(q);
-    this.centres.push(p);
+    this.centres.push(r);
+    this.centres.push(s);
+    this.centres.push(t);
+    // this.centres.push(u);
     // this.centres.push(r);
     // this.centres.push(s);
     // this.centres.push(t);
     // this.centres.push(potential_centres[8]);
     // this.centres.push(potential_centres[7]);
     // this.centres.push(d);
-    this.secondary_centres.push(a);
+    // this.secondary_centres.push(a);
     this.secondary_centres.push(b);
     this.secondary_centres.push(c);
     this.secondary_centres.push(d);
@@ -113,7 +110,7 @@ class Scene {
     this.secondary_centres.push(k);
     this.secondary_centres.push(l);
     this.secondary_centres.push(m);
-    // this.secondary_centres.push(n);
+    this.secondary_centres.push(n);
 
     // this.secondary_centres.push(e);
     // this.secondary_centres.push(f);
@@ -143,7 +140,7 @@ class Scene {
     return routes
   }
 
-  create_paths(points, graph, filter, stroke_width_start, stroke_width_end){
+  old_create_paths(points, graph, filter, stroke_width_start, stroke_width_end){
     console.log(points)
     let routes = this.create_connected_network(points, graph);
 
@@ -175,128 +172,106 @@ class Scene {
     return paths;
   }
   
-  manually_create_routes(){
-    let a = this.secondary_centres[0];
-    let b = this.secondary_centres[1];
-    let c = this.secondary_centres[2];
-    let d = this.secondary_centres[3];
-    let e = this.secondary_centres[4];
-    let f = this.secondary_centres[5];
-    let g = this.secondary_centres[6];
-    let h = this.secondary_centres[7];
-    let i = this.secondary_centres[8];
-    let j = this.secondary_centres[9];
-    let k = this.secondary_centres[10];
-    let l = this.secondary_centres[11];
-    let m = this.secondary_centres[12];
-    let n = this.secondary_centres[13];
-
-    let routes = this.create_connected_network(this.secondary_centres, this.secondary_graph);
-    r0 = this.secondary_graph.shortest(a, b);
-    r1 = this.secondary_graph.shortest(a, c);
-    r2 = this.secondary_graph.shortest(a, d);
-    r3 = this.secondary_graph.shortest(a, e);
-    r4 = this.secondary_graph.shortest(a, f);
-    r5 = this.secondary_graph.shortest(a, g);
-    r6 = this.secondary_graph.shortest(b, c);
-    r7 = this.secondary_graph.shortest(b, d);
-    r8 = this.secondary_graph.shortest(b, e);
-    r9 = this.secondary_graph.shortest(b, f);
-    r10 = this.secondary_graph.shortest(b, g);
-    r11 = this.secondary_graph.shortest(c, d);
-    r12 = this.secondary_graph.shortest(c, e);
-    r13 = this.secondary_graph.shortest(c, f);
-    r14 = this.secondary_graph.shortest(c, g);
-    r15 = this.secondary_graph.shortest(d, e);
-    // r16 = this.secondary_graph.shortest(d, f);
-
-
+  create_paths(points, graph, sw){
+    let routes = this.create_connected_network(points, graph);
     
-  
-    let r0r1 = this.find_intersections(r1, r0);
 
-    // if r0r1 length == 1 then add
-    let final = [r0r1[0]]
-    let queue = routes
-    // queue = shuffle(queue);
-    console.log("-------------------------------------------------------")
-    while(queue.length > 0){
-      let current = queue.shift();
-      console.log("Picking from queue", current);
-      for(let i = 0; i < final.length; i++){
-        let other = final[i];
-        let intersections = this.find_intersections(other, current);
-        if(intersections.length == 1){
-          current = intersections[0];
-        } else {
-          console.log("Found multiple intersections");
-          for(let intersection of intersections){
-            queue.shift(intersection)
-            break;
+
+    // routes = [r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23]
+    // Create a connected network of routes, this is all the possible combinations of routes
+    // Put these in a queue
+    // Pop the first route and push to the finalised routes
+    // Pop a route in the queue
+    // For each finalised route, if this route doesn't intersect it, find_intersections will return an array with one element
+    // If it does intersect, then we shift all the intersections into the top of the queue, and break, starting the queue again
+    // If we get to the end of checking this route against the finalised routes, 
+    // More work is needed however, because I still see overlaps
+
+    let final = [];
+    if(routes.length > 1){
+      let queue = routes
+      let r0 = queue[0]
+      let r1 = queue[1];
+      console.log("Routes", routes)
+      let r0r1 = this.find_intersections(r1, r0);
+
+      // if r0r1 length == 1 then add
+      final.push(r0r1[0])
+      // queue = shuffle(queue);
+      console.log("-------------------------------------------------------")
+      while(queue.length > 0){
+        let current = queue.shift();
+        console.log("Picking from queue", current);
+        for(let i = 0; i < final.length; i++){
+          let other = final[i];
+          let intersections = this.find_intersections(other, current);
+          if(intersections.length == 1){
+            current = intersections[0];
+          } else {
+            console.log("Found multiple intersections");
+            for(let intersection of intersections){
+              queue.unshift(intersection)
+              break;
+            }
           }
         }
+
+        console.log("-------------------------------------------------------")
+        console.log("Adding to final", current);
+        final.push(current);
       }
-
-      console.log("-------------------------------------------------------")
-      console.log("Adding to final", current);
-      final.push(current);
+    } else {
+      final = routes;
     }
 
-    // let r0r2 = this.find_intersections(r2, r0);
-    // let r0r3 = this.find_intersections(r3, r0);
+    return final;
     
+  }
 
-    // let r0r2 = this.find_intersections(r2, r0r1[0]);
-    // let r0r3 = this.find_intersections(r3, r0r2[0]);
-    
-    // let r1r0 = this.find_intersections(r0, r1);
-    // let r1r2 = this.find_intersections(r2, r1r0[0]);
-    // let r1r3 = this.find_intersections(r3, r1r2[0]);
-
-    // let r2r0 = this.find_intersections(r0, r2);
-    // let r2r1 = this.find_intersections(r1, r2r0[0]);
-    // let r2r3 = this.find_intersections(r3, r2r1[0]);
-    
-    
-    
-
-
-    // let r0r3 = this.find_intersections(r0, r3);
-    // let help = this.find_intersections(r0r3[0], r0r1[0]);
-
-    // let r1r2 = this.find_intersections(r1, r2);
-    // let r1r3 = this.find_intersections(r1, r3);
-
-    // let r2r3 = this.find_intersections(r2, r3);
-
-    // let potential = [r0r1[0], r0r2[0], r0r3[0], r1r2[0], r1r3[0], r2r3[0]];
-
-    // for(let i = 0; i < potential.length; i++){  
-    //   let found = false
-    //   let p = potential[i];
-    //   for(let j = 0; j < final.length; j++){
-    //     let other = final[j];
-    //     console.log(i,j)
-    //     if( this.fully_equal_routes(p, other)){
-    //       console.log("Found equal routes", i, j);
-    //       found = true;
-    //       break;
-    //     }
-    //   }
-    //   if(!found){
-    //     console.log("Adding route", i);
-    //     final.push(p);
-    //   }
-    // }
-
-    // console.log(final)
-    let paths = [];
-    for(let r of final){
-      let path = this.create_road([r], false, 8);
-      paths.push(path);
+  create_roads(paths, sw = 0, filter = false){
+    let roads = []
+    console.log(paths)
+    for(let path of paths){
+      let road = this.create_road(path, filter, sw, sw);
+      roads.push(road);
     }
-  
-    return paths
+    
+    return roads;
+  }
+
+  create_road(route, filter, stroke_width_start, stroke_width_end){
+    let points = [];
+    for(let node of route){
+      let p = node.position;
+      points.push(p)
+    }
+    let polyline 
+
+    if(filter){
+      polyline = new Polyline(points).to_bezier(60).filter(stroke_width_start*2);
+    } else {
+      polyline = new Polyline(points).to_bezier(60);
+    }
+
+    if(stroke_width_start > 0 && stroke_width_end > 0){
+      polyline = polyline.to_polygon(stroke_width_start, stroke_width_end);
+    }
+
+    return polyline
+  }
+
+  extend_path_to_edge(path){
+    let start = path[0].position;
+    let end = path[path.length - 1].position;
+    let d = p5.Vector.sub(end, start);
+    let m = d.mag();
+    if(m < 100){ return path; }
+    
+    let unit = d.copy().normalize();
+    let extended_start = p5.Vector.add(start, unit.copy().mult(100));
+    let extended_end = p5.Vector.sub(end, unit.copy().mult(100));
+    
+    return [extended_start, ...path, extended_end];
   }
 
   fully_equal_routes(a, b){
@@ -448,23 +423,7 @@ class Scene {
     return results;
   }
 
-  create_road(routes, filter, stroke_width_start, stroke_width_end){
-    let points = [];
-    for(let route of routes){
-      for(let node of route){
-        let p = node.position;
-        points.push(p)
-      }
-    }
-    let polyline 
-    if(filter){
-      polyline = new Polyline(points).to_bezier(60).filter(stroke_width_start*2).to_polygon(stroke_width_start, stroke_width_end);
-    } else {
-      polyline = new Polyline(points).to_bezier(60).to_polygon(stroke_width_start, stroke_width_end);
-    }
-
-    return polyline
-  }
+  
 
   create_lots(){
     let top_left = createVector(BW + MBW, BW + MBW);
@@ -589,8 +548,8 @@ class Scene {
 
     console.log("EDGE LENGTH", edge_length);
     let stroke_width;
-    if (hierarchy_counter < 2 && edge_length > 200) {
-      stroke_width = 24;
+    if (hierarchy_counter < 2 && edge_length > 300) {
+      stroke_width = 12;
       hierarchy_counter++;
     // } else if (hierarchy_counter < 6 && edge_length > 100) {
     //   hierarchy_counter++;
