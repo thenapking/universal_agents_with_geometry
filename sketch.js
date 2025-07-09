@@ -53,7 +53,7 @@ function setup(){
   setup_svg();
 
   process_data();
-  frameRate(60);
+  frameRate(30);
   
   template = {
     foci: [
@@ -66,35 +66,22 @@ function setup(){
     ]};
   scene = new Scene(template)
   scene.draw();
-  // scene.graph.draw_edges()
-  // scene.secondary_graph.draw_edges()
-  // stroke(255,0,0)
-  scene.river_outer[0].draw()
-  scene.river_outer[1].draw()
-  scene.river_outer[2].draw()
-
-  // for(let i = 0; i < scene.foci.length; i++){
-  //   circle(scene.foci[i].x, scene.foci[i].y, 20);
-  //   text(i, scene.foci[i].x + 5, scene.foci[i].y + 5);
-  // }
-
-
+  // draw_edges();
 }
 
 let ctx = 0;
 function draw(){
-  // let points = [[[100,100],[100,200],[200,200],[200,100]]];
-  // polyCircleA = new MultiPolygon(points);
-  // polyCircleA.draw();
-  // polyCircleB = new Regular(polyCircleA, 7, 'vertical-dashes', true);
-  // polyCircleB.construct();
-  // polyCircleB.draw()
-  // noLoop()
+  // test_draw(scene.roads, ctx);
+  final_draw();
+}
 
-  
-  // noLoop();
+function draw_edges(){
+  // scene.graph.draw_edges()
+  scene.secondary_graph.draw_edges()
+}
 
-  let p = scene.roads[ctx]
+function test_draw(collection){
+  let p = collection[ctx]
   if(p){
     p.draw();
     ctx++
@@ -104,29 +91,30 @@ function draw(){
     
     noLoop();
   }
+}
 
-  // if(exporting){ 
-  //   let file_name = `output_${seed}.svg`;
-  //   console.log("Exporting to: ", file_name);
-  //   beginRecordSVG(this, file_name); 
-  // }
+function final_draw(){
+  if(exporting){ 
+    let file_name = `output_${seed}.svg`;
+    console.log("Exporting to: ", file_name);
+    beginRecordSVG(this, file_name); 
+  }
 
-  // push()
-  //   default_setup()
-  //   if(!exporting) { scene.draw(); }
+  push()
+    default_setup()
+    if(!exporting) { scene.draw(); }
 
-  //   draw_coffers();
-  // pop()
+    draw_coffers();
+  pop()
 
-  // draw_borders();
+  draw_borders();
 
-  // if(exporting) alignment_guide();
+  if(exporting) alignment_guide();
   
-  // noLoop();
+  noLoop();
 
-  // if(exporting){ endRecordSVG(this); }
-  // console.log("Finished drawing all groups");
-  
+  if(exporting){ endRecordSVG(this); }
+  console.log("Finished drawing all groups");
 }
 
 function draw_coffers(){

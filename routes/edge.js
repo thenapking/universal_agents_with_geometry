@@ -7,10 +7,11 @@ class Edge {
     this.end = end; 
     this.start_id = start.id;
     this.end_id = end.id;
-    this.weight = weight || 1; 
     this.v = this.end.position.copy().sub(this.start.position);
     this.distance = this.v.mag();
     this.direction = this.v.heading();
+
+    this.weight = this.distance;
   }
 
   draw(){

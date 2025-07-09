@@ -75,7 +75,25 @@ class Graph {
     const neighbours = this.neighbours.get(node.id);
     return neighbours.sort((a, b) => a.id - b.id);
   }
-  
+
+
+  kruskal() {
+    let sortedEdges = [...this.edges].sort((a, b) => a.weight - b.weight);
+
+    let ds = new DisjointSet(this.node_ids);
+    let mstEdges = [];
+
+    for (let edge of sortedEdges) {
+      let u = edge.start.id;
+      let v = edge.end.id;
+
+      if (ds.union(u, v)) {
+        mstEdges.push(edge);
+      }
+    }
+
+    return mstEdges;
+  }
   
   // Dijkstra
   shortest(a, b) {
