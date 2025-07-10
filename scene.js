@@ -2,20 +2,16 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THIN_THRESHOLD = 0.26;
-let template;
-let r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24, r25, r26, r27, r28;
 class Scene {
-  constructor(template){
-    this.foci = template.foci || [];
+  constructor(){
+    this.foci =  [];
     this.focus = this.foci[0] 
-    this.sizes = [100, 100, 100, 75, 75]
     this.points = [];
     this.polylines = [];
-    this.polycircles = [];
+    this.sectors = [];
     this.potential_coffers = [];
-    this.offscreen_foci = template.offscreen_foci || [];
+
     this.centres = [];
-    this.river_points = [];
     this.secondary_centres = [];  
 
     this.offscreen_points = [];
@@ -26,26 +22,34 @@ class Scene {
 
     this.graph = new Graph(edges, nodes);
     this.secondary_graph = new Graph(minor_edges, minor_nodes);
-    console.log("--------")
-    console.log("Creating roads")
+    this.initialize();
+  }
 
+  initialize(){
+    console.log("-----------------------------")
+    console.log("Finding foci")
     this.create_foci();
-    this.main_paths = this.create_paths(this.centres, this.graph);
-    this.main_roads = this.create_roads(this.main_paths, INTERCITY_ROAD);
-    this.main_road_lines = this.create_roads(this.main_paths);
+
+    console.log("Creating major roads")
+
+    this.major_paths = this.create_paths(this.centres, this.graph);
+    this.major_roads = this.create_roads(this.major_paths, INTERCITY_ROAD);
+    this.major_road_lines = this.create_roads(this.major_paths);
+
+    console.log("Creating minor roads")
 
     this.minor_paths = this.create_paths(this.secondary_centres, this.secondary_graph);
     this.minor_roads = this.create_roads(this.minor_paths, 8);
     this.minor_road_lines = this.create_roads(this.minor_paths);
 
-    this.roads = this.main_roads.concat(this.minor_roads)
-    this.road_lines = this.main_road_lines.concat(this.minor_road_lines)
-    // this.create_lines();
+    this.roads = this.major_roads.concat(this.minor_roads)
+    this.road_lines = this.major_road_lines.concat(this.minor_road_lines)
 
     
     console.log("Subdividing Lots")
     this.create_lots();
     this.subdivide_lots();
+
     console.log("Creating coffers")
     this.create_coffers()
   }
@@ -151,29 +155,29 @@ class Scene {
     let queue = paths
     let r0 = queue[0]
     let r1 = queue[1];
-    console.log("Paths", paths)
+    // console.log("Paths", paths)
     let r0r1 = this.find_intersections(r1, r0);
 
     // if r0r1 length == 1 then add
     final.push(r0r1[0])
     // queue = shuffle(queue);
-    console.log("-------------------------------------------------------")
+    // console.log("-------------------------------------------------------")
     while(queue.length > 0){
       let current = queue.shift();
-      console.log("Picking from queue", current);
+      // console.log("Picking from queue", current);
       for(let i = 0; i < final.length; i++){
         let other = final[i];
         let intersections = this.find_intersections(other, current);
-        console.log("intersections", intersections);
+        // console.log("intersections", intersections);
         if(intersections.length == 0){
           // all points in current are in other, so we can skip this path
-          console.log("intersections empty");
+          // console.log("intersections empty");
           current = [];
           break;
         } else if(intersections.length == 1){
           current = intersections[0];
         } else {
-          console.log("Found multiple intersections");
+          // console.log("Found multiple intersections");
           for(let intersection of intersections){
             queue.unshift(intersection)
             break;
@@ -181,10 +185,10 @@ class Scene {
         }
       }
 
-      console.log("-------------------------------------------------------")
-      console.log("Current path", current);
+      // console.log("-------------------------------------------------------")
+      // console.log("Current path", current);
       if(current.length > min_length){
-        console.log("ADDDING", current);
+        // console.log("ADDDING", current);
         final.push(current);
       }
     }
@@ -195,7 +199,6 @@ class Scene {
 
   create_roads(paths, sw = 0, filter = false){
     let roads = []
-    console.log(paths)
     for(let path of paths){
       let road = this.create_road(path, filter, sw, sw);
       roads.push(road);
@@ -225,42 +228,7 @@ class Scene {
     return polyline
   }
 
-  extend_path_to_edge(path){
-    let start = path[0].position;
-    let end = path[path.length - 1].position;
-    let d = p5.Vector.sub(end, start);
-    let m = d.mag();
-    if(m < 100){ return path; }
-    
-    let unit = d.copy().normalize();
-    let extended_start = p5.Vector.add(start, unit.copy().mult(100));
-    let extended_end = p5.Vector.sub(end, unit.copy().mult(100));
-    
-    return [extended_start, ...path, extended_end];
-  }
-
-  fully_equal_routes(a, b){
-    if(a.length !== b.length){ return false; }
-    return this.equal_routes(a, b) || this.equal_routes(b, a);
-  }
-
-
-  equal_routes(a, b){
-    if(a.length !== b.length){ return false; }
-    for(let i = 0; i < a.length; i++){
-      if(a[i].id !== b[i].id){ return false; }
-    }
-    return true;
-  }
-
-  route_to_points(route){
-    let points = [];
-    for(let node of route){
-      let p = node.id;
-      points.push(p)
-    }
-    return points;
-  }
+ 
 
   find_intersections(a, b){
     let forward = this.find_forward_intersections(a, b);
@@ -303,12 +271,12 @@ class Scene {
 
     // only one intersection
     if(ib.length < 2) { 
-      console.log("Only one intersection found, returning original", [b]);
+      // console.log("Only one intersection found, returning original", [b]);
       return [b];
     }
 
     if(ib.length === b.length){
-      console.log("All points in b are in a, returning empty array");
+      // console.log("All points in b are in a, returning empty array");
       return null;
     }
 
@@ -322,15 +290,14 @@ class Scene {
     let subsequences = [];
     let previous_idx = 0;
 
-    console.log("Found intersections at indices:", ia, ib);
+    // console.log("Found intersections at indices:", ia, ib);
     // now we find subsequences between the intersection points
     for(let k = 0; k < ib.length - 1; k++){
       if(k < highest_index) { continue }
       let current = ib[k];
       let next = ib[k + 1];
       if(current + 1 === next){
-        // found a matching index
-        console.log("Found matching indices", current, next);
+        // console.log("Found matching indices", current, next);
         let subsequence_start_idx = k;
         let subsequence_end_idx = k + 1;
         
@@ -349,19 +316,19 @@ class Scene {
         highest_index = max(highest_index, subsequence_end_idx);
 
         if(previous_idx < ib[subsequence_start_idx]){
-          console.log("Found subsequence from", previous_idx, "to", ib[subsequence_start_idx]);
+          // console.log("Found subsequence from", previous_idx, "to", ib[subsequence_start_idx]);
           subsequences.push([previous_idx, ib[subsequence_start_idx]]);
         }
 
-        console.log("Subsequence from", ib[subsequence_start_idx], "to", ib[subsequence_end_idx]);
+        // console.log("Subsequence from", ib[subsequence_start_idx], "to", ib[subsequence_end_idx]);
         subsequences.push([ib[subsequence_start_idx], ib[subsequence_end_idx]]);
         previous_idx = ib[subsequence_end_idx];
-        console.log("previous increase", previous_idx)
+        // console.log("previous increase", previous_idx)
       }
     }
 
     if(previous_idx < ib.length){
-      console.log("Adding last subsequence from", previous_idx, "to", b.length);
+      // console.log("Adding last subsequence from", previous_idx, "to", b.length);
       subsequences.push([previous_idx, b.length]);
     }
 
@@ -400,7 +367,7 @@ class Scene {
     // if we have no results, all subsequences were found in A
     // which means this route is completely contained in A
     if(results.length === 0){ 
-      console.log("Route a completely covers b, returning null");
+      // console.log("Route a completely covers b, returning null");
       return null 
     }
     
@@ -417,17 +384,16 @@ class Scene {
     let points = [top_left, top_right, bottom_right, bottom_left];
     let bg = new MultiPolygon(points, 'countryside');
     
-    this.lots = [bg];
     let unioned_roads = unionPolygons(this.roads)
     let new_bg = bg.difference(unioned_roads);
-    this.polycircles = new_bg
+    this.sectors = new_bg
     
     
   }
 
   create_coffers(){
     let results = []
-    for(let p of this.potential_coffers){
+    for(let p of this.lots){
       let centroid = p.centroid();
       let nearest = null;
       let nearest_dist = Infinity;
@@ -469,7 +435,7 @@ class Scene {
   subdivide_lots(){
     let results = [];
     let counter = 0;
-    for(let p of this.polycircles){
+    for(let p of this.sectors){
       
       let r = this.subdivide(p, 300);
       for(let rr of r){
@@ -478,7 +444,7 @@ class Scene {
       counter++;
 
     }
-    this.potential_coffers = results;
+    this.lots = results;
   }
 
   subdivide(polygon, min_area, counter = 0, hierarchy_counter = 0) {
@@ -508,22 +474,20 @@ class Scene {
     }
 
     if(area > PARK && area < 4000 && random(1) < 0.03 && counter > 0){
+      console.log("-----PARK-----", polygon)
       return [polygon]
     }
 
     if(area > CIVIC && area < 4000 && random(1) < 0.07 && counter > 0){
+      console.log("-----CIVIC-----", polygon)
       return [polygon]
     }
 
-    
-
     let edge = polygon.find_longest_edge();
     if (!edge) {
-      console.warn("No edges found for subdivision");
+      // console.warn("No edges found for subdivision");
       return [polygon];
     }
-
-
 
     let p1 = edge[0].start;
     let p2 = edge[edge.length - 1].end;
@@ -531,8 +495,8 @@ class Scene {
     let midpoint = p5.Vector.add(p1, p2).mult(0.5);
 
     let stroke_width;
-    let main_road = hierarchy_counter < 3 && edge_length > 300
-    if (main_road) {
+    let major_road = hierarchy_counter < 3 && edge_length > 300
+    if (major_road) {
       stroke_width = MAJOR_ROAD;
       hierarchy_counter++;
     } else if (edge_length > 75) {
@@ -575,19 +539,7 @@ class Scene {
     if (!valid) { return [polygon]; }
 
     // 6) If the road is over a certain length we also need the path down it
-    if (edge_length > 75) {
-      let junctures = polygon.intersect_polyline(new_line);
-      for(let j = 0; j < junctures.length-1; j+=2){
-        let Ar = junctures[j].point;
-        let Br = junctures[j+1].point;
-        let fitted_street = new Polyline([Ar, Br])
-        if (main_road) {
-          this.main_road_lines.push(fitted_street);
-        } else {
-          this.minor_road_lines.push(fitted_street);
-        }
-      }
-    }
+    this.join_dangling_streets(polygon, new_line, edge_length, major_road)
 
     let result = [];
     for (let piece of pieces) {
@@ -597,68 +549,50 @@ class Scene {
     return result;
   }
 
+  join_dangling_streets(polygon, line, edge_length, major_road){
+    if (edge_length < 75) { return }
+    let junctures = polygon.intersect_polyline(line);
+
+    for(let j = 0; j < junctures.length-1; j+=2){
+      let Ar = junctures[j].point;
+      let Br = junctures[j+1].point;
+      let Bdir = p5.Vector.sub(Br, Ar).normalize().mult(INTERCITY_ROAD);
+      let Adir = p5.Vector.sub(Ar, Br).normalize().mult(INTERCITY_ROAD);
+      let Ax = p5.Vector.add(Ar, Adir);
+      let Bx = p5.Vector.add(Br, Bdir);
+      let Aj = Ar;
+      let Bj = Br;
+      let Aextension  = new Polyline([Ax, Ar]);
+      let Bextension = new Polyline([Bx, Br]);
 
 
-  best_points(points, centre, k, min_x = DPI/2, min_y = DPI/2) {
-    // Step 1: compute angle from centre to each point
-    let angle_to_centre = points.map(point => {
-      let dx = point.position.x - centre.x;
-      let dy = point.position.y - centre.y;
-      let angle = atan2(dy, dx);
-      return { point, angle };
-    });
-  
-    // Step 3: test all combinations of k points to find max angular spread
-    let best = null;
-    let bestScore = -Infinity;
-  
-    // Brute-force: try all k-combinations
-    let combos = k_combinations(angle_to_centre, k);
-    for (let combo of combos) {
-      let valid = true;
-
-      // Check spatial constraints
-      for (let i = 0; i < k; i++) {
-        for (let j = i + 1; j < k; j++) {
-          let a = combo[i].point.position;
-          let b = combo[j].point.position;
-          if (abs(a.x - b.x) < min_x || abs(a.y - b.y) < min_y) {
-            valid = false;
-            break;
-          }
+      for(let other of this.road_lines){
+        let junctions = Aextension.intersection(other)
+        if(junctions.length > 0){
+          Aj = junctions[0];
+          break;
         }
-        if (!valid) break;
       }
 
-      if (!valid) continue;
-
-      let angles = combo.map(obj => obj.angle);
-      angles.sort((a, b) => a - b);
-  
-      // Make it circular: compute angle differences, including wrap-around
-      let diffs = [];
-      for (let i = 0; i < angles.length; i++) {
-        let a1 = angles[i];
-        let a2 = angles[(i + 1) % angles.length];
-        let diff = (a2 - a1 + TWO_PI) % TWO_PI;
-        diffs.push(diff);
+      for(let other of this.road_lines){
+        let junctions = Bextension.intersection(other)
+        if(junctions.length > 0){
+          Bj = junctions[0];
+          break;
+        }
       }
-  
-      // Score: use minimum angle gap
-      let minGap = Math.min(...diffs);
-      if (minGap > bestScore) {
-        bestScore = minGap;
-        best = combo;
+
+      let fitted_street = new Polyline([Aj, Bj])
+      this.road_lines.push(fitted_street);
+      if (major_road) {
+        this.major_road_lines.push(fitted_street);
+      } else {
+        this.minor_road_lines.push(fitted_street);
       }
     }
-    if (!best) {
-      console.warn("No valid combination found");
-      return null;
-    }
-
-    return best.map(obj => obj.point);
   }
-  
+
+
   onscreen(position){
     let bwt = BW + MBW
     return position.x > bwt && position.x < (FW - bwt) &&
@@ -669,36 +603,6 @@ class Scene {
     return !this.onscreen(position);
   }
 
-  create_lines(){
-    let offset = createVector(BW + MBW, BW + MBW)
-    let p1 = createVector(W/3, 0)
-    let p2 = createVector(W/3, H)
-    this.add_full_line(p1, p2, offset);
-    
-  }
-
-  add_full_line(a, b, at = createVector(0, 0), bt = createVector(0, 0)){
-    let l = this.full_line(a.copy().add(at), b.copy().add(bt));
-    this.offscreen_lines.push(l);
-  }
-
-  full_line(a, b){
-    // y = mx + c, m = dy / dx
-    let d = p5.Vector.sub(b, a);
-
-    if(d.x === 0) { 
-      console.warn("Vertical line detected, using x-coordinate for line.");
-      return new Polyline([createVector(a.x, 0), createVector(a.x, height)]);
-    }
-    
-    let m = d.y / d.x;
-    let c = a.y - m * a.x;
-    let x1 = 0;
-    let y1 = m * x1 + c;
-    let x2 = width;
-    let y2 = m * x2 + c;
-    return new Polyline([createVector(x1, y1), createVector(x2, y2)]);
-  }
 
   draw(){
     push();

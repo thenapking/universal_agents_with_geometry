@@ -41,7 +41,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(11)
+  load_data(10)
 }
 
 function setup(){
@@ -55,19 +55,10 @@ function setup(){
 
   process_data();
   frameRate(30);
-  
-  template = {
-    foci: [
-      createVector(W/2, H/2)
-    ], 
-    offscreen_foci: [
-      createVector(0, 0),
-      createVector(W + 2*BW + 2*MBW, H/4 + BW + MBW),
-      createVector(W + 2*BW + 2*MBW, 3*H/4 + BW + MBW),
-    ]};
-  scene = new Scene(template)
-  scene.draw();
-  draw_edges();
+
+  scene = new Scene()
+  // scene.draw();
+  // draw_edges();
 }
 
 let ctx = 0;
@@ -107,6 +98,7 @@ function final_draw(){
     if(!exporting) { scene.draw(); }
 
     draw_coffers();
+    draw_lots();
     draw_road_lines()
 
   pop()
@@ -121,6 +113,16 @@ function final_draw(){
   console.log("Finished drawing all groups");
 }
 
+function draw_lots(){
+  push();
+    stroke(palette.black);
+    noFill();
+    for(let lot of scene.lots){
+      lot.draw();
+    }
+  pop();
+}
+
 function draw_coffers(){
   push();
     stroke(palette.black);
@@ -128,14 +130,6 @@ function draw_coffers(){
       coffer.fill();
     }
   pop();
-
-  push()
-    stroke(palette.white);
-    for(let coffer of coffers){
-      coffer.draw();
-    }
-  pop()
-  
 }
 
 function draw_roads(){
@@ -147,12 +141,12 @@ function draw_roads(){
 function draw_road_lines(){
   push()
     noFill();
-    stroke(palette.black);
+    stroke(palette.white);
     for(let r of scene.minor_road_lines){
       r.draw()
     }
     strokeWeight(4);
-    for(let r of scene.main_road_lines){
+    for(let r of scene.major_road_lines){
       r.draw()
     }
   pop();
@@ -163,7 +157,6 @@ function default_setup(){
   stroke(palette.black);
   strokeWeight(1);
   fill(palette.background);
-
 }
     
 function draw_borders(){
