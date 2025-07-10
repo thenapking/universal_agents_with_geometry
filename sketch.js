@@ -66,12 +66,12 @@ function setup(){
     ]};
   scene = new Scene(template)
   scene.draw();
-  draw_edges();
+  // draw_edges();
 }
 
 let ctx = 0;
 function draw(){
-  // test_draw(scene.roads, ctx);
+  // test_draw(scene.minor_road_lines, ctx);
   final_draw();
 }
 

@@ -148,39 +148,7 @@ class Scene {
     return routes
   }
 
-  old_create_paths(points, graph, filter, stroke_width_start, stroke_width_end){
-    console.log(points)
-    let routes = this.create_connected_network(points, graph);
-
-    let paths = []
-    let split_routes = [];
-    for(let i  = 0; i < routes.length; i++){
-      let ri = routes[i]
-      let r0 = routes[0];
-      let base = this.find_intersections(r0, ri)
-      let previous = base
-      console.log(i,0)
-      for(let j = 1; j < i; j++){
-        console.log(i,j)
-        let rj = routes[j]
-        let carried = previous[0]
-        let current = this.find_intersections(rj, carried)
-        previous = current;
-      }
-
-      split_routes.push(previous);
-    }
-
-    
-    for(let s of split_routes){
-      let path = this.create_road(s, filter, stroke_width_start, stroke_width_end);
-      paths.push(path);
-    }
-
-    return paths;
-  }
-  
-  create_paths(points, graph, sw){
+  create_paths(points, graph, min_length = 3){
     let routes = this.create_connected_network(points, graph);
     
     // let a = points[0];
@@ -208,49 +176,47 @@ class Scene {
     // More work is needed however, because I still see overlaps
 
     let final = [];
-    if(routes.length > 1){
-      let queue = routes
-      let r0 = queue[0]
-      let r1 = queue[1];
-      console.log("Routes", routes)
-      let r0r1 = this.find_intersections(r1, r0);
+    if(routes.length == 0){ return final; }
+    
+    let queue = routes
+    let r0 = queue[0]
+    let r1 = queue[1];
+    console.log("Routes", routes)
+    let r0r1 = this.find_intersections(r1, r0);
 
-      // if r0r1 length == 1 then add
-      final.push(r0r1[0])
-      // queue = shuffle(queue);
-      console.log("-------------------------------------------------------")
-      while(queue.length > 0){
-        let current = queue.shift();
-        console.log("Picking from queue", current);
-        for(let i = 0; i < final.length; i++){
-          let other = final[i];
-          let intersections = this.find_intersections(other, current);
-          console.log("intersections", intersections);
-          if(intersections.length == 0){
-            // all points in current are in other, so we can skip this route
-            console.log("intersections empty");
-            current = [];
+    // if r0r1 length == 1 then add
+    final.push(r0r1[0])
+    // queue = shuffle(queue);
+    console.log("-------------------------------------------------------")
+    while(queue.length > 0){
+      let current = queue.shift();
+      console.log("Picking from queue", current);
+      for(let i = 0; i < final.length; i++){
+        let other = final[i];
+        let intersections = this.find_intersections(other, current);
+        console.log("intersections", intersections);
+        if(intersections.length == 0){
+          // all points in current are in other, so we can skip this route
+          console.log("intersections empty");
+          current = [];
+          break;
+        } else if(intersections.length == 1){
+          current = intersections[0];
+        } else {
+          console.log("Found multiple intersections");
+          for(let intersection of intersections){
+            queue.unshift(intersection)
             break;
-          } else if(intersections.length == 1){
-            current = intersections[0];
-          } else {
-            console.log("Found multiple intersections");
-            for(let intersection of intersections){
-              queue.unshift(intersection)
-              break;
-            }
           }
         }
-
-        console.log("-------------------------------------------------------")
-        console.log("Current route", current);
-        if(current.length > 3){
-          console.log("ADDDING", current);
-          final.push(current);
-        }
       }
-    } else {
-      final = routes;
+
+      console.log("-------------------------------------------------------")
+      console.log("Current route", current);
+      if(current.length > min_length){
+        console.log("ADDDING", current);
+        final.push(current);
+      }
     }
 
     return final;
@@ -331,7 +297,7 @@ class Scene {
     // all points in b are in a, return empty array
     if(forward === null){ return [] }
     if(forward.length > 0){ return forward }
-    console.log("Reversing b to find intersections with a");
+    // console.log("Reversing b to find intersections with a");
     let reverse_b = b.slice().reverse();
     let reverse = this.find_forward_intersections(a, reverse_b);
     if(reverse.length > 0){
@@ -347,8 +313,8 @@ class Scene {
 
     // ia is list of indices of intersections in a
     // ib is list of indices of intersections in b
-    console.log("--------Finding intersections");
-    console.log(a, b)
+    // console.log("--------Finding intersections");
+    // console.log(a, b)
     let ia = [];
     let ib = []
     let points = []
@@ -437,7 +403,7 @@ class Scene {
       let end = indices[1];
 
       let new_route = b.slice(start, end + 1);
-      console.log("potential subsequence", new_route);
+      // console.log("potential subsequence", new_route);
 
       let found_start = false;
       let found_end = false;
@@ -454,11 +420,11 @@ class Scene {
     }
 
 
-    console.log("ia", ia);
-    console.log("ib", ib);
-    console.log("point", points)
-    console.log("Subseq", subsequences)
-    console.log("Found intersections:", results);
+    // console.log("ia", ia);
+    // console.log("ib", ib);
+    // console.log("point", points)
+    // console.log("Subseq", subsequences)
+    // console.log("Found intersections:", results);
     
     // At this point we know that there is at least one subsequence
     // if we have no results, all subsequences were found in A
@@ -594,14 +560,10 @@ class Scene {
     let edge_length = p5.Vector.dist(p1, p2);
     let midpoint = p5.Vector.add(p1, p2).mult(0.5);
 
-    console.log("EDGE LENGTH", edge_length);
     let stroke_width;
     if (hierarchy_counter < 2 && edge_length > 300) {
       stroke_width = 12;
       hierarchy_counter++;
-    // } else if (hierarchy_counter < 6 && edge_length > 100) {
-    //   hierarchy_counter++;
-    //   stroke_width = 12;
     } else if (edge_length > 75) {
       stroke_width = 8;
     } else {
@@ -624,7 +586,6 @@ class Scene {
     let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
 
     let new_line = new Polyline([A, B]);
-
     let new_street = new_line.to_polygon(stroke_width);
     let pieces = polygon.difference(new_street);
 
@@ -641,6 +602,17 @@ class Scene {
       }
     }
     if (!valid) { return [polygon]; }
+
+    // 6) If the road is over a certain length we also need the path down it
+    if (edge_length > 75) {
+      let junctures = polygon.intersect_polyline(new_line);
+      for(let j = 0; j < junctures.length-1; j+=2){
+        let Ar = junctures[j].point;
+        let Br = junctures[j+1].point;
+        let fitted_street = new Polyline([Ar, Br])
+        this.minor_road_lines.push(fitted_street);
+      }
+    }
 
     let result = [];
     for (let piece of pieces) {
