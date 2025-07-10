@@ -27,35 +27,20 @@ class Scene {
 
   initialize(){
     console.log("-----------------------------")
-    console.log("Finding foci")
     this.create_foci();
-
-    console.log("Creating major roads")
-
-    this.major_paths = this.create_paths(this.centres, this.graph);
-    this.major_roads = this.create_roads(this.major_paths, INTERCITY_ROAD);
-    this.major_road_lines = this.create_roads(this.major_paths);
-
-    console.log("Creating minor roads")
-
-    this.minor_paths = this.create_paths(this.secondary_centres, this.secondary_graph);
-    this.minor_roads = this.create_roads(this.minor_paths, 8);
-    this.minor_road_lines = this.create_roads(this.minor_paths);
-
-    this.roads = this.major_roads.concat(this.minor_roads)
-    this.road_lines = this.major_road_lines.concat(this.minor_road_lines)
+    this.create_roads()
 
     
-    console.log("Subdividing Lots")
     this.create_lots();
     this.subdivide_lots();
 
-    console.log("Creating coffers")
-    this.create_coffers()
+    // this.create_coffers()
   }
 
   
   create_foci(){
+    console.log("Finding foci")
+
     for(let i = 0; i < emitters.length; i++){
       let emitter = emitters[i];
       if(!emitter.principal){ continue; }
@@ -109,7 +94,26 @@ class Scene {
     
   }
 
-  create_connected_network(points, graph){
+  create_roads(){
+    console.log("Creating major roads")
+
+    this.major_shortest_paths = this.create_shortest_paths(this.centres, this.graph);
+    this.major_paths = create_paths(this.major_shortest_paths);
+    this.major_roads = this.paths_to_roads(this.major_paths, INTERCITY_ROAD);
+    this.major_road_lines = this.paths_to_roads(this.major_paths);
+
+    console.log("Creating minor roads")
+
+    this.minor_shortest_paths = this.create_shortest_paths(this.secondary_centres, this.secondary_graph);
+    this.minor_paths = create_paths(this.minor_shortest_paths);
+    this.minor_roads = this.paths_to_roads(this.minor_paths, 8);
+    this.minor_road_lines = this.paths_to_roads(this.minor_paths);
+
+    this.roads = this.major_roads.concat(this.minor_roads)
+    this.road_lines = this.major_road_lines.concat(this.minor_road_lines)
+  }
+
+  create_shortest_paths(points, graph){
     let paths = []
     for(let i = 0; i < points.length; i++){
       let centre = points[i];
@@ -122,259 +126,15 @@ class Scene {
     return paths
   }
 
-  create_paths(points, graph, min_length = 3){
-    let paths = this.create_connected_network(points, graph);
-    
-    // let a = points[0];
-    // let b = points[1];
-    // let c = points[2];
-    // let d = points[3];
-
-    // r0 = graph.shortest(a, b);
-    // r1 = graph.shortest(a, c);
-    // r2 = graph.shortest(a, d);
-    // r3 = graph.shortest(b, c);
-    // r4 = graph.shortest(b, d);
-    // r5 = graph.shortest(c, d);
-
-      
-    // paths = [r0, r1, r2, r3, r4, r5];
-
-    // Create a connected network of paths, this is all the possible combinations of paths
-    // Put these in a queue
-    // Pop the first path and push to the finalised paths
-    // Pop a path in the queue
-    // For each finalised path, if this path doesn't intersect it, find_intersections will return an array with one element
-    // If it does intersect, then we shift all the intersections into the top of the queue, and break, starting the queue again
-    // If we get to the end of checking this path against the finalised paths, 
-    // More work is needed however, because I still see overlaps
-
-    let final = [];
-    if(paths.length == 0){ return final; }
-    
-    let queue = paths
-    let r0 = queue[0]
-    let r1 = queue[1];
-    // console.log("Paths", paths)
-    let r0r1 = this.find_intersections(r1, r0);
-
-    // if r0r1 length == 1 then add
-    final.push(r0r1[0])
-    // queue = shuffle(queue);
-    // console.log("-------------------------------------------------------")
-    while(queue.length > 0){
-      let current = queue.shift();
-      // console.log("Picking from queue", current);
-      for(let i = 0; i < final.length; i++){
-        let other = final[i];
-        let intersections = this.find_intersections(other, current);
-        // console.log("intersections", intersections);
-        if(intersections.length == 0){
-          // all points in current are in other, so we can skip this path
-          // console.log("intersections empty");
-          current = [];
-          break;
-        } else if(intersections.length == 1){
-          current = intersections[0];
-        } else {
-          // console.log("Found multiple intersections");
-          for(let intersection of intersections){
-            queue.unshift(intersection)
-            break;
-          }
-        }
-      }
-
-      // console.log("-------------------------------------------------------")
-      // console.log("Current path", current);
-      if(current.length > min_length){
-        // console.log("ADDDING", current);
-        final.push(current);
-      }
-    }
-
-    return final;
-    
-  }
-
-  create_roads(paths, sw = 0, filter = false){
+  paths_to_roads(paths, sw = 0, filter = false){
     let roads = []
     for(let path of paths){
-      let road = this.create_road(path, filter, sw, sw);
+      let road = path.to_polygon(sw, filter);
       roads.push(road);
     }
     
     return roads;
   }
-
-  create_road(route, filter, stroke_width_start, stroke_width_end){
-    let points = [];
-    for(let node of route){
-      let p = node.position;
-      points.push(p)
-    }
-    let polyline 
-
-    if(filter){
-      polyline = new Polyline(points).to_bezier(60).filter(stroke_width_start*2);
-    } else {
-      polyline = new Polyline(points).to_bezier(60);
-    }
-
-    if(stroke_width_start > 0 && stroke_width_end > 0){
-      polyline = polyline.to_polygon(stroke_width_start, stroke_width_end);
-    }
-
-    return polyline
-  }
-
- 
-
-  find_intersections(a, b){
-    let forward = this.find_forward_intersections(a, b);
-    // all points in b are in a, return empty array
-    if(forward === null){ return [] }
-    if(forward.length > 0){ return forward }
-    // console.log("Reversing b to find intersections with a");
-    let reverse_b = b.slice().reverse();
-    let reverse = this.find_forward_intersections(a, reverse_b);
-    if(reverse.length > 0){
-      return reverse 
-    }
-    return [b]
-  }
-
-
-  find_forward_intersections(a,b){
-    // a,b are two routes of ids
-    // this splits line b into subsections which are not included in a
-
-    // ia is list of indices of intersections in a
-    // ib is list of indices of intersections in b
-    // console.log("--------Finding intersections");
-    // console.log(a, b)
-    let ia = [];
-    let ib = []
-    let points = []
-
-    for(let i = 0; i < a.length; i++){
-      let node = a[i];
-      for(let j = 0; j < b.length; j++){
-        let other = b[j];
-        if(node === other){
-          points.push(node);
-          ia.push(i);
-          ib.push(j);
-        }
-      }
-    }
-
-    // only one intersection
-    if(ib.length < 2) { 
-      // console.log("Only one intersection found, returning original", [b]);
-      return [b];
-    }
-
-    if(ib.length === b.length){
-      // console.log("All points in b are in a, returning empty array");
-      return null;
-    }
-
-    // Sort the indicies in case one route traverses in an opposite direction
-    ia = ia.sort((x, y) => x - y);
-    ib = ib.sort((x, y) => x - y);
-
-    
-
-    let highest_index = 0;
-    let subsequences = [];
-    let previous_idx = 0;
-
-    // console.log("Found intersections at indices:", ia, ib);
-    // now we find subsequences between the intersection points
-    for(let k = 0; k < ib.length - 1; k++){
-      if(k < highest_index) { continue }
-      let current = ib[k];
-      let next = ib[k + 1];
-      if(current + 1 === next){
-        // console.log("Found matching indices", current, next);
-        let subsequence_start_idx = k;
-        let subsequence_end_idx = k + 1;
-        
-        let sa_idx = k;
-        let sb_idx = k + 1;
-        let subsequence_a = ib[sa_idx];
-        let subsequence_b = ib[sb_idx];
-        while(subsequence_a + 1 === subsequence_b && sb_idx < ib.length - 1){
-          sa_idx++;
-          sb_idx++;
-          subsequence_a = ib[sa_idx];
-          subsequence_b = ib[sb_idx];
-          subsequence_end_idx = sb_idx;
-        }
-
-        highest_index = max(highest_index, subsequence_end_idx);
-
-        if(previous_idx < ib[subsequence_start_idx]){
-          // console.log("Found subsequence from", previous_idx, "to", ib[subsequence_start_idx]);
-          subsequences.push([previous_idx, ib[subsequence_start_idx]]);
-        }
-
-        // console.log("Subsequence from", ib[subsequence_start_idx], "to", ib[subsequence_end_idx]);
-        subsequences.push([ib[subsequence_start_idx], ib[subsequence_end_idx]]);
-        previous_idx = ib[subsequence_end_idx];
-        // console.log("previous increase", previous_idx)
-      }
-    }
-
-    if(previous_idx < ib.length){
-      // console.log("Adding last subsequence from", previous_idx, "to", b.length);
-      subsequences.push([previous_idx, b.length]);
-    }
-
-    
-    let results = []
-    for(let i = 0; i < subsequences.length; i++){
-      let indices = subsequences[i];
-      let start = indices[0];
-      let end = indices[1];
-
-      let new_route = b.slice(start, end + 1);
-      // console.log("potential subsequence", new_route);
-
-      let found_start = false;
-      let found_end = false;
-      for(let k = 0; k < ib.length; k++){
-        if(ib[k] === start){
-          found_start = true;
-        }
-        if(ib[k] === end){
-          found_end = true;
-        }
-      }
-      if(found_start && found_end) { continue; }
-      results.push(new_route);
-    }
-
-
-    // console.log("ia", ia);
-    // console.log("ib", ib);
-    // console.log("point", points)
-    // console.log("Subseq", subsequences)
-    // console.log("Found intersections:", results);
-    
-    // At this point we know that there is at least one subsequence
-    // if we have no results, all subsequences were found in A
-    // which means this route is completely contained in A
-    if(results.length === 0){ 
-      // console.log("Route a completely covers b, returning null");
-      return null 
-    }
-    
-    return results;
-  }
-
-  
 
   create_lots(){
     let top_left = createVector(BW + MBW, BW + MBW);
@@ -387,11 +147,11 @@ class Scene {
     let unioned_roads = unionPolygons(this.roads)
     let new_bg = bg.difference(unioned_roads);
     this.sectors = new_bg
-    
-    
   }
 
   create_coffers(){
+    console.log("Creating coffers")
+
     let results = []
     for(let p of this.lots){
       let centroid = p.centroid();
@@ -433,11 +193,13 @@ class Scene {
   }
 
   subdivide_lots(){
+    console.log("Subdividing Lots")
+
     let results = [];
     let counter = 0;
     for(let p of this.sectors){
       
-      let r = this.subdivide(p, 300);
+      let r = this.subdivide(p, MIN_LOT_SIZE);
       for(let rr of r){
         results.push(rr);
       }
@@ -447,78 +209,36 @@ class Scene {
     this.lots = results;
   }
 
-  subdivide(polygon, min_area, counter = 0, hierarchy_counter = 0) {
-    let area = polygon.area()
+  distance_from_lot_to_nearest_foci(polygon) {
     let centroid = polygon.bounds_centroid();
     
-    let nearest = null;
     let nearest_dist = Infinity;
 
     for (let f of this.foci) {
       let d = p5.Vector.dist(centroid, f);
       if (d < nearest_dist) {
         nearest_dist = d;
-        nearest = f;
       }
     }
-    let d = nearest_dist;
-    let max_area = 20000
-    let max_dist = 200
-    let scale = map(d, 0, max_dist, 0, 1);
-    let inv = pow(scale, 2);
-    let threshold = min_area + (max_area - min_area) * inv;
-    threshold *= 0.05
+    return nearest_dist;
+  }
 
-    if (area < threshold || area < min_area ) {
-      return [polygon];
-    }
-   
-    if(area > CIVIC && area < 4000 && random(1) < 0.1 && counter > 0){
-      return [polygon]
-    }
-
-    let edge = polygon.find_longest_edge();
-    if (!edge) {
-      // console.warn("No edges found for subdivision");
-      return [polygon];
-    }
-
-    let p1 = edge[0].start;
-    let p2 = edge[edge.length - 1].end;
-    let edge_length = p5.Vector.dist(p1, p2);
-    let midpoint = p5.Vector.add(p1, p2).mult(0.5);
-
+  set_road_width(major_road, edge_length){
     let stroke_width;
-    let major_road = hierarchy_counter < 3 && edge_length > 300
+    
     if (major_road) {
       stroke_width = MAJOR_ROAD;
-      hierarchy_counter++;
-    } else if (edge_length > 75) {
+    } else if (edge_length > MINOR_ROAD_LENGTH) {
       stroke_width = MINOR_ROAD;
     } else {
       stroke_width = SIDE_ROAD;
     }
 
-    // Compute the unit‐vector direction of the longest edge,
-    // then rotate by 90° to get a perpendicular direction
-    let parallel = p5.Vector.sub(p2, p1).normalize();
-    // Rotating (x,y) → (−y, x) is a 90° CCW rotation:
-    let perpendicular = createVector(-parallel.y, parallel.x);
+    return stroke_width;
+  }
 
-    const [minX, minY, maxX, maxY] = polygon.bounds();
-    let w = maxX - minX;
-    let h = maxY - minY;
-    let diagonal = 2 * Math.sqrt(w * w + h * h);
-
-    // 5) Build two endpoints A, B for our infinite (sampled) cutting line:
-    let A = p5.Vector.add(midpoint, p5.Vector.mult(perpendicular, diagonal));
-    let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
-
-    let new_line = new Polyline([A, B]);
-    let new_street = new_line.to_polygon(stroke_width);
-    let pieces = polygon.difference(new_street);
-
-    if (pieces.length === 0) { return [polygon]; }
+  validate(pieces){
+    if (pieces.length === 0) { return false }
     
     let valid = true;
     for (let piece of pieces) {
@@ -530,11 +250,74 @@ class Scene {
         break;
       }
     }
-    if (!valid) { return [polygon]; }
+    return valid
+  }
 
-    // 6) If the road is over a certain length we also need the path down it
+  subdivide(polygon, min_area, counter = 0, hierarchy_counter = 0) {
+    // 1) Check whether we should halt
+    let area = polygon.area()
+    let d = this.distance_from_lot_to_nearest_foci(polygon);
+
+    let max_area = 20000
+    let max_dist = 200
+
+    let scale = map(d, 0, max_dist, 0, 1);
+    let inv = pow(scale, 2);
+    let threshold = min_area + (max_area - min_area) * inv;
+    threshold *= 0.05
+
+    if (area < threshold || area < min_area ) {
+      return [polygon];
+    }
+   
+    if(area > CIVIC && area < MAX_LOT_SIZE && random(1) < 0.1 && counter > 0){
+      return [polygon]
+    }
+
+    let edge = polygon.find_longest_edge();
+    if (!edge) {
+      return [polygon];
+    }
+
+    // 2) Find edges
+    let p1 = edge[0].start;
+    let p2 = edge[edge.length - 1].end;
+    let edge_length = p5.Vector.dist(p1, p2);
+    let midpoint = p5.Vector.add(p1, p2).mult(0.5);
+
+    // 3) Compute the unit‐vector direction of the longest edge,
+    // then rotate by 90° to get a perpendicular direction
+    let parallel = p5.Vector.sub(p2, p1).normalize();
+    // Rotating (x,y) → (−y, x) is a 90° CCW rotation:
+    let perpendicular = createVector(-parallel.y, parallel.x);
+
+    // 4) Compute the bounding box of the polygon to determine the diagonal length
+    const [minX, minY, maxX, maxY] = polygon.bounds();
+    let w = maxX - minX;
+    let h = maxY - minY;
+    let diagonal = 2 * Math.sqrt(w * w + h * h);
+
+    // 5) Build two endpoints A, B for our infinite (sampled) cutting line:
+    let A = p5.Vector.add(midpoint, p5.Vector.mult(perpendicular, diagonal));
+    let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
+
+    // 6) Calculate the street's width, and create a polyline
+    let major_road = hierarchy_counter++ < 3 && edge_length > MAJOR_ROAD_LENGTH
+    let stroke_width = this.set_road_width(major_road, edge_length);
+
+    let new_line = new Polyline([A, B]);
+    let new_street = new_line.to_polygon(stroke_width);
+
+    // 7) Perform the difference operation on the street polygon, and validate it
+    let pieces = polygon.difference(new_street);
+
+    if (!this.validate(pieces)) { return [polygon]; }
+
+    // 8) If the road is over a certain length we also need the path down it
+    // We also need to ensure that the road_line joins existing roads
     this.join_dangling_streets(polygon, new_line, edge_length, major_road)
 
+    // 9) Recurse or return
     let result = [];
     for (let piece of pieces) {
       let pieces = this.subdivide(piece, min_area, counter++, hierarchy_counter);
@@ -596,7 +379,6 @@ class Scene {
   offscreen(position){
     return !this.onscreen(position);
   }
-
 
   draw(){
     push();

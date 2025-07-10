@@ -40,7 +40,7 @@ class Coffer {
 
     this.fill_type = 'houses'
 
-    if(d > 300 || area > 4000){ this.fill_type = random(COUNTRY)}
+    if(d > 300 || area > MAX_LOT_SIZE){ this.fill_type = random(COUNTRY)}
     if(d < 200 && area > CIVIC){ this.fill_type = random(TOWN)}
     if(area < 200 && random() < 0.1) { this.fill_type = random(SMALL) }
 
@@ -55,7 +55,7 @@ class Coffer {
     if(this.fill_type == 'civic') { total_civic_count++ }
 
     if(area < 100) { this.fill_type = 'blank'}
-    if(area > 4000) { this.fill_type = random(LARGE) }
+    if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
 
     if(this.fill_type == 'park') {
       this.fill_object = new Park(this.polygon, 0.2, 0);

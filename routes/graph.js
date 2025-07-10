@@ -152,7 +152,7 @@ class Graph {
 
         if(path.length < 2) { return }
         
-        return path
+        return new Path(path);
       }
 
       // Explore the connected edges
