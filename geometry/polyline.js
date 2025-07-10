@@ -120,6 +120,7 @@ class Polyline {
     return new MultiPolygon(points);
   }
 
+  // do we need to resample the interpolated points to make sure they are even?
   to_bezier(detail = 10, curviness = 0.5) {
     let points = [this.points[0]];
   
@@ -158,6 +159,8 @@ class Polyline {
 
     return new Polyline(points);
   }
+
+  
   
   intersects(other){
     for (let segment of this.segments) {

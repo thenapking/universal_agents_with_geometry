@@ -32,14 +32,17 @@ class Scene {
 
     this.create_foci();
     this.main_paths = this.create_paths(this.centres, this.graph);
-    this.minor_paths = this.create_paths(this.secondary_centres, this.secondary_graph);
     this.main_roads = this.create_roads(this.main_paths, 16);
-    this.minor_roads = this.create_roads(this.minor_paths, 8);
     this.main_road_lines = this.create_roads(this.main_paths);
+
+    this.minor_paths = this.create_paths(this.secondary_centres, this.secondary_graph);
+    this.minor_roads = this.create_roads(this.minor_paths, 8);
     this.minor_road_lines = this.create_roads(this.minor_paths);
-    this.roads = this.minor_roads.concat(this.main_roads);
-    this.road_lines = this.minor_road_lines.concat(this.main_road_lines);
-    // this.create_lines();
+
+    this.roads = this.main_roads.concat(this.minor_roads)
+    // this.roads = this.main_roads
+    this.road_lines = this.main_road_lines //this.minor_road_lines.concat(
+    this.create_lines();
 
     
     console.log("Subdividing Lots")
@@ -60,13 +63,15 @@ class Scene {
     }
 
     let q = this.graph.find(728)
-    let p = this.graph.find(700)
+    let p = this.graph.find(749)
     let r = this.graph.find(703)
     let s = this.graph.find(787)
     let t = this.graph.find(720)
     let u = this.graph.find(726)
+    let v = this.graph.find(707)
+    let x = this.graph.find(724)
 
-    let a = this.secondary_graph.find(911)
+    let a = this.secondary_graph.find(996)
     let b = this.secondary_graph.find(916)
     let c = this.secondary_graph.find(1000)
     let d = this.secondary_graph.find(980)
@@ -87,17 +92,20 @@ class Scene {
     // this.river_points.push(q);
     // this.river_points.push(r);
 
+    this.centres.push(p);
     this.centres.push(r);
     this.centres.push(s);
     this.centres.push(t);
-    // this.centres.push(u);
+    this.centres.push(u);
+    this.centres.push(v);
+    this.centres.push(x);
     // this.centres.push(r);
     // this.centres.push(s);
     // this.centres.push(t);
     // this.centres.push(potential_centres[8]);
     // this.centres.push(potential_centres[7]);
     // this.centres.push(d);
-    // this.secondary_centres.push(a);
+    this.secondary_centres.push(a);
     this.secondary_centres.push(b);
     this.secondary_centres.push(c);
     this.secondary_centres.push(d);
@@ -175,9 +183,21 @@ class Scene {
   create_paths(points, graph, sw){
     let routes = this.create_connected_network(points, graph);
     
+    // let a = points[0];
+    // let b = points[1];
+    // let c = points[2];
+    // let d = points[3];
 
+    // r0 = graph.shortest(a, b);
+    // r1 = graph.shortest(a, c);
+    // r2 = graph.shortest(a, d);
+    // r3 = graph.shortest(b, c);
+    // r4 = graph.shortest(b, d);
+    // r5 = graph.shortest(c, d);
 
-    // routes = [r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20, r21, r22, r23]
+      
+    // routes = [r0, r1, r2, r3, r4, r5];
+
     // Create a connected network of routes, this is all the possible combinations of routes
     // Put these in a queue
     // Pop the first route and push to the finalised routes
@@ -205,7 +225,13 @@ class Scene {
         for(let i = 0; i < final.length; i++){
           let other = final[i];
           let intersections = this.find_intersections(other, current);
-          if(intersections.length == 1){
+          console.log("intersections", intersections);
+          if(intersections.length == 0){
+            // all points in current are in other, so we can skip this route
+            console.log("intersections empty");
+            current = [];
+            break;
+          } else if(intersections.length == 1){
             current = intersections[0];
           } else {
             console.log("Found multiple intersections");
@@ -217,8 +243,11 @@ class Scene {
         }
 
         console.log("-------------------------------------------------------")
-        console.log("Adding to final", current);
-        final.push(current);
+        console.log("Current route", current);
+        if(current.length > 3){
+          console.log("ADDDING", current);
+          final.push(current);
+        }
       }
     } else {
       final = routes;
@@ -299,6 +328,8 @@ class Scene {
 
   find_intersections(a, b){
     let forward = this.find_forward_intersections(a, b);
+    // all points in b are in a, return empty array
+    if(forward === null){ return [] }
     if(forward.length > 0){ return forward }
     console.log("Reversing b to find intersections with a");
     let reverse_b = b.slice().reverse();
@@ -334,15 +365,22 @@ class Scene {
       }
     }
 
-    // Sort the indicies in case one route traverses in an opposite direction
-    ia = ia.sort((x, y) => x - y);
-    ib = ib.sort((x, y) => x - y);
-
     // only one intersection
     if(ib.length < 2) { 
       console.log("Only one intersection found, returning original", [b]);
       return [b];
     }
+
+    if(ib.length === b.length){
+      console.log("All points in b are in a, returning empty array");
+      return null;
+    }
+
+    // Sort the indicies in case one route traverses in an opposite direction
+    ia = ia.sort((x, y) => x - y);
+    ib = ib.sort((x, y) => x - y);
+
+    
 
     let highest_index = 0;
     let subsequences = [];
@@ -391,6 +429,7 @@ class Scene {
       subsequences.push([previous_idx, b.length]);
     }
 
+    
     let results = []
     for(let i = 0; i < subsequences.length; i++){
       let indices = subsequences[i];
@@ -420,6 +459,15 @@ class Scene {
     console.log("point", points)
     console.log("Subseq", subsequences)
     console.log("Found intersections:", results);
+    
+    // At this point we know that there is at least one subsequence
+    // if we have no results, all subsequences were found in A
+    // which means this route is completely contained in A
+    if(results.length === 0){ 
+      console.log("Route a completely covers b, returning null");
+      return null 
+    }
+    
     return results;
   }
 
@@ -576,6 +624,7 @@ class Scene {
     let B = p5.Vector.sub(midpoint, p5.Vector.mult(perpendicular, diagonal));
 
     let new_line = new Polyline([A, B]);
+
     let new_street = new_line.to_polygon(stroke_width);
     let pieces = polygon.difference(new_street);
 

@@ -76,8 +76,8 @@ function draw(){
 }
 
 function draw_edges(){
-  scene.graph.draw_edges()
-  // scene.secondary_graph.draw_edges()
+  // scene.graph.draw_edges()
+  scene.secondary_graph.draw_edges()
 }
 
 function test_draw(collection){
