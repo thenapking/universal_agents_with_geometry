@@ -1,7 +1,8 @@
 
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
-const THIN_THRESHOLD = 0.26;
+const THINNESS_THRESHOLD = 0.26;
+const SECONDARY_DENSITY = 100;
 class Scene {
   constructor(){
     this.foci =  [];
@@ -30,13 +31,21 @@ class Scene {
     this.create_foci();
     this.create_roads()
 
-    
-    this.create_lots();
-    this.subdivide_lots();
+    // this.create_lots();
+    // this.subdivide_lots();
 
     // this.create_coffers()
   }
 
+  onscreen(position){
+    let bwt = BW + MBW
+    return position.x > bwt && position.x < (FW - bwt) &&
+    position.y > bwt && position.y < (FH - bwt)
+  }
+
+  offscreen(position){
+    return !this.onscreen(position);
+  }
   
   create_foci(){
     console.log("Finding foci")
@@ -46,9 +55,7 @@ class Scene {
       if(!emitter.principal){ continue; }
       let position = createVector(emitter.position.x, emitter.position.y);
       this.foci.push(position);
-
     }
-
     
     for(let i = 0; i < this.graph.nodes.length; i++){
       let node = this.graph.nodes[i];
@@ -56,7 +63,6 @@ class Scene {
       if(this.onscreen(node.position)){ continue; }
       this.centres.push(node);
     }
-
 
     for(let i = 0; i < this.foci.length; i++){
       let f = this.foci[i];
@@ -82,16 +88,12 @@ class Scene {
       for(let other of this.secondary_centres){
         if(other.id === node.id){ continue }
         let d = p5.Vector.dist(node.position, other.position);
-        if(d < 100){ found = true; break; }
+        if(d < SECONDARY_DENSITY){ found = true; break; }
       }
       if(found) { continue; }
         
       this.secondary_centres.push(node);
     }
-
-
-
-    
   }
 
   create_roads(){
@@ -209,50 +211,6 @@ class Scene {
     this.lots = results;
   }
 
-  distance_from_lot_to_nearest_foci(polygon) {
-    let centroid = polygon.bounds_centroid();
-    
-    let nearest_dist = Infinity;
-
-    for (let f of this.foci) {
-      let d = p5.Vector.dist(centroid, f);
-      if (d < nearest_dist) {
-        nearest_dist = d;
-      }
-    }
-    return nearest_dist;
-  }
-
-  set_road_width(major_road, edge_length){
-    let stroke_width;
-    
-    if (major_road) {
-      stroke_width = MAJOR_ROAD;
-    } else if (edge_length > MINOR_ROAD_LENGTH) {
-      stroke_width = MINOR_ROAD;
-    } else {
-      stroke_width = SIDE_ROAD;
-    }
-
-    return stroke_width;
-  }
-
-  validate(pieces){
-    if (pieces.length === 0) { return false }
-    
-    let valid = true;
-    for (let piece of pieces) {
-      let bounding_box_area = piece.bounds_area();
-      let area = piece.area();
-      let is_thin = area / bounding_box_area < THIN_THRESHOLD;
-      if (is_thin) {
-        valid = false;
-        break;
-      }
-    }
-    return valid
-  }
-
   subdivide(polygon, min_area, counter = 0, hierarchy_counter = 0) {
     // 1) Check whether we should halt
     let area = polygon.area()
@@ -311,7 +269,7 @@ class Scene {
     // 7) Perform the difference operation on the street polygon, and validate it
     let pieces = polygon.difference(new_street);
 
-    if (!this.validate(pieces)) { return [polygon]; }
+    if (!this.test_thinness(pieces)) { return [polygon]; }
 
     // 8) If the road is over a certain length we also need the path down it
     // We also need to ensure that the road_line joins existing roads
@@ -369,15 +327,48 @@ class Scene {
     }
   }
 
+  distance_from_lot_to_nearest_foci(polygon) {
+    let centroid = polygon.bounds_centroid();
+    
+    let nearest_dist = Infinity;
 
-  onscreen(position){
-    let bwt = BW + MBW
-    return position.x > bwt && position.x < (FW - bwt) &&
-    position.y > bwt && position.y < (FH - bwt)
+    for (let f of this.foci) {
+      let d = p5.Vector.dist(centroid, f);
+      if (d < nearest_dist) {
+        nearest_dist = d;
+      }
+    }
+    return nearest_dist;
   }
 
-  offscreen(position){
-    return !this.onscreen(position);
+  set_road_width(major_road, edge_length){
+    let stroke_width;
+    
+    if (major_road) {
+      stroke_width = MAJOR_ROAD;
+    } else if (edge_length > MINOR_ROAD_LENGTH) {
+      stroke_width = MINOR_ROAD;
+    } else {
+      stroke_width = SIDE_ROAD;
+    }
+
+    return stroke_width;
+  }
+
+  test_thinness(pieces){
+    if (pieces.length === 0) { return false }
+    
+    let valid = true;
+    for (let piece of pieces) {
+      let bounding_box_area = piece.bounds_area();
+      let area = piece.area();
+      let is_thin = area / bounding_box_area < THINNESS_THRESHOLD;
+      if (is_thin) {
+        valid = false;
+        break;
+      }
+    }
+    return valid
   }
 
   draw(){
@@ -387,17 +378,11 @@ class Scene {
       stroke(light_pen);
       rectMode(CENTER)
 
-      // full outer box
       rect(FW/2, FH/2, FW, FH);
-
       draw_grid(DPI/4);
-
 
       translate(BW + MBW, BW + MBW);
       rect(W/2, H/2, W, H);
-      circle(this.foci[0].x, this.foci[0].y, 20); 
-
-
     pop();
   }
 
