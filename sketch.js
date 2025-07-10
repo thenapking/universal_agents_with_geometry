@@ -27,6 +27,13 @@ let SMALL_HATCH = 4
 let MEDIUM_HATCH = 6;
 let LARGE_HATCH = 10;
 
+const ERROR = 0.001
+const ANGLE = 3.141/24;
+const AREA = 200;
+const PARK = 3000;
+const CIVIC = 1000;
+const BLOCK = 2000;
+
 
 let PHI;
 let exporting = false;
@@ -41,7 +48,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(10)
+  load_data(16)
 }
 
 function setup(){

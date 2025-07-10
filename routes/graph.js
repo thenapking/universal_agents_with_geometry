@@ -115,7 +115,7 @@ class Graph {
   
   // Dijkstra
   shortest(a, b) {
-    console.log("Finding shortest path from", a.id, "to", b.id);
+    // console.log("Finding shortest path from", a.id, "to", b.id);
     const distances = {};
     const previous = {};
     const queue = [];

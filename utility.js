@@ -111,6 +111,7 @@ function keyPressed(){
 
   if (key.toLowerCase() === "p") {
     exporting = true;
+    redraw();
   }
   
   if (key.toLowerCase() === "-" || key.toLowerCase() === "=") {  

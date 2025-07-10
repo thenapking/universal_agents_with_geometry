@@ -472,14 +472,8 @@ class Scene {
     if (area < threshold || area < min_area ) {
       return [polygon];
     }
-
-    if(area > PARK && area < 4000 && random(1) < 0.03 && counter > 0){
-      console.log("-----PARK-----", polygon)
-      return [polygon]
-    }
-
-    if(area > CIVIC && area < 4000 && random(1) < 0.07 && counter > 0){
-      console.log("-----CIVIC-----", polygon)
+   
+    if(area > CIVIC && area < 4000 && random(1) < 0.1 && counter > 0){
       return [polygon]
     }
 

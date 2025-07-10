@@ -40,7 +40,7 @@ class Coffer {
 
     this.fill_type = 'houses'
 
-    if(d > 300 || area > 3000){ this.fill_type = random(COUNTRY)}
+    if(d > 300 || area > 4000){ this.fill_type = random(COUNTRY)}
     if(d < 200 && area > CIVIC){ this.fill_type = random(TOWN)}
     if(area < 200 && random() < 0.1) { this.fill_type = random(SMALL) }
 
@@ -48,14 +48,14 @@ class Coffer {
     if(this.fill_type == 'park' &&  this.polygon.outer.length != 4) { this.fill_type = 'houses'}
     if(this.fill_type == 'trees' && this.polygon.outer.length != 4) { this.fill_type = 'houses' }
 
-    if(this.fill_type == 'trees' && area > 2000) { this.fill_type = 'houses' }
+    if(this.fill_type == 'trees' && area > 3000) { this.fill_type = 'houses' }
 
-    if(this.fill_type == 'civic' && (area < 600 || area > 3000)) { this.fill_type = 'houses' }
+    if(this.fill_type == 'civic' && (area < 500)) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     if(this.fill_type == 'civic') { total_civic_count++ }
 
     if(area < 100) { this.fill_type = 'blank'}
-    if(area > 3000) { this.fill_type = random(LARGE) }
+    if(area > 4000) { this.fill_type = random(LARGE) }
 
     if(this.fill_type == 'park') {
       this.fill_object = new Park(this.polygon, 0.2, 0);
@@ -78,17 +78,21 @@ class Coffer {
       this.fill_object.construct();
     }
 
-    if(this.fill_type == 'dots' || 
-       this.fill_type == 'vertical-dashes' || 
-       this.fill_type == 'horizontal-dashes') {
+    if(this.fill_type == 'dots' ) {
       this.fill_object = new Regular(this.polygon, 5, this.fill_type, true);
+      this.fill_object.construct();
+    }
+
+    if(this.fill_type == 'large-vertical-dashes' || 
+       this.fill_type == 'large-horizontal-dashes') {
+      this.fill_object = new Regular(this.polygon, 12, this.fill_type, true);
       this.fill_object.construct();
     }
 
 
     if(this.fill_type == 'large-dots' || 
-      this.fill_type == 'large-vertical-dashes' || 
-      this.fill_type == 'large-horizontal-dashes') {
+      this.fill_type == 'vertical-dashes' || 
+      this.fill_type == 'horizontal-dashes') {
       this.fill_object = new Regular(this.polygon, 7, this.fill_type, true);
       this.fill_object.construct();
     }

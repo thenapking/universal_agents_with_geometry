@@ -1,9 +1,4 @@
-const ERROR = 0.001
-const ANGLE = 3.141/24;
-const AREA = 200;
-const PARK = 3000;
-const CIVIC = 1000;
-const BLOCK = 2000;
+
 
 const LARGE_SW = 10;
 const MEDIUM_SW = 8;
