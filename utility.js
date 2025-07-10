@@ -31,7 +31,7 @@ function process_data(){
   
   for(let i = 0; i < hotspots.length; i++){
     let h = hotspots[i];
-    let node = new Node(h.position.x, h.position.y);
+    let node = new Node(h.position.x*1.5 - 2*MBW, h.position.y*1.5 - 2*MBW);
 
     if(h.group.id == 0){
       nodes[i] = node;
@@ -44,11 +44,14 @@ function process_data(){
     if(c.group.id == 0){
       let from = nodes[c.from_id];
       let to = nodes[c.to_id];
+      if(from.id != c.from_id || to.id != c.to_id){ continue }
       let edge = new Edge(from, to);
       edges.push(edge);
     } else {
       let from = minor_nodes[c.from_id];
       let to = minor_nodes[c.to_id];
+      // if(from.id != c.from_id || to.id != c.to_id){ continue }
+
       let edge = new Edge(from, to);
       minor_edges.push(edge);
     }

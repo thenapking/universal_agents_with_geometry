@@ -42,11 +42,29 @@ class Graph {
     this.edges.push(edge);
     this.neighbours.get(edge.start.id).push(edge.end.id);
     this.neighbours.get(edge.end.id).push(edge.start.id);
+    edge.start.degree++;
+    edge.end.degree++;
 
   }
 
   find(id){
     return this.nodes.find(node => node.id === id);
+  }
+
+  find_node_by_position(position) {
+    let nearest = null;
+    let nearest_distance = Infinity;
+    for (let node of this.nodes) {
+      let distance = p5.Vector.dist(node.position, position);
+      if (distance < nearest_distance) {
+        nearest_distance = distance;
+        nearest = node;
+      }
+      if(nearest_distance < 1e-6) { // If very close, return immediately
+        return nearest;
+      }
+    }
+    return nearest;
   }
 
   find_edge(from_id, to_id) {
@@ -132,7 +150,9 @@ class Graph {
           previous_id = previous[previous_id];
         }
 
-        return path;
+        if(path.length < 2) { return }
+        
+        return path
       }
 
       // Explore the connected edges

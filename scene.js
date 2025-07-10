@@ -20,19 +20,18 @@ class Scene {
 
     this.offscreen_points = [];
     this.offscreen_lines = [];
-    this.minor_points = []; 
+    
     this.roads = [];
-    this.farms = []
+    this.lots = []
 
     this.graph = new Graph(edges, nodes);
     this.secondary_graph = new Graph(minor_edges, minor_nodes);
     console.log("--------")
     console.log("Creating roads")
-    this.split_routes = []
 
     this.create_foci();
     this.main_paths = this.create_paths(this.centres, this.graph);
-    this.main_roads = this.create_roads(this.main_paths, 16);
+    this.main_roads = this.create_roads(this.main_paths, INTERCITY_ROAD);
     this.main_road_lines = this.create_roads(this.main_paths);
 
     this.minor_paths = this.create_paths(this.secondary_centres, this.secondary_graph);
@@ -40,9 +39,8 @@ class Scene {
     this.minor_road_lines = this.create_roads(this.minor_paths);
 
     this.roads = this.main_roads.concat(this.minor_roads)
-    // this.roads = this.main_roads
-    this.road_lines = this.main_road_lines //this.minor_road_lines.concat(
-    this.create_lines();
+    this.road_lines = this.main_road_lines.concat(this.minor_road_lines)
+    // this.create_lines();
 
     
     console.log("Subdividing Lots")
@@ -62,94 +60,66 @@ class Scene {
 
     }
 
-    let q = this.graph.find(728)
-    let p = this.graph.find(749)
-    let r = this.graph.find(703)
-    let s = this.graph.find(787)
-    let t = this.graph.find(720)
-    let u = this.graph.find(726)
-    let v = this.graph.find(707)
-    let x = this.graph.find(724)
-
-    let a = this.secondary_graph.find(996)
-    let b = this.secondary_graph.find(916)
-    let c = this.secondary_graph.find(1000)
-    let d = this.secondary_graph.find(980)
-    let e = this.secondary_graph.find(961)
-    let f = this.secondary_graph.find(932)
-    let g = this.secondary_graph.find(1108)
-    let h = this.secondary_graph.find(1099)
-    let i = this.secondary_graph.find(1113)
-    let j = this.secondary_graph.find(1102)
-    let k = this.secondary_graph.find(1082)
-    let l = this.secondary_graph.find(1111)
-    let m = this.secondary_graph.find(1010)
-    let n = this.secondary_graph.find(1089)
+    
+    for(let i = 0; i < this.graph.nodes.length; i++){
+      let node = this.graph.nodes[i];
+      if(node.degree > 1) {continue; }
+      if(this.onscreen(node.position)){ continue; }
+      this.centres.push(node);
+    }
 
 
+    for(let i = 0; i < this.foci.length; i++){
+      let f = this.foci[i];
+      let node = this.secondary_graph.find_node_by_position(f);
+      if(node.degree < 2){ continue; }
+      for(let other of this.secondary_centres){
+        if(other.id === node.id){ continue; }
+      }
+      this.secondary_centres.push(node);      
+    }
 
-    // this.river_points.push(p);
-    // this.river_points.push(q);
-    // this.river_points.push(r);
+    for(let i = 0; i < this.foci.length; i++){
+      let f = this.foci[i];
+      let node = this.graph.find_node_by_position(f);
+      if(node.degree < 2){ continue; }
+      this.centres.push(node);      
+    }
 
-    this.centres.push(p);
-    this.centres.push(r);
-    this.centres.push(s);
-    this.centres.push(t);
-    this.centres.push(u);
-    this.centres.push(v);
-    this.centres.push(x);
-    // this.centres.push(r);
-    // this.centres.push(s);
-    // this.centres.push(t);
-    // this.centres.push(potential_centres[8]);
-    // this.centres.push(potential_centres[7]);
-    // this.centres.push(d);
-    this.secondary_centres.push(a);
-    this.secondary_centres.push(b);
-    this.secondary_centres.push(c);
-    this.secondary_centres.push(d);
-    this.secondary_centres.push(e);
-    this.secondary_centres.push(f);
-    this.secondary_centres.push(g);
-    this.secondary_centres.push(h);
-    this.secondary_centres.push(i);
-    this.secondary_centres.push(j);
-    this.secondary_centres.push(k);
-    this.secondary_centres.push(l);
-    this.secondary_centres.push(m);
-    this.secondary_centres.push(n);
+    for(let i = 0; i < this.secondary_graph.nodes.length; i++){
+      let node = this.secondary_graph.nodes[i];
+      if(node.degree < 6) {continue; }
+      let found = false;
+      for(let other of this.secondary_centres){
+        if(other.id === node.id){ continue }
+        let d = p5.Vector.dist(node.position, other.position);
+        if(d < 100){ found = true; break; }
+      }
+      if(found) { continue; }
+        
+      this.secondary_centres.push(node);
+    }
 
-    // this.secondary_centres.push(e);
-    // this.secondary_centres.push(f);
-    // this.secondary_centres.push(g);
-    // this.secondary_centres.push(h);
-    // this.secondary_centres.push(i);
-    // this.secondary_centres.push(j);
+
 
     
-
-    // this.foci.push(a.position);
-    // this.foci.push(n.position);
   }
 
   create_connected_network(points, graph){
-    let routes = []
+    let paths = []
     for(let i = 0; i < points.length; i++){
       let centre = points[i];
       for(let j = i + 1; j < points.length; j++){
         let other = points[j];
-        let route = graph.shortest(centre, other);
-        if(route.length > 0){
-          routes.push(route);
-        }
+        let path = graph.shortest(centre, other);
+        if(path) { paths.push(path) };
       }
     }
-    return routes
+    return paths
   }
 
   create_paths(points, graph, min_length = 3){
-    let routes = this.create_connected_network(points, graph);
+    let paths = this.create_connected_network(points, graph);
     
     // let a = points[0];
     // let b = points[1];
@@ -164,24 +134,24 @@ class Scene {
     // r5 = graph.shortest(c, d);
 
       
-    // routes = [r0, r1, r2, r3, r4, r5];
+    // paths = [r0, r1, r2, r3, r4, r5];
 
-    // Create a connected network of routes, this is all the possible combinations of routes
+    // Create a connected network of paths, this is all the possible combinations of paths
     // Put these in a queue
-    // Pop the first route and push to the finalised routes
-    // Pop a route in the queue
-    // For each finalised route, if this route doesn't intersect it, find_intersections will return an array with one element
+    // Pop the first path and push to the finalised paths
+    // Pop a path in the queue
+    // For each finalised path, if this path doesn't intersect it, find_intersections will return an array with one element
     // If it does intersect, then we shift all the intersections into the top of the queue, and break, starting the queue again
-    // If we get to the end of checking this route against the finalised routes, 
+    // If we get to the end of checking this path against the finalised paths, 
     // More work is needed however, because I still see overlaps
 
     let final = [];
-    if(routes.length == 0){ return final; }
+    if(paths.length == 0){ return final; }
     
-    let queue = routes
+    let queue = paths
     let r0 = queue[0]
     let r1 = queue[1];
-    console.log("Routes", routes)
+    console.log("Paths", paths)
     let r0r1 = this.find_intersections(r1, r0);
 
     // if r0r1 length == 1 then add
@@ -196,7 +166,7 @@ class Scene {
         let intersections = this.find_intersections(other, current);
         console.log("intersections", intersections);
         if(intersections.length == 0){
-          // all points in current are in other, so we can skip this route
+          // all points in current are in other, so we can skip this path
           console.log("intersections empty");
           current = [];
           break;
@@ -212,7 +182,7 @@ class Scene {
       }
 
       console.log("-------------------------------------------------------")
-      console.log("Current route", current);
+      console.log("Current path", current);
       if(current.length > min_length){
         console.log("ADDDING", current);
         final.push(current);
@@ -447,7 +417,7 @@ class Scene {
     let points = [top_left, top_right, bottom_right, bottom_left];
     let bg = new MultiPolygon(points, 'countryside');
     
-    this.farms = [bg];
+    this.lots = [bg];
     let unioned_roads = unionPolygons(this.roads)
     let new_bg = bg.difference(unioned_roads);
     this.polycircles = new_bg
@@ -561,13 +531,14 @@ class Scene {
     let midpoint = p5.Vector.add(p1, p2).mult(0.5);
 
     let stroke_width;
-    if (hierarchy_counter < 2 && edge_length > 300) {
-      stroke_width = 12;
+    let main_road = hierarchy_counter < 3 && edge_length > 300
+    if (main_road) {
+      stroke_width = MAJOR_ROAD;
       hierarchy_counter++;
     } else if (edge_length > 75) {
-      stroke_width = 8;
+      stroke_width = MINOR_ROAD;
     } else {
-      stroke_width = 4;
+      stroke_width = SIDE_ROAD;
     }
 
     // Compute the unit‐vector direction of the longest edge,
@@ -610,7 +581,11 @@ class Scene {
         let Ar = junctures[j].point;
         let Br = junctures[j+1].point;
         let fitted_street = new Polyline([Ar, Br])
-        this.minor_road_lines.push(fitted_street);
+        if (main_road) {
+          this.main_road_lines.push(fitted_street);
+        } else {
+          this.minor_road_lines.push(fitted_street);
+        }
       }
     }
 

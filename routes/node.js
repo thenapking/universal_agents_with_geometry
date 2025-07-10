@@ -4,9 +4,8 @@ class Node {
   constructor(x, y) {
     this.id = Node.id++; 
     this.position = createVector(x,y);
-    this.community_id = -1; // Default community ID
-    this.members; // Members of the community
     this.radius = 5
+    this.degree = 0;
   }
 
   distance(other) {
