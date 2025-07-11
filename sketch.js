@@ -25,6 +25,7 @@ let MAX_LOT_SIZE = 4000;
 let MAJOR_ROAD = 16;
 let MINOR_ROAD = 8;
 let SIDE_ROAD = 4;
+let ROAD_CURVINESS = 0.35 // between 0.25 and 0.5
 
 let MINOR_ROAD_LENGTH = 75
 let MAJOR_ROAD_LENGTH = 300;
@@ -69,12 +70,11 @@ function setup(){
   frameRate(30);
 
   scene = new Scene()
-  // scene.draw();
-  // draw_edges();
 }
 
 let ctx = 0;
 function draw(){
+  // debug_housing();
   // test_draw(scene.roads, ctx);
   final_draw();
 }
@@ -82,6 +82,19 @@ function draw(){
 function draw_edges(){
   scene.graph.draw_edges()
   scene.secondary_graph.draw_edges()
+}
+
+let polyCircleA;
+function debug_housing(){
+  polyCircleA = new Oblong(W/4, H/6, 20, 10);
+  // polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 4);  
+  fill_object = new Housing(polyCircleA);
+  stroke(255,0,0)
+  polyCircleA.draw();
+  stroke(0)
+  fill_object.construct();
+  fill_object.draw();
+  noLoop();
 }
 
 function test_draw(collection){
@@ -154,10 +167,15 @@ function draw_road_lines(){
   push()
     noFill();
     stroke(palette.white);
+    // strokeWeight(1);
+    // for(let r of scene.street_road_lines){
+    //   r.draw()
+    // }
+    strokeWeight(2);
     for(let r of scene.minor_road_lines){
       r.draw()
     }
-    strokeWeight(4);
+    strokeWeight(6);
     for(let r of scene.major_road_lines){
       r.draw()
     }

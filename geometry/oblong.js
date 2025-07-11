@@ -1,4 +1,4 @@
-class Oblong extends Polygon {
+class Oblong extends MultiPolygon {
   constructor(x, y, width, height) {
     
 

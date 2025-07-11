@@ -18,7 +18,7 @@ class Path {
   }
 
   to_polyline(stroke_width, filter){
-    let polyline = new Polyline(this.points).to_bezier(60)
+    let polyline = new Polyline(this.points).to_bezier(60, ROAD_CURVINESS)
     if(!filter){ return polyline }
     
     return polyline.filter(stroke_width*2);
@@ -56,7 +56,7 @@ class Path {
 
   // this splits path b into subsections which are not included in a
   find_forward_intersections(other){
-    console.log("--------Finding intersections");
+    // console.log("--------Finding intersections");
     let a = other.nodes
     let b = this.nodes;
 
@@ -78,8 +78,8 @@ class Path {
       }
     }
 
-    console.log("Found intersections at indices:")
-    console.log(ia, ib)
+    // console.log("Found intersections at indices:")
+    // console.log(ia, ib)
 
 
     // only one intersection
@@ -153,7 +153,7 @@ class Path {
       let end = indices[1];
 
       let new_route = this.slice(start, end + 1);
-      console.log("potential subsequence", new_route);
+      // console.log("potential subsequence", new_route);
 
       let found_start = false;
       let found_end = false;

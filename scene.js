@@ -12,8 +12,12 @@ class Scene {
     this.sectors = [];
     this.potential_coffers = [];
 
-    this.centres = [];
-    this.secondary_centres = [];  
+    this.major_points = [];
+    this.minor_points = [];  
+
+    this.major_road_lines = [];
+    this.minor_road_lines = [];
+    this.street_road_lines = []
 
     this.offscreen_points = [];
     this.offscreen_lines = [];
@@ -21,8 +25,8 @@ class Scene {
     this.roads = [];
     this.lots = []
 
-    this.graph = new Graph(edges, nodes);
-    this.secondary_graph = new Graph(minor_edges, minor_nodes);
+    this.major_graph = new Graph(edges, nodes);
+    this.minor_graph = new Graph(minor_edges, minor_nodes);
     this.initialize();
   }
 
@@ -31,10 +35,10 @@ class Scene {
     this.create_foci();
     this.create_roads()
 
-    // this.create_lots();
-    // this.subdivide_lots();
+    this.create_lots();
+    this.subdivide_lots();
 
-    // this.create_coffers()
+    this.create_coffers()
   }
 
   onscreen(position){
@@ -57,56 +61,56 @@ class Scene {
       this.foci.push(position);
     }
     
-    for(let i = 0; i < this.graph.nodes.length; i++){
-      let node = this.graph.nodes[i];
+    for(let i = 0; i < this.major_graph.nodes.length; i++){
+      let node = this.major_graph.nodes[i];
       if(node.degree > 1) {continue; }
       if(this.onscreen(node.position)){ continue; }
-      this.centres.push(node);
+      this.major_points.push(node);
     }
 
     for(let i = 0; i < this.foci.length; i++){
       let f = this.foci[i];
-      let node = this.secondary_graph.find_node_by_position(f);
+      let node = this.minor_graph.find_node_by_position(f);
       if(node.degree < 2){ continue; }
-      for(let other of this.secondary_centres){
+      for(let other of this.minor_points){
         if(other.id === node.id){ continue; }
       }
-      this.secondary_centres.push(node);      
+      this.minor_points.push(node);      
     }
 
     for(let i = 0; i < this.foci.length; i++){
       let f = this.foci[i];
-      let node = this.graph.find_node_by_position(f);
+      let node = this.major_graph.find_node_by_position(f);
       if(node.degree < 2){ continue; }
-      this.centres.push(node);      
+      this.major_points.push(node);      
     }
 
-    for(let i = 0; i < this.secondary_graph.nodes.length; i++){
-      let node = this.secondary_graph.nodes[i];
+    for(let i = 0; i < this.minor_graph.nodes.length; i++){
+      let node = this.minor_graph.nodes[i];
       if(node.degree < 6) {continue; }
       let found = false;
-      for(let other of this.secondary_centres){
+      for(let other of this.minor_points){
         if(other.id === node.id){ continue }
         let d = p5.Vector.dist(node.position, other.position);
         if(d < SECONDARY_DENSITY){ found = true; break; }
       }
       if(found) { continue; }
         
-      this.secondary_centres.push(node);
+      this.minor_points.push(node);
     }
   }
 
   create_roads(){
     console.log("Creating major roads")
 
-    this.major_shortest_paths = this.create_shortest_paths(this.centres, this.graph);
+    this.major_shortest_paths = this.create_shortest_paths(this.major_points, this.major_graph);
     this.major_paths = create_paths(this.major_shortest_paths);
     this.major_roads = this.paths_to_roads(this.major_paths, INTERCITY_ROAD);
     this.major_road_lines = this.paths_to_roads(this.major_paths);
 
     console.log("Creating minor roads")
 
-    this.minor_shortest_paths = this.create_shortest_paths(this.secondary_centres, this.secondary_graph);
+    this.minor_shortest_paths = this.create_shortest_paths(this.minor_points, this.minor_graph);
     this.minor_paths = create_paths(this.minor_shortest_paths);
     this.minor_roads = this.paths_to_roads(this.minor_paths, 8);
     this.minor_road_lines = this.paths_to_roads(this.minor_paths);
@@ -285,7 +289,6 @@ class Scene {
   }
 
   join_dangling_streets(polygon, line, edge_length, major_road){
-    if (edge_length < 75) { return }
     let junctures = polygon.intersect_polyline(line);
 
     for(let j = 0; j < junctures.length-1; j+=2){
@@ -321,8 +324,10 @@ class Scene {
       this.road_lines.push(fitted_street);
       if (major_road) {
         this.major_road_lines.push(fitted_street);
-      } else {
+      } else if(edge_length > MINOR_ROAD_LENGTH) {
         this.minor_road_lines.push(fitted_street);
+      } else {
+        this.street_road_lines.push(fitted_street);
       }
     }
   }
@@ -396,34 +401,3 @@ class Scene {
 
 
 
-////////////////////////////////////////////////////////////////
-let polylines = []
-let poly_road;
-let polygonA, polygonB, polylineA, polylineB, polyCircle;
-let polyOuter, polyInner;
-
-
-
-
-
-////////////////////////////////////////////////////////////////
-
-
-function k_combinations(arr, k) {
-  let result = [];
-
-  function combine(temp = [], start = 0) {
-    if (temp.length === k) {
-      result.push([...temp]);
-      return;
-    }
-    for (let i = start; i < arr.length; i++) {
-      temp.push(arr[i]);
-      combine(temp, i + 1);
-      temp.pop();
-    }
-  }
-
-  combine();
-  return result;
-}

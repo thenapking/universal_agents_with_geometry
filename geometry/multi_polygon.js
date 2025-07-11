@@ -101,6 +101,27 @@ class MultiPolygon {
     return new MultiPolygon([points], this.type, this.parent);
   }
 
+  is_convex(){
+    if(this.outer.length < 3) { return false; }
+    let sign = 0;
+    for(let i = 0; i < this.outer.length; i++){
+      let a = this.outer[i];
+      let b = this.outer[(i + 1) % this.outer.length];
+      let c = this.outer[(i + 2) % this.outer.length];
+
+      let cross = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+      if(cross === 0) continue; // collinear points
+      if(sign === 0) {
+        sign = Math.sign(cross);
+      } else if(Math.sign(cross) !== sign) {
+        return false; // found a concave angle
+      }
+    }
+    return true;
+  }
+
+  is_concave(){ return !this.is_convex() }
+
   // AREA and other geometry methods
   max_diameter(points = this.outer) {
     let max_dist = 0;
