@@ -159,12 +159,11 @@ class Polyline {
     return new Polyline(points);
   }
 
-  // this may not handle multiple clipping points
   clip(polygon) {
     // Duplicate the line so new junctures can be found
     let new_line = new Polyline(this.points);
     const junctures = polygon.intersect_polyline(new_line);
-    console.log("Junctures found:", junctures);
+
     if (junctures.length === 0) {
       return this.points.every(p => polygon.contains(p)) ? [this] : [];
     }
@@ -182,17 +181,13 @@ class Polyline {
       }
     }
 
-
-
     let lines = []
     
     let jn = floor(junctures.length/2) * 2
     for(let i = 0; i < jn; i++) {
       let piece = [];
-      console.log("IM A NONCE")
       let start = junctures[i];
       let end = junctures[i + 1];
-      console.log(i, start, end)
 
       if(!start || !end) continue; 
       let midpoint = createVector(
@@ -200,24 +195,21 @@ class Polyline {
         (start.point.y + end.point.y) / 2
       );
       let inside = polygon.contains(midpoint)
-      if(inside){
-        console.log("Inside polygon, starting at juncture:", start.point);
-        piece.push(start.point);
-        let segment = start.polyline;
-        console.log("End index", end.polyline.index)
-        while(segment && segment.index != end.polyline.index) {
-          let next_segment = segment.next;
-          if (!next_segment) break;
-          console.log("Adding", next_segment.index, "to piece");
-          piece.push(next_segment.start);
-          segment = next_segment;
-        }
-
+      if(!inside){ continue }
+      piece.push(start.point);
+      let segment = start.polyline;
+      while(segment && segment.index != end.polyline.index) {
+        let next_segment = segment.next;
+        if (!next_segment) break;
+        piece.push(next_segment.start);
+        segment = next_segment;
       }
+      piece.push(end.point);
 
       let new_line = new Polyline(piece);
       lines.push(new_line);
     }
+
 
     return lines; 
   }

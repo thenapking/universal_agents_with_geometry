@@ -77,9 +77,11 @@ function setup(){
 
 let ctx = 0;
 function draw(){
+  // debug_housing();
   // test_draw(scene.roads, ctx);
   final_draw();
   // clip_road_test(5)
+  
 }
 
 function draw_edges(){
@@ -99,17 +101,17 @@ function debug_housing(){
   ]
 
       
-
+  console.log("Housin")
   polyCircleA = new MultiPolygon(points);
   // polyCircleA = new Oblong(W/4, H/6, 20, 10);
   // polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 4);  
-  fill_object = new Housing(polyCircleA);
+  fill_object = new Terrace(polyCircleA);
   stroke(255,0,0)
   polyCircleA.draw();
   stroke(0)
   fill_object.construct();
-  // fill_object.draw();
-  // noLoop();
+  fill_object.draw();
+  noLoop();
 }
 
 let lo, lp, lr;

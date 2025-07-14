@@ -40,8 +40,8 @@ class Coffer {
     let near_centre = random() < 1 - (d / 200)
 
     this.fill_type = 'blank'
-    if(d < 100 && this.is_trapezoid()) { this.fill_type = 'houses'}
-    if(d < 200 && near_centre && this.is_trapezoid()) { this.fill_type = 'houses'}
+    if(d < 100 && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    if(d < 200 && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
     if(d < 200 && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
     if(d < 200 && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
     if(this.fill_type == 'civic') { total_civic_count++ }
@@ -81,8 +81,8 @@ class Coffer {
       this.fill_object.construct();
     }
 
-    if(this.fill_type == 'houses'){
-      this.fill_object = new Housing(this.polygon);
+    if(this.fill_type == 'terraces'){
+      this.fill_object = new Terrace(this.polygon);
       this.fill_object.construct();
     }
 

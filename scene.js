@@ -44,9 +44,9 @@ class Scene {
     this.create_roads()
 
     this.create_lots();
-    // this.subdivide_lots();
+    this.subdivide_lots();
 
-    // this.create_coffers()
+    this.create_coffers()
   }
 
   onscreen(position){

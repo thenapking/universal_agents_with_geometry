@@ -12,7 +12,9 @@ class Civic {
   }
 
   outline_fill(){
-    this.inner_polygon = this.polygon.scale(random(0.6, 0.7));
+    this.inner_polygon = this.polygon.scale(random(0.65, 0.8));
+    this.hatch = new Hatching(this.inner_polygon, 5, 'downwards');
+    this.hatch.hatch('downwards');
   }
 
   hatched_fill(){
