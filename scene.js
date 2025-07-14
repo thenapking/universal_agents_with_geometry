@@ -114,14 +114,14 @@ class Scene {
     this.intercity_shortest_paths = this.create_shortest_paths(this.intercity_points, this.intercity_graph);
     this.intercity_paths = create_paths(this.intercity_shortest_paths);
     this.intercity_roads = this.paths_to_roads(this.intercity_paths, INTERCITY_ROAD);
-    this.intercity_road_lines = this.paths_to_roads(this.intercity_paths);
+    this.intercity_road_lines = this.paths_to_lines(this.intercity_paths);
 
     console.log("Creating minor roads")
 
     this.minor_shortest_paths = this.create_shortest_paths(this.minor_points, this.minor_graph);
     this.minor_paths = create_paths(this.minor_shortest_paths);
     this.minor_roads = this.paths_to_roads(this.minor_paths, 8);
-    this.minor_road_lines = this.paths_to_roads(this.minor_paths);
+    this.minor_road_lines = this.paths_to_lines(this.minor_paths);
 
     this.roads = this.intercity_roads.concat(this.minor_roads)
     this.road_lines = this.intercity_road_lines.concat(this.minor_road_lines)
@@ -145,6 +145,18 @@ class Scene {
     for(let path of paths){
       let road = path.to_polygon(sw, filter);
       roads.push(road);
+    }
+    
+    return roads;
+  }
+
+  paths_to_lines(paths, sw = 0, filter = false){
+    let roads = []
+    for(let path of paths){
+      let clipped_paths = path.to_polyline(sw, filter).clip(this.bounding_box);
+      for(let clipped_path of clipped_paths){
+        roads.push(clipped_path);
+      }
     }
     
     return roads;

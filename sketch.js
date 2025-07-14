@@ -56,7 +56,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(14)
+  load_data(16)
 }
 
 function setup(){
@@ -77,9 +77,9 @@ function setup(){
 
 let ctx = 0;
 function draw(){
-  // test_draw(fill_object.houses, ctx);
+  // test_draw(scene.roads, ctx);
   final_draw();
-  clip_road_test()
+  // clip_road_test()
 }
 
 function draw_edges(){
@@ -212,6 +212,7 @@ function draw_road_lines(){
 function default_setup(){
   background(palette.background);
   stroke(palette.black);
+  strokeCap(SQUARE);  
   strokeWeight(1);
   fill(palette.background);
 }
