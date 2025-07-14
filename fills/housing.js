@@ -1,7 +1,9 @@
-const HOUSE_MIN = 3;
-const HOUSE_MAX = 4;
-const HOUSE_MIN_DIV = 8;
-const HOUSE_MAX_DIV = 10;
+const HOUSE_MIN = 6;
+const HOUSE_MAX = 10;
+const HOUSE_MIN_DIV = 6;
+const HOUSE_MAX_DIV = 8;
+
+//  TODO - some clean up required
 class Housing {
   constructor(polygon) {
     this.polygon = polygon.outer.length > 5 ? polygon.simplify(3) : polygon;
@@ -188,8 +190,7 @@ class Housing {
     if(this.walls.length < 3){ return }
 
     push();
-      noFill()
-      stroke(0,255,0)
+      noFill();
       for (let wall of this.walls) {
         wall.draw();
       }

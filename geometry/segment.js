@@ -170,6 +170,12 @@ class Segment {
     return p5.Vector.dist(point, pb);
   }
 
+  parallel(other, tolerance = 1e-6) {
+    const v1 = this.to_v()
+    const v2 = other.to_v()
+    return Math.abs(cross(v1, v2)) < tolerance;
+  }
+
   sort() {
     this.junctures.sort((a, b) => {
       const distanceA = p5.Vector.dist(a.point, this.start);

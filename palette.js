@@ -64,6 +64,8 @@ let palettes = {
   "Light Cherry": {background: "#F8ECE7", strength: "2.5", black: "#BE1340", white: "#FFFFFF"},
   "Burnt Orange Ink": {background: "#F8ECE7", strength: "2.5", black: "#F77331", white: "#FFFFFF"},
   "Fabricworm": {background: "#e9e7e8", black: "#474246", white: "#FFFFFF", colours:[ "#aaafc5", "#d97d5f", "#cec7bf", "#b7b0a5", "#8b838b", "#79758a"]},
+  "MultiTest": {background: "#f4ecf1", strength: "2.5", black: "#FFFFF", white: "#FFFFFF", 
+  colours:["#485f8b", "#632c72", "#e99d29", "#4794a2", "#474246"]},
 };
 
 

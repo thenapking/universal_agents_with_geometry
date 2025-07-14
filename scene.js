@@ -5,6 +5,7 @@ const THINNESS_THRESHOLD = 0.26;
 const SECONDARY_DENSITY = 100;
 class Scene {
   constructor(){
+    this.bounding_box = new Oblong(MBW+BW, MBW+BW, W, H)
     this.foci =  [];
     this.focus = this.foci[0] 
     this.points = [];
@@ -12,12 +13,19 @@ class Scene {
     this.sectors = [];
     this.potential_coffers = [];
 
+    this.intercity_points = [];
     this.major_points = [];
     this.minor_points = [];  
 
+    this.intercity_road_lines = [];
     this.major_road_lines = [];
     this.minor_road_lines = [];
     this.street_road_lines = []
+
+    this.intercity_roads = [];
+    this.major_roads = [];
+    this.minor_roads = [];
+    this.street_roads = [];
 
     this.offscreen_points = [];
     this.offscreen_lines = [];
@@ -25,7 +33,7 @@ class Scene {
     this.roads = [];
     this.lots = []
 
-    this.major_graph = new Graph(edges, nodes);
+    this.intercity_graph = new Graph(edges, nodes);
     this.minor_graph = new Graph(minor_edges, minor_nodes);
     this.initialize();
   }
@@ -61,11 +69,11 @@ class Scene {
       this.foci.push(position);
     }
     
-    for(let i = 0; i < this.major_graph.nodes.length; i++){
-      let node = this.major_graph.nodes[i];
+    for(let i = 0; i < this.intercity_graph.nodes.length; i++){
+      let node = this.intercity_graph.nodes[i];
       if(node.degree > 1) {continue; }
       if(this.onscreen(node.position)){ continue; }
-      this.major_points.push(node);
+      this.intercity_points.push(node);
     }
 
     for(let i = 0; i < this.foci.length; i++){
@@ -80,9 +88,9 @@ class Scene {
 
     for(let i = 0; i < this.foci.length; i++){
       let f = this.foci[i];
-      let node = this.major_graph.find_node_by_position(f);
+      let node = this.intercity_graph.find_node_by_position(f);
       if(node.degree < 2){ continue; }
-      this.major_points.push(node);      
+      this.intercity_points.push(node);      
     }
 
     for(let i = 0; i < this.minor_graph.nodes.length; i++){
@@ -103,10 +111,10 @@ class Scene {
   create_roads(){
     console.log("Creating major roads")
 
-    this.major_shortest_paths = this.create_shortest_paths(this.major_points, this.major_graph);
-    this.major_paths = create_paths(this.major_shortest_paths);
-    this.major_roads = this.paths_to_roads(this.major_paths, INTERCITY_ROAD);
-    this.major_road_lines = this.paths_to_roads(this.major_paths);
+    this.intercity_shortest_paths = this.create_shortest_paths(this.intercity_points, this.intercity_graph);
+    this.intercity_paths = create_paths(this.intercity_shortest_paths);
+    this.intercity_roads = this.paths_to_roads(this.intercity_paths, INTERCITY_ROAD);
+    this.intercity_road_lines = this.paths_to_roads(this.intercity_paths);
 
     console.log("Creating minor roads")
 
@@ -115,8 +123,8 @@ class Scene {
     this.minor_roads = this.paths_to_roads(this.minor_paths, 8);
     this.minor_road_lines = this.paths_to_roads(this.minor_paths);
 
-    this.roads = this.major_roads.concat(this.minor_roads)
-    this.road_lines = this.major_road_lines.concat(this.minor_road_lines)
+    this.roads = this.intercity_roads.concat(this.minor_roads)
+    this.road_lines = this.intercity_road_lines.concat(this.minor_road_lines)
   }
 
   create_shortest_paths(points, graph){
@@ -178,6 +186,7 @@ class Scene {
       }
     }
 
+    results = shuffle(results)
     for(let p of results){
       let centroid = p.centroid();
       let nearest = this.foci[0];
@@ -232,7 +241,7 @@ class Scene {
       return [polygon];
     }
    
-    if(area > CIVIC && area < MAX_LOT_SIZE && random(1) < 0.1 && counter > 0){
+    if(area > CIVIC && area < MAX_LOT_SIZE && random(1) < CIVIC_PROBABILITY && counter > 0){
       return [polygon]
     }
 
@@ -387,7 +396,7 @@ class Scene {
       draw_grid(DPI/4);
 
       translate(BW + MBW, BW + MBW);
-      rect(W/2, H/2, W, H);
+      this.bounding_box.draw();
     pop();
   }
 

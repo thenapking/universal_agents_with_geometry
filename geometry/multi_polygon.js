@@ -1,5 +1,5 @@
 const SCALE = 10000000; // precision scale factor for integer coords
-
+// TODO: remove types
 class MultiPolygon {
   static next_id = 1;
   constructor(points, type, parent) {
@@ -644,63 +644,4 @@ class MultiPolygon {
   }
 }
 
-
-function multi_disjoint(polygons) {
-  const n = polygons.length;
-  const pieces = [];
-  const piece_cache = new Map();
-  
-
-  for (let i = 1; i < (1 << n); i++) {
-    const k = lowest_index(i);
-    const j = i & ~(1 << k);
-
-    let cached_fragments = j === 0 ? [polygons[k]] : piece_cache.get(j);
-    if (!cached_fragments || cached_fragments.length === 0) continue;
-
-    let new_fragments = [];
-
-    const polygon = polygons[k];
-
-    for (let fragment of cached_fragments) {
-      if (!polygon.intersects_bounds(fragment)) continue;
-
-      const result = fragment.intersection(polygon);
-      if (result) new_fragments.push(...result);
-    }
-
-    if (new_fragments.length > 0) {
-      piece_cache.set(i, new_fragments);
-
-      // subtract excluded polygons
-      let excluded = [];
-      for (let m = 0; m < n; m++) {
-        if ((i & (1 << m)) === 0) excluded.push(polygons[m]);
-      }
-
-      for (let piece of excluded) {
-        const differences = [];
-        for (let fragment of new_fragments) {
-          if (!piece.intersects_bounds(fragment)) {
-            differences.push(fragment);
-            continue;
-          }
-          const diff = fragment.difference(piece);
-          if (diff) differences.push(...diff);
-        }
-        new_fragments = differences;
-      }
-
-      pieces.push(...new_fragments.filter(f => !f.is_zero_area?.()));
-    }
-  }
-
-  return pieces;
-}
-
-
-
-function lowest_index(mask) {
-  return Math.log2(mask & -mask); // gets position of least significant 1
-}
 

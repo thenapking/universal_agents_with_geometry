@@ -120,7 +120,7 @@ class Polyline {
     return new MultiPolygon(points);
   }
 
-  // do we need to resample the interpolated points to make sure they are even?
+  // TODO: do we need to resample the interpolated points to make sure they are even?
   to_bezier(detail = 10, curviness = 0.5) {
     let points = [this.points[0]];
   
@@ -152,7 +152,6 @@ class Polyline {
     return new Polyline(points);
   }
 
-  
   // apply a moving average filter 
   filter(windowSize) {
     let points = moving_average(this.points, windowSize);
@@ -160,8 +159,81 @@ class Polyline {
     return new Polyline(points);
   }
 
+  clip(polygon) {
+    const polyline = new Polyline(this.points); // copy to avoid mutation
+    const junctures = polygon.intersect_polyline(polyline);
+    if (junctures.length === 0) {
+      return this.points.every(p => polygon.contains(p)) ? [polyline] : [];
+    }
+    
+    const segments = [];
+
+    let inside = polygon.contains(polyline.points[0]);
+
+    // TODO: This didn't work
+    if (inside) {
+      let piece = [polyline.points[0].copy()];
+
+      let segment = polyline.first();
+      let safety = 0;
+
+      while (segment && safety++ < 1000) {
+        // walk to next juncture
+        segment = this.walk(segment, piece, 'with');
+        if (!segment) break;
+
+        // check for next juncture
+        if (segment.junctures.length > 0) {
+          const next_juncture = segment.junctures[0];
+          next_juncture.increment();
+          piece.push(next_juncture.point.copy());
+          inside = polygon.contains(next_juncture.point);
+          continue;
+        }
+
+        piece.push(segment.end.copy());
+      }
+    }
   
+    for (let juncture of junctures) {
+      if (juncture.visits > 0) continue;
+    
+      if(!inside) {
+        inside = !inside;
+        continue;
+      }
+      let piece = [juncture.point.copy()];
+      juncture.increment();
   
+      let segment = juncture.polyline;
+      let safety = 0;
+  
+      while (segment && safety++ < 1000) {
+        // walk to next segment
+        segment = segment.next;
+        if (!segment) break;
+  
+        // check for next juncture
+        if (segment.junctures.length > 0) {
+          const next_junction = segment.junctures[0];
+          next_junction.increment();
+          piece.push(next_junction.point.copy());
+          break;
+        }
+  
+        piece.push(segment.end.copy());
+      }
+  
+      if (piece.length >= 2) {
+        segments.push(new Polyline(piece));
+      }
+    }
+  
+    return segments;
+  }
+  
+
+
   intersects(other){
     for (let segment of this.segments) {
       for (let other_segment of other.segments) {
@@ -187,7 +259,7 @@ class Polyline {
     return intersections;
   }
 
-  // This is not perfect
+  // TODO: self intersections remain after this
   remove_self_intersections() {
     let new_segments = [];  
     let points = [];
@@ -212,7 +284,7 @@ class Polyline {
     return new Polyline(points);
   }
 
-
+  // FUNCTIONS TO split a polygon by a line
   walk(juncture, piece, direction) {
     let next = juncture.polyline;
 
