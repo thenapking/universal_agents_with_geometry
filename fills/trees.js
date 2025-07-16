@@ -1,7 +1,9 @@
 class Trees{
-  constructor(polygon) {
+  constructor(polygon, inner = true) {
     this.polygon = polygon;
     this.inner_polygon = this.polygon.scale(0.65);
+    this.outer_polygon = polygon.difference(this.inner_polygon)[0];
+    this.inner = inner;
     this.circles = [];
     this.bounds = this.polygon.bounds();
     const [minX, minY, maxX, maxY] = this.bounds;
@@ -29,8 +31,11 @@ class Trees{
           break;
         }
       }
-      if(!intersects && this.inner_polygon.contains(p)){
+      let condition = this.inner ? 
+        this.inner_polygon.contains(p) : 
+        this.outer_polygon.contains(p);
 
+      if(!intersects && condition){
         dropped = 0;
         trees.push(p);
         this.circles.push({x: p.x, y: p.y, r: rad});

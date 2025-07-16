@@ -1,10 +1,14 @@
 class Terrace {
   constructor(polygon) {
-    this.polygon = polygon.outer.length > 5 ? polygon.simplify(3) : polygon;
+    this.set_back = polygon.area() > 600 && (random() < 0.2); 
+    this.polygon = this.set_back ? polygon.scale(0.5) : polygon; 
+    this.outer_polygon = this.set_back ? polygon.difference(this.polygon)[0] : polygon;
     this.bounds = this.polygon.bounds();
-    this.centroid = this.polygon.centroid(); // your class should define this
+    this.centroid = this.polygon.centroid(); 
 
     this.lines = []
+
+    
   }
 
   construct(){
@@ -14,7 +18,7 @@ class Terrace {
     let dir = p5.Vector.sub(p2, p1).normalize();
     let perp = createVector(-dir.y, dir.x); // perpendicular direction
 
-    let center = this.polygon.centroid(); // Assume you have this
+    let center = this.polygon.centroid(); 
 
     let line_half_length = FW;
     let a = p5.Vector.sub(center, p5.Vector.mult(dir, line_half_length));
@@ -28,12 +32,18 @@ class Terrace {
     for(let i = 1; i < n; i++){
       let start = centre_line.points[0].copy()
       let end = centre_line.points[centre_line.points.length - 1].copy()
-      let pos = start.lerp(end, i/n); // midpoint of the line
+      let pos = start.lerp(end, i/n); 
       let c = p5.Vector.add(pos, p5.Vector.mult(perp, line_half_length));
       let d = p5.Vector.sub(pos, p5.Vector.mult(perp, line_half_length));
       let pl2 = new Polyline([c, d])
       pl2 = pl2.clip(this.polygon);
       this.lines.push(pl2[0]);
+    }
+
+    // Create the garden polygon
+    if(this.set_back) {
+      this.garden = new Trees(this.outer_polygon, false);
+      this.garden.construct();
     }
   }
 
@@ -45,6 +55,10 @@ class Terrace {
 
   draw(){
     push()
+      if(this.set_back) { 
+        this.polygon.draw(); 
+        this.garden.draw(false)
+      }
       for (let l of this.lines) {
         l.draw();
       }

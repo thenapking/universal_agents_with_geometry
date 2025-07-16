@@ -1,7 +1,9 @@
 class Hatching {
-  constructor(polygon, spacing){
+  constructor(polygon, spacing, dash = 0, gap = 0) {
     this.polygon = polygon;
     this.spacing = spacing || 10; // Default spacing of 10
+    this.dash = dash;
+    this.gap = gap ;
     this.polylines = []
     this.junctures = [];
     this.bounds = this.polygon.bounds();
@@ -43,7 +45,7 @@ class Hatching {
         this.upwards();
         break;
     }
-    this.find_junctures();
+    this.construct();
   }
 
   find_junctures() {  
@@ -66,6 +68,17 @@ class Hatching {
         }
       }
     }
+  }
+
+  construct(){
+    this.lines = []
+    for(let polyline of this.polylines){
+      let results = polyline.clip(this.polygon);
+      for(let result of results){
+        this.lines.push(result);
+      }
+    }
+
   }
 
   horizontal() {
@@ -97,22 +110,18 @@ class Hatching {
 
   }
 
-  draw(debug = false) {
-    if(debug){
-      stroke(255, 0, 0)
-      noFill(); 
-      rectMode(CORNERS);
-      rect(this.minX, this.minY, this.maxX, this.maxY);
-      for(let polyline of this.polylines){
-        polyline.draw();
-      }
-    }
-
+  draw() {
     push();
-    for(let j = 0; j < this.junctures.length; j+=2){
-      let start = this.junctures[j].point;
-      let end = this.junctures[j + 1].point;
-      line(start.x, start.y, end.x, end.y);
+    let start_dashed = true;
+
+    for(let line of this.lines) {
+
+      if(this.dash > 0) {
+        line.draw_dashed(this.dash, this.gap, start_dashed);
+        start_dashed = !start_dashed; 
+      } else {
+        line.draw();
+      }
     }
     pop();
   }

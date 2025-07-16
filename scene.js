@@ -35,7 +35,6 @@ class Scene {
 
     this.intercity_graph = new Graph(edges, nodes);
     this.minor_graph = new Graph(minor_edges, minor_nodes);
-    this.initialize();
   }
 
   initialize(){

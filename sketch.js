@@ -56,7 +56,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(14)
+  load_data(11)
 }
 
 function setup(){
@@ -72,14 +72,15 @@ function setup(){
   frameRate(10);
 
   scene = new Scene()
+  // scene.initialize()
 
 }
 
 let ctx = 0;
 function draw(){
-  // debug_housing();
+  debug_fills();
   // test_draw(scene.roads, ctx);
-  final_draw();
+  // final_draw();
   // clip_road_test(5)
   
 }
@@ -91,7 +92,7 @@ function draw_edges(){
 
 let polyCircleA, fill_object;
 
-function debug_housing(){
+function debug_fills(){
   let points = [
     createVector(255.40007714091817, 339.0843547),
     createVector(255.40007714091817, 348.9488567625),
@@ -101,7 +102,7 @@ function debug_housing(){
   ]
 
       
-  console.log("Housin")
+  console.log("START")
   polyCircleA = new MultiPolygon(points);
   // polyCircleA = new Oblong(W/4, H/6, 20, 10);
   // polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 4);  

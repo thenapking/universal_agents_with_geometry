@@ -13,6 +13,7 @@ let colours = ['brown', 'yellow', 'grey', 'pink', 'orange']
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
 let MAX_CIVIC = 20;
+let CENTRE_DIST = 100;
 let total_civic_count = 0;  
 let civil_statistics = {
   blank: 0, downwards: 0, upwards: 0, dots: 0, 
@@ -37,18 +38,18 @@ class Coffer {
     let centroid = this.polygon.centroid();
     let area = this.polygon.area();
     let d = p5.Vector.dist(centroid, this.focus);
-    let near_centre = random() < 1 - (d / 200)
+    let near_centre = random() < 1 - (d / CENTRE_DIST)
 
     this.fill_type = 'blank'
-    if(d < 100 && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    if(d < 200 && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    if(d < 200 && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
-    if(d < 200 && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
+    if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
+    if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
     if(this.fill_type == 'civic') { total_civic_count++ }
 
     // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
-    // if(d > 300 || area > MAX_LOT_SIZE){ this.fill_type = random(COUNTRY)}
+    if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = random(COUNTRY)}
     // if(d < 200 && near_centre ){ this.fill_type = 'houses'}
     if(area < 200 && random() < 0.1) { this.fill_type = random(SMALL) }
 
@@ -86,27 +87,28 @@ class Coffer {
       this.fill_object.construct();
     }
 
-    if(this.fill_type == 'dots' ) {
-      this.fill_object = new Regular(this.polygon, 5, this.fill_type, true);
-      this.fill_object.construct();
-    }
-
     if(this.fill_type == 'large-vertical-dashes' || 
        this.fill_type == 'large-horizontal-dashes') {
-      this.fill_object = new Regular(this.polygon, 12, this.fill_type, true);
-      this.fill_object.construct();
+      this.fill_object = new Hatching(this.polygon, 7, 9, 3);
     }
 
-
-    if(this.fill_type == 'large-dots' || 
-      this.fill_type == 'vertical-dashes' || 
+    if(this.fill_type == 'vertical-dashes' || 
       this.fill_type == 'horizontal-dashes') {
-      this.fill_object = new Regular(this.polygon, 7, this.fill_type, true);
-      this.fill_object.construct();
+      this.fill_object = new Hatching(this.polygon, 5, 5, 3);
+    }
+
+    if(this.fill_type == 'vertical-dashes' ||
+       this.fill_type == 'large-vertical-dashes'){
+      this.fill_object.hatch('vertical');
+    }
+
+    if(this.fill_type == 'horizontal-dashes' ||
+        this.fill_type == 'large-horizontal-dashes'){
+      this.fill_object.hatch('horizontal');
     }
 
     if(this.fill_type == 'downwards' || this.fill_type == 'upwards') {
-      this.fill_object = new Hatching(this.polygon, 5, this.fill_type);
+      this.fill_object = new Hatching(this.polygon, 5);
       this.fill_object.hatch(this.fill_type);
     }
 

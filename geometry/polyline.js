@@ -328,5 +328,49 @@ class Polyline {
     }
     endShape();
   }
+
+  draw_dashed(dash_length, gap_length, drawingDash = true) {
+    if (this.points.length < 2 || dash_length <= 0 || gap_length < 0) return;
+    
+    if(!gap_length) { gap_length = dash_length; }
+
+    let remaining = dash_length; // Length left in the current dash/gap
+    let i = 0;
+    let start = this.points[0].copy();
+  
+    while (i < this.points.length - 1) {
+      let a = start;
+      let b = this.points[i + 1];
+      let segment = p5.Vector.sub(b, a);
+      let segLength = segment.mag();
+  
+      if (segLength <= remaining) {
+        if (drawingDash) {
+          line(a.x, a.y, b.x, b.y);
+        }
+        remaining -= segLength;
+        start = b.copy();
+        i++;
+      } else {
+        let dir = segment.copy().normalize();
+        let next = p5.Vector.add(a, dir.mult(remaining));
+  
+        if (drawingDash) {
+          line(a.x, a.y, next.x, next.y);
+        }
+  
+        // Toggle dash/gap and reset remaining
+        drawingDash = !drawingDash;
+        remaining = drawingDash ? dash_length : gap_length;
+        start = next.copy();
+        // Stay on same segment
+      }
+    }
+  }
+  
+  
+  
+
+  
 }
 
