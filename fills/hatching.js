@@ -6,11 +6,11 @@ class Hatching {
     this.gap = gap ;
     this.polylines = []
     this.junctures = [];
-    this.bounds = this.polygon.bounds();
     this.set_bounds();
   }
 
   set_bounds() {
+    this.bounds = this.polygon.bounds();
     const [minX, minY, maxX, maxY] = this.bounds;
     this.minX = minX;
     this.minY = minY;

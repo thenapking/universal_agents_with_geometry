@@ -72,15 +72,15 @@ function setup(){
   frameRate(10);
 
   scene = new Scene()
-  // scene.initialize()
+  scene.initialize()
 
 }
 
 let ctx = 0;
 function draw(){
-  debug_fills();
+  // debug_fills();
   // test_draw(scene.roads, ctx);
-  // final_draw();
+  final_draw();
   // clip_road_test(5)
   
 }
@@ -101,12 +101,19 @@ function debug_fills(){
 
   ]
 
-      
+  let new_points = [
+    new p5.Vector(736.8697802113705, 173.937643275),
+    new p5.Vector(689.7395604227411, 173.937643275),
+    new p5.Vector(689.7395604227411, 120),
+    new p5.Vector(736.8697802113705, 120),
+  ];
+
+
   console.log("START")
-  polyCircleA = new MultiPolygon(points);
+  polyCircleA = new MultiPolygon(new_points);
   // polyCircleA = new Oblong(W/4, H/6, 20, 10);
-  // polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 4);  
-  fill_object = new Terrace(polyCircleA);
+  // polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 100);  
+  fill_object = new Contour(polyCircleA, 'upwards', 10);
   stroke(255,0,0)
   polyCircleA.draw();
   stroke(0)

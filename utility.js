@@ -95,9 +95,13 @@ function deterministic_shuffle(arr) {
 
 function set_seeds(){
   seed = Math.floor(Math.random() * 1000000);
-  console.log("seed = ", seed);
   // seed =  136482
-  seed =  250765
+  // seed =  250765
+  // seed = 504760
+  // seed = 90640
+
+  console.log("seed = ", seed);
+
   randomSeed(seed);
   noiseSeed(seed);
 }

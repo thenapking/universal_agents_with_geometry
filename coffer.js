@@ -7,8 +7,9 @@
 // Set the fill type of each polygon based on its area
 let SMALL =  [ 'blank', 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
 let TOWN = [ 'blank', 'park', 'civic', 'trees'] 
-let LARGE =  [ 'blank', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes' ];  
-let COUNTRY = [ 'blank', 'large-dots', 'vertical-dashes', 'horizontal-dashes',  'dots'];
+let LARGE =  [ 'blank', 'large-dots', 'upwards-contour', 'downwards-contour' ];  
+let COUNTRY = [ 'blank', 'large-dots', 'upwards-contour', 'downwards-contour', 'vertical-contour', 'horizontal-contour', 'vertical-dashes', 'horizontal-dashes',  'dots'];
+let COUNTRY_WEIGHTS = [1, 1, 10, 10, 10, 10, 1, 2, 1];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
@@ -49,7 +50,7 @@ class Coffer {
 
     // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
-    if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = random(COUNTRY)}
+    if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS)}
     // if(d < 200 && near_centre ){ this.fill_type = 'houses'}
     if(area < 200 && random() < 0.1) { this.fill_type = random(SMALL) }
 
@@ -65,6 +66,8 @@ class Coffer {
 
     if(area < 100) { this.fill_type = 'blank'}
     if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
+
+    // this.fill_type = random(['upwards-contour', 'downwards-contour'])
 
     if(this.fill_type == 'park') {
       this.fill_object = new Park(this.polygon, 0.2, 0);
@@ -84,6 +87,18 @@ class Coffer {
 
     if(this.fill_type == 'terraces'){
       this.fill_object = new Terrace(this.polygon);
+      this.fill_object.construct();
+    }
+
+    if(this.fill_type == 'upwards-contour' ||
+       this.fill_type == 'downwards-contour') {
+      let direction = this.fill_type.split('-')[0];
+      if(this.is_triangular()) { direction = this.set_triangular_hatch()}
+      let size = random([7])
+      // if(this.polygon.area() < 300) { size = 3; }
+      // if(this.polygon.area() > 3000) { size = 10; }
+      let sf = random(0.0075, 0.02)
+      this.fill_object = new Contour(this.polygon, direction, size, sf);
       this.fill_object.construct();
     }
 
@@ -116,7 +131,7 @@ class Coffer {
   }
 
   is_triangular(){
-    return this.polygon.outer.length == 3
+    return this.polygon.simplify().outer.length == 3
   }
 
   set_triangular_hatch(){
@@ -139,8 +154,6 @@ class Coffer {
     return this.polygon.outer.length < 10
   }
 
-  
-
   is_rectangle(){
     if(!this.is_quadrilateral()) return false;
     let a = this.polygon.outer[0];
@@ -150,8 +163,6 @@ class Coffer {
     return (a.x + c.x) / 2 == (b.x + d.x) / 2 && (a.y + c.y) / 2 == (b.y + d.y) / 2 &&
            a.angle_to(b) == Math.PI/2 && b.angle_to(c) == Math.PI/2;
   }
-
-  
 
   is_trapezoid(tolerance){
     if(!this.is_quadrilateral()) return false;
@@ -186,6 +197,16 @@ class Coffer {
     return (a.x == b.x && c.x == d.x) || (a.y == b.y && c.y == d.y);
   }
 
+  weighted_random(array, weights) {
+    let total = weights.reduce((a, b) => a + b, 0);
+    let r = random(total);
+    for (let i = 0; i < array.length; i++) {
+      if (r < weights[i]) return array[i];
+      r -= weights[i];
+    }
+  }
+  
+
 
   draw() {
     noFill();
@@ -197,9 +218,6 @@ class Coffer {
       this.fill_object.draw();
     }
     noFill()
-    // circle(this.focus.x, this.focus.y, 200);
-
-
   }
 }
 
