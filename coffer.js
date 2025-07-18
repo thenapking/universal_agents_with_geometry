@@ -7,9 +7,9 @@
 // Set the fill type of each polygon based on its area
 let SMALL =  [ 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
 let TOWN = [ 'park', 'civic', 'trees'] 
-let LARGE =  [ 'large-dots', 'upwards-contour', 'downwards-contour' ];  
-let COUNTRY = [ 'large-dots', 'upwards-contour', 'downwards-contour', 'vertical-contour', 'horizontal-contour', 'vertical-dashes', 'horizontal-dashes',  'dots'];
-let COUNTRY_WEIGHTS = [1, 1, 100, 100, 50, 50, 1, 2, 1];
+let LARGE =  [ 'large-dots', 'contour-upwards', 'contour-downwards' ];  
+let COUNTRY = [ 'large-dots', 'contour-upwards', 'contour-downwards', 'boustrophedon', 'vertical-contour', 'horizontal-contour', 'vertical-dashes', 'horizontal-dashes',  'dots'];
+let COUNTRY_WEIGHTS = [1, 1, 100, 100, 200, 50, 50, 1, 2, 1];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
@@ -22,6 +22,7 @@ let civil_statistics = {
   'large-vertical-dashes': 0, 'large-horizontal-dashes': 0,
   trees: 0, park: 0, civic: 0, houses: 0  
 }
+
 class Coffer {
   static id = 0;
   constructor(polygon, focus, colour) {
@@ -40,6 +41,8 @@ class Coffer {
     let area = this.polygon.area();
     let d = p5.Vector.dist(centroid, this.focus);
     let near_centre = random() < 1 - (d / CENTRE_DIST)
+    let longest_edge = this.polygon.find_longest_edge()[0];  
+    let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
 
     this.fill_type = 'blank'
     if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
@@ -65,11 +68,19 @@ class Coffer {
 
     if(area < 100) { this.fill_type = 'downwards'}
     if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
+
+    if(this.fill_type == 'boustrophedon'){
+      if (abs(le_dir) < 0) {
+        this.fill_type = 'blank'
+      } else if (abs(le_dir - PI) < 0 || abs(le_dir + PI) < 0){
+        this.fill_type = 'blank'
+      }
+    }
     
 
     // if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
 
-    // this.fill_type = random(['upwards-contour', 'downwards-contour'])
+    
 
     if(this.fill_type == 'park') {
       this.fill_object = new Park(this.polygon, 0.2, 0);
@@ -92,13 +103,34 @@ class Coffer {
       this.fill_object.construct();
     }
 
-    if(this.fill_type == 'upwards-contour' ||
-       this.fill_type == 'downwards-contour') {
-      let direction = this.fill_type.split('-')[0];
+    if(this.fill_type == 'contour-upwards' ||
+       this.fill_type == 'contour-downwards') {
+      let direction = this.fill_type.split('-')[1];
       if(this.is_triangular()) { direction = this.set_triangular_hatch()}
       let sf = random(0.0075, 0.02)
 
       this.fill_object = new Contour(this.polygon, direction, sf);
+      this.fill_object.construct();
+    }
+
+    if(this.fill_type == 'boustrophedon') {
+      console.log('Boustrophedon fill for polygon', this.id);
+      let longest_edge = this.polygon.find_longest_edge()[0];  
+      let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
+      let direction = 'downwards';
+      let tolerance = 0.01;
+
+      if (abs(le_dir - 0) < tolerance) {
+        direction = 'vertical';
+      } else if (abs(le_dir - PI) < tolerance || abs(le_dir + PI) < tolerance){
+        direction = 'horizontal';
+      } else if (abs(le_dir - HALF_PI) < tolerance) {
+        direction = 'upwards';
+      } else if (abs(le_dir + HALF_PI) < tolerance) {
+        direction = 'downwards';
+      }
+      console.log(longest_edge, direction)
+      this.fill_object = new Boustrophedon(this.polygon, direction, 7, 0.7);
       this.fill_object.construct();
     }
 

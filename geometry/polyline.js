@@ -4,6 +4,8 @@ class Polyline {
     this.points = points;
     if(clean) { this.clean(tolerance) }
     this.find_segments();
+    this.start = this.points[0];
+    this.end = this.points[this.points.length - 1];
   }
 
   clean(tolerance = 0.001) {
@@ -319,6 +321,8 @@ class Polyline {
     }
     return found;
   }
+
+  
 
   draw(){
     if (this.points.length < 2) return;
