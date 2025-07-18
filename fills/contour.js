@@ -1,5 +1,5 @@
 class Contour {
-  constructor(polygon, direction = 'downwards', spacing = 10, sf = 0.01, angle_range = PI / 4) {
+  constructor(polygon, direction = 'downwards', sf = 0.01, spacing = 5, angle_range = PI / 4) {
     this.polygon = polygon;
     this.spacing = spacing;
     this.sf = sf;
@@ -53,11 +53,12 @@ class Contour {
   }
 
   construct(){
-    console.log("----------")
     this.trace();
     this.distance();
     this.lines = [];
     this.trace();
+    this.distance();
+
   }
 
   trace(){
@@ -114,8 +115,8 @@ class Contour {
   }
 
   distance(){
-    let total_min_dist = 0;
-    let count = 0;
+    let min_dist = Infinity;
+    let max_dist = 0;
     for(let i = 0; i < this.lines.length - 1; i++){
       let l1 = this.lines[i];
       let l2 = this.lines[i + 1];
@@ -123,19 +124,24 @@ class Contour {
         let p1 = l1.points[j];
         let p2 = l2.points[j];
         if(!p1 || !p2) continue; // Skip if points are undefined
-        let min_dist = p5.Vector.dist(p1, p2);
-        total_min_dist += min_dist;
-        count++;
+        let d = p5.Vector.dist(p1, p2);
+        if(d < min_dist){ 
+          min_dist = d;
+        }
+
+        if(d > max_dist){
+          max_dist = d;
+        }
       }
     }
 
-    console.log(("Desired spacing", this.spacing));
-
-    let avg_spacing = total_min_dist / count;
-    let scale_factor = this.spacing / avg_spacing;
+    // console.log(("Desired spacing", this.spacing));
+    
+    let scale_factor = this.spacing / min_dist;
     this.spacing = this.spacing * scale_factor;
+    this.spacing = constrain(this.spacing, 3, 15); 
 
-    console.log(`Average spacing: ${avg_spacing}, Adjusted spacing: ${this.spacing}`);
+    // console.log(`Average spacing: ${min_dist}, Adjusted spacing: ${this.spacing}, max spacing: ${max_dist}`);
   }
 
   draw(){

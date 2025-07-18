@@ -5,11 +5,11 @@
 
 
 // Set the fill type of each polygon based on its area
-let SMALL =  [ 'blank', 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
-let TOWN = [ 'blank', 'park', 'civic', 'trees'] 
-let LARGE =  [ 'blank', 'large-dots', 'upwards-contour', 'downwards-contour' ];  
-let COUNTRY = [ 'blank', 'large-dots', 'upwards-contour', 'downwards-contour', 'vertical-contour', 'horizontal-contour', 'vertical-dashes', 'horizontal-dashes',  'dots'];
-let COUNTRY_WEIGHTS = [1, 1, 10, 10, 10, 10, 1, 2, 1];
+let SMALL =  [ 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
+let TOWN = [ 'park', 'civic', 'trees'] 
+let LARGE =  [ 'large-dots', 'upwards-contour', 'downwards-contour' ];  
+let COUNTRY = [ 'large-dots', 'upwards-contour', 'downwards-contour', 'vertical-contour', 'horizontal-contour', 'vertical-dashes', 'horizontal-dashes',  'dots'];
+let COUNTRY_WEIGHTS = [1, 1, 100, 100, 50, 50, 1, 2, 1];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
@@ -48,7 +48,6 @@ class Coffer {
     if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
     if(this.fill_type == 'civic') { total_civic_count++ }
 
-    // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
     if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS)}
     // if(d < 200 && near_centre ){ this.fill_type = 'houses'}
@@ -64,8 +63,11 @@ class Coffer {
     // if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     // if(this.fill_type == 'civic') { total_civic_count++ }
 
-    if(area < 100) { this.fill_type = 'blank'}
-    if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
+    if(area < 100) { this.fill_type = 'downwards'}
+    if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
+    
+
+    // if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
 
     // this.fill_type = random(['upwards-contour', 'downwards-contour'])
 
@@ -94,11 +96,9 @@ class Coffer {
        this.fill_type == 'downwards-contour') {
       let direction = this.fill_type.split('-')[0];
       if(this.is_triangular()) { direction = this.set_triangular_hatch()}
-      let size = random([7])
-      // if(this.polygon.area() < 300) { size = 3; }
-      // if(this.polygon.area() > 3000) { size = 10; }
       let sf = random(0.0075, 0.02)
-      this.fill_object = new Contour(this.polygon, direction, size, sf);
+
+      this.fill_object = new Contour(this.polygon, direction, sf);
       this.fill_object.construct();
     }
 

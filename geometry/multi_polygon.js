@@ -97,7 +97,7 @@ class MultiPolygon {
 
   simplify(factor){
     let points = simplify(this.outer, factor);
-    if(points.length < 3) { return [this]; }
+    if(points.length < 3) { return this; }
     return new MultiPolygon([points], this.type, this.parent);
   }
 

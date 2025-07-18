@@ -56,7 +56,7 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(11)
+  load_data(16)
 }
 
 function setup(){
