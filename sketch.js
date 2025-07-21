@@ -55,20 +55,14 @@ let active_group_id = 0;
 let scene;
 let seed; 
 
-function preload() {
-  // load_data(16)
-}
-
 function setup(){
   set_seeds()
-  // process_data();
 
   createCanvas(FW, FH);
   pixelDensity(4);
 
   setup_svg();
 
-  process_data();
   frameRate(10);
 
   scene = new Scene()
@@ -80,8 +74,8 @@ function setup(){
 let ctx = 0;
 function draw(){
   // debug_fills();
-  test_draw(scene.lots, ctx);
-  // final_draw();
+  // test_draw(scene.lots, ctx);
+  final_draw();
   
 }
 

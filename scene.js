@@ -2,8 +2,8 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 10;
-const CITY_DENSITY = 60;
+const SECONDARY_DENSITY = 4;
+const CITY_DENSITY = 2;
 const CITY_RADIUS = 150;
 const RSF = 0.001
 const RM = 10
@@ -44,10 +44,11 @@ class Scene {
 
   initialize(){
     console.log("-----------------------------")
+    
+    this.set_city_limits()
     this.create_foci();
     this.create_graph();
     this.create_roads_in_order();
-    // this.create_roads();
     
 
 
@@ -55,7 +56,7 @@ class Scene {
     this.create_lots();
     this.subdivide_lots();
 
-    // this.create_coffers()
+    this.create_coffers()
   }
 
   onscreen(position){
@@ -114,6 +115,7 @@ class Scene {
     }
 
     for(let f of this.secondary_foci){
+      if(this.offscreen(f)){ continue; }
       city_density = random(10, CITY_DENSITY)
       for(let i = 0; i < city_density; i++){
         let x = randomGaussian(f.x, CITY_RADIUS/2);
@@ -196,6 +198,16 @@ class Scene {
     this.unioned_roads = [];
 
     for(let chain of potential_roads){
+      // remove dangling roads
+      let start = chain[0];
+      let end = chain[chain.length - 1];
+      let start_connections = this.graph.find_edges(start.id).length
+      let end_connections = this.graph.find_edges(end.id).length
+      let start_onscreen = this.onscreen(start.position); 
+      let end_onscreen = this.onscreen(end.position);
+      if(start_onscreen && start_connections < 2 ) { continue; }
+      if(end_onscreen && end_connections < 2 ) { continue; }
+      
       let points = []
 
       for(let node of chain) {
@@ -203,11 +215,23 @@ class Scene {
       }
       
       let polyline = new Polyline(points, false).to_bezier(60)
-    
-      this.road_lines.push(polyline);
+      let clipped_polyline = polyline.clip(this.city_limits)
+      if(!clipped_polyline || clipped_polyline.length < 1) { continue; }
+      let final_line = clipped_polyline[0];
+      if(final_line.points.length < 2) { 
+        console.warn("Final line has less than 2 points, skipping", polyline);
+        final_line = polyline;
+      }
+      // clipped_polyline = clipped_polyline[0]
+      console.log("Creating road with", final_line, "points");
 
-      let road = polyline.to_polygon(8);
+      this.road_lines.push(final_line);
+      this.minor_road_lines.push(final_line);
+
+      let road = final_line.to_polygon(MINOR_ROAD);
       this.roads.push(road);
+      this.minor_roads.push(road);
+
       if(this.roads.length === 1){
         this.unioned_roads = road;
       } else if(this.roads.length > 1){
@@ -217,131 +241,18 @@ class Scene {
     }
   }
 
-  create_roads(){
-    this.graph.to_polylines();
 
-    this.road_lines = this.graph.polylines
-
-    this.major_roads = [];
-    this.major_road_lines = [];
-    this.minor_roads = [];
-    this.minor_road_lines = [];
-    this.intercity_roads = [];
-    this.intercity_road_lines = [];
-
-    this.unioned_roads = [];
-
-    for(let road_line of this.road_lines){
-      let nearest_city;
-      let nearest_city_dist = Infinity;
-      let cities = this.secondary_foci.slice()
-      cities.push(this.focus)
-
-      for(let f of cities){
-        let city_centre = f;
-        let d = p5.Vector.dist(road_line.points[0], city_centre);
-        if(d < nearest_city_dist){
-          nearest_city_dist = d;
-          nearest_city = city_centre;
-        }
-      }
-
-      let in_a_city = true;
-      
-      for(let p of road_line.points){
-        let d = p5.Vector.dist(p, nearest_city);
-        if(d > CITY_RADIUS){
-          in_a_city = false;
-          break;
-        }
-      }
-
-      if(!in_a_city){
-        this.intercity_road_lines.push(road_line);
-        let road = road_line.to_polygon(INTERCITY_ROAD);
-        this.intercity_roads.push(road);
-        this.roads.push(road);
-      } else if(road_line.points.length < 10) {
-        this.minor_road_lines.push(road_line);
-        let road = road_line.to_polygon(MINOR_ROAD);
-        this.minor_roads.push(road);
-        this.roads.push(road);
-      } else {
-        this.major_road_lines.push(road_line);
-        let road = road_line.to_polygon(MAJOR_ROAD);
-        this.major_roads.push(road);
-        this.roads.push(road);
-      } 
-
-      
-    }
-  }
-
-  // old_create_roads(){
-  //   console.log("Creating major roads")
-
-  //   this.intercity_shortest_paths = this.create_shortest_paths(this.intercity_points, this.graph);
-  //   this.intercity_paths = create_paths(this.intercity_shortest_paths);
-  //   this.intercity_roads = this.paths_to_roads(this.intercity_paths, INTERCITY_ROAD);
-  //   this.intercity_road_lines = this.paths_to_lines(this.intercity_paths);
-
-  //   console.log("Creating minor roads")
-
-  //   this.minor_shortest_paths = this.create_shortest_paths(this.minor_points, this.minor_graph);
-  //   this.minor_paths = create_paths(this.minor_shortest_paths);
-  //   this.minor_roads = this.paths_to_roads(this.minor_paths, 8);
-  //   this.minor_road_lines = this.paths_to_lines(this.minor_paths);
-
-  //   this.roads = this.intercity_roads.concat(this.minor_roads)
-  //   this.road_lines = this.intercity_road_lines.concat(this.minor_road_lines)
-  // }
-
-  // create_shortest_paths(points, graph){
-  //   let paths = []
-  //   for(let i = 0; i < points.length; i++){
-  //     let centre = points[i];
-  //     for(let j = i + 1; j < points.length; j++){
-  //       let other = points[j];
-  //       let path = graph.shortest(centre, other);
-  //       if(path) { paths.push(path) };
-  //     }
-  //   }
-  //   return paths
-  // }
-
-  // paths_to_roads(paths, sw = 0, filter = false){
-  //   let roads = []
-  //   for(let path of paths){
-  //     let road = path.to_polygon(sw, filter);
-  //     roads.push(road);
-  //   }
-    
-  //   return roads;
-  // }
-
-  // paths_to_lines(paths, sw = 0, filter = false){
-  //   let roads = []
-  //   for(let path of paths){
-  //     let clipped_paths = path.to_polyline(sw, filter).clip(this.bounding_box);
-  //     for(let clipped_path of clipped_paths){
-  //       roads.push(clipped_path);
-  //     }
-  //   }
-    
-  //   return roads;
-  // }
-
-  create_lots(){
+  set_city_limits(){
     let top_left = createVector(BW + MBW, BW + MBW);
     let bottom_right = createVector(W + BW + MBW, H + BW + MBW);
     let top_right = createVector(W + BW + MBW, BW + MBW);
     let bottom_left = createVector(BW + MBW, H + BW + MBW);
     let points = [top_left, top_right, bottom_right, bottom_left];
-    let bg = new MultiPolygon(points, 'countryside');
+    this.city_limits = new MultiPolygon(points, 'countryside');
+  }
     
-    // let unioned_roads = unionPolygons(this.roads)
-    let new_bg = bg.difference(this.unioned_roads);
-    this.sectors = new_bg
+  create_lots(){
+    this.sectors = this.city_limits.difference(this.unioned_roads);
   }
 
   create_coffers(){
@@ -576,34 +487,34 @@ class Scene {
       rect(FW/2, FH/2, FW, FH);
       draw_grid(DPI/4);
 
-      fill(255,0,0)
-      for(let f of this.foci){
-        circle(f.x, f.y, 10);
-      }
+      // fill(255,0,0)
+      // for(let f of this.foci){
+      //   circle(f.x, f.y, 10);
+      // }
 
       noFill();
       stroke(0,0,255)
 
-      circle(this.focus.x, this.focus.y, CITY_RADIUS * 2);
-      for(let f of this.secondary_foci){
-        circle(f.x, f.y, CITY_RADIUS);
-      }
+      // circle(this.focus.x, this.focus.y, CITY_RADIUS * 2);
+      // for(let f of this.secondary_foci){
+      //   circle(f.x, f.y, CITY_RADIUS);
+      // }
 
       stroke(255)
 
       noFill();
       this.bounding_box.draw();
-      this.graph.draw();
+      // this.graph.draw();
       noFill();
       stroke(0)
       // this.graph.draw_edges();
       // this.graph.draw_chains();
+      // this.graph.draw_nodes();
 
       // for(let r of this.unioned_roads){
       //   r.draw();
       // }
 
-      this.unioned_roads.draw();
       
     pop();
   }

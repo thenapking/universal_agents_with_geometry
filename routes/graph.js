@@ -234,14 +234,51 @@ class Graph {
       let dA = this.neighbours.get(a.id).length;
       let dB = this.neighbours.get(b.id).length;
 
-      if(dA !==2 || dB !== 2) {
-        let chain = this.create_chain(a, b);
+      // if(dA !==2 || dB !== 2) {
+        let chain = this.create_bidirectional_chain(a, b);
         if(chain.length > 1) {
           this.chains.push(chain);
         }
-      }
+      // }
     }
   }
+
+  create_bidirectional_chain(a, b) {
+    let chain = [a];
+    this.visit(a, b);
+    chain.push(b);
+  
+    // Extend forwards from b
+    let prev = a;
+    let current = b;
+    while (true) {
+      let neighbours = this.neighbours.get(current.id).filter(id => id !== prev.id);
+      if (neighbours.length !== 1) break;
+      let next = this.find(neighbours[0]);
+      if (this.visited(current, next)) break;
+      this.visit(current, next);
+      chain.push(next);
+      prev = current;
+      current = next;
+    }
+  
+    // Extend backwards from a
+    prev = b;
+    current = a;
+    while (true) {
+      let neighbours = this.neighbours.get(current.id).filter(id => id !== prev.id);
+      if (neighbours.length !== 1) break;
+      let next = this.find(neighbours[0]);
+      if (this.visited(current, next)) break;
+      this.visit(current, next);
+      chain.unshift(next);
+      prev = current;
+      current = next;
+    }
+  
+    return chain;
+  }
+  
 
   create_chain(a, b){
     let chain = [a]
@@ -356,7 +393,9 @@ class Graph {
     }
   }
 
-  draw(){
+
+
+  draw_nodes(){
     push();
       for (let node of this.nodes) {
         node.draw();
@@ -383,5 +422,10 @@ class Graph {
         poly.draw();
       }
     pop();
+  }
+
+  draw(){
+    this.draw_edges();
+    this.draw_nodes();
   }
 }

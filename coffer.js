@@ -44,17 +44,17 @@ class Coffer {
     let longest_edge = this.polygon.find_longest_edge()[0];  
     let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
 
-    this.fill_type = 'blank'
-    if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
-    if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
-    if(this.fill_type == 'civic') { total_civic_count++ }
+    this.fill_type = 'terraces'
+    // if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    // if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    // if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
+    // if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
+    // if(this.fill_type == 'civic') { total_civic_count++ }
 
 
-    if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS)}
+    // if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS)}
     // if(d < 200 && near_centre ){ this.fill_type = 'houses'}
-    if(area < 200 && random() < 0.1) { this.fill_type = random(SMALL) }
+    // if(area < 200 && random() < 0.1) { this.fill_type = random(SMALL) }
 
     // if(this.fill_type == 'civic' && this.polygon.outer.length != 4) { this.fill_type = 'houses' }
     // if(this.fill_type == 'park' &&  this.polygon.outer.length != 4) { this.fill_type = 'houses'}
@@ -66,16 +66,16 @@ class Coffer {
     // if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     // if(this.fill_type == 'civic') { total_civic_count++ }
 
-    if(area < 100) { this.fill_type = 'downwards'}
-    if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
+    // if(area < 100) { this.fill_type = 'downwards'}
+    // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
-    if(this.fill_type == 'boustrophedon'){
-      if (abs(le_dir) < 0) {
-        this.fill_type = 'blank'
-      } else if (abs(le_dir - PI) < 0 || abs(le_dir + PI) < 0){
-        this.fill_type = 'blank'
-      }
-    }
+    // if(this.fill_type == 'boustrophedon'){
+    //   if (abs(le_dir) < 0) {
+    //     this.fill_type = 'blank'
+    //   } else if (abs(le_dir - PI) < 0 || abs(le_dir + PI) < 0){
+    //     this.fill_type = 'blank'
+    //   }
+    // }
     
 
     // if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
