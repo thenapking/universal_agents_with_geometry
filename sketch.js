@@ -22,7 +22,7 @@ let RIVER = 80;
 let MIN_LOT_SIZE = 600;
 let MAX_LOT_SIZE = 4000;
 
-let INTERCITY_ROAD = 26
+let INTERCITY_ROAD = 18
 let MAJOR_ROAD = 12;
 let MINOR_ROAD = 8;
 let SIDE_ROAD = 4;
@@ -56,12 +56,12 @@ let scene;
 let seed; 
 
 function preload() {
-  load_data(16)
+  // load_data(16)
 }
 
 function setup(){
   set_seeds()
-  process_data();
+  // process_data();
 
   createCanvas(FW, FH);
   pixelDensity(4);
@@ -73,14 +73,15 @@ function setup(){
 
   scene = new Scene()
   scene.initialize()
+  scene.draw();
 
 }
 
 let ctx = 0;
 function draw(){
   // debug_fills();
-  // test_draw(scene.roads, ctx);
-  final_draw();
+  test_draw(scene.lots, ctx);
+  // final_draw();
   
 }
 

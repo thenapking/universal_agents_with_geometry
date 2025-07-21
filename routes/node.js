@@ -23,11 +23,13 @@ class Node {
   }
 
   draw() {
+    push();
     noFill();
     circle(this.position.x, this.position.y, this.radius);
-    fill(0);
-    textSize(20);
-    text(this.id, this.position.x + 5, this.position.y + 5);
-    noFill()
+    // fill(0);
+    // textSize(20);
+    // text(this.id, this.position.x + 5, this.position.y + 5);
+    // noFill()
+    pop();
   }  
 }

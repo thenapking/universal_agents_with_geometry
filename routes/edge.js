@@ -1,6 +1,6 @@
 class Edge {
   static id = 0;
-  constructor(start, end, weight) {
+  constructor(start, end) {
     this.id = Edge.id++;
     // start and end are Nodes
     this.start = start; 
@@ -10,8 +10,6 @@ class Edge {
     this.v = this.end.position.copy().sub(this.start.position);
     this.distance = this.v.mag();
     this.direction = this.v.heading();
-
-    this.weight = this.distance;
   }
 
   draw(){
