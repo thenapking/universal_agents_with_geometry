@@ -2,8 +2,8 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 30;
-const CITY_DENSITY = 10;
+const SECONDARY_DENSITY = 10;
+const CITY_DENSITY = 1;
 const CITY_RADIUS = 100;
 const RSF = 0.001
 const RM = 9
@@ -18,7 +18,8 @@ const SCENE_CREATE_LOTS = 40;
 const SCENE_SUBDIVIDE_LOTS = 50;
 const SCENE_PREPARE_COFFERS = 60;
 const SCENE_CREATE_COFFERS = 70;
-const SCENE_COMPLETE = 80;
+const SCENE_UPDATE_COFFERS = 80;
+const SCENE_COMPLETE = 90;
 
 class Scene {
   constructor(){
@@ -53,7 +54,7 @@ class Scene {
     this.lots = []
     this.farms = [];
     this.state = SCENE_INIT;
-
+    this.current_coffer_id = 0;
   }
 
   initialize(){
@@ -81,6 +82,7 @@ class Scene {
     this.subdivide_lots();
     this.prepare_coffers();
     this.create_coffers()
+    this.update_coffers();
   }
 
   onscreen(position){
@@ -157,7 +159,7 @@ class Scene {
 
     for(let f of this.secondary_foci){
       if(this.offscreen(f)){ continue; }
-      city_density = random(10, CITY_DENSITY)
+      city_density = random(1, CITY_DENSITY)
       let cities_added = 0
       while(cities_added < city_density){
         let x = randomGaussian(f.x, CITY_RADIUS/2);
@@ -558,7 +560,8 @@ class Scene {
     if(this.state != SCENE_CREATE_COFFERS){ return }
     if(this.potential_coffers.length == 0){ 
       console.log("Finished creating coffers");
-      this.state = SCENE_COMPLETE; 
+      console.log("Updating coffers")
+      this.state = SCENE_UPDATE_COFFERS; 
       return; 
     }
 
@@ -578,6 +581,21 @@ class Scene {
     
     coffers.push(coffer);
 
+  }
+
+  update_coffers(){
+    if(this.state != SCENE_UPDATE_COFFERS){ return }
+    let coffer = coffers[this.current_coffer_id];
+    let active = coffer.update();
+
+    if(active < 1){ 
+      this.current_coffer_id++;
+    }
+    
+    if(this.current_coffer_id >= coffers.length){
+      console.log("Finished updating coffers");
+      this.state = SCENE_COMPLETE; 
+    }
   }
 
   draw(){

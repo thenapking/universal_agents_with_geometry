@@ -8,7 +8,7 @@
 let SMALL =  [ 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
 let TOWN = [ 'terraces', 'park', 'civic', 'trees'] 
 let TOWN_WEIGHTS = [100, 1, 20, 3];
-let LARGE =  [ 'large-dots', 'contour-upwards', 'contour-downwards' ];  
+let LARGE =  [  'large-dots', 'contour-upwards', 'contour-downwards' ];  
 let COUNTRY = [ 'large-dots', 'contour-upwards', 'contour-downwards', 'boustrophedon', 'vertical-dashes', 'horizontal-dashes', 'dots'];
 let COUNTRY_WEIGHTS = [1, 100, 100, 20, 50, 50, 10,];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
@@ -35,6 +35,7 @@ class Coffer {
     this.type = type || 'countryside'
     this.fill_object = null;
     this.create_fill_object();
+    this.active = true;
   }
 
   create_fill_object(){
@@ -84,30 +85,46 @@ class Coffer {
       }
     }
     
+    if(this.type == 'countryside' && area > 12000 && area < 40000) { this.fill_type = 'agent-circular' }
+    if(area >= 60000) { this.fill_type = random(LARGE) }
 
-    // if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }
+    if(this.fill_type == 'agent-circular'){
+      let minSize = int(random(7, 15))
+      let maxSize = minSize*2
+      let avgSize = (minSize + maxSize) / 2;
+      let n = floor(this.polygon.bounds_area() / (avgSize * avgSize));
+      let options = { noiseScale: 0.005, a: minSize, sf: 0.5, squareness: 0.5 };
+      console.log('Creating agent circular fill for polygon', options);
 
+      this.fill_object = new SuperEllipseGroup(n, this.polygon.bounds_centroid(), 10, this.polygon, options);
+      this.fill_object.initialize();
+    }
     
 
     if(this.fill_type == 'park') {
       this.fill_object = new Park(this.polygon, 0.2, 0);
       this.fill_object.construct();
+      this.active = false;
     }
 
     if(this.fill_type == 'trees') {
       this.fill_object = new Trees(this.polygon);
       this.fill_object.construct();
+      this.active = false;
     }
     
     
     if(this.fill_type == 'civic') {
       this.fill_object = new Civic(this.polygon);
       this.fill_object.construct();
+      this.active = false;
+      
     }
 
     if(this.fill_type == 'terraces'){
       this.fill_object = new Terrace(this.polygon);
       this.fill_object.construct();
+      this.active = false;
     }
 
     if(this.fill_type == 'contour-upwards' ||
@@ -118,6 +135,7 @@ class Coffer {
 
       this.fill_object = new Contour(this.polygon, direction, sf);
       this.fill_object.construct();
+      this.active = false;
     }
 
     if(this.fill_type == 'boustrophedon') {
@@ -139,6 +157,7 @@ class Coffer {
       console.log(longest_edge, direction)
       this.fill_object = new Boustrophedon(this.polygon, direction, 7, 0.7);
       this.fill_object.construct();
+      this.active = false;
     }
 
     if(this.fill_type == 'large-vertical-dashes' || 
@@ -154,16 +173,19 @@ class Coffer {
     if(this.fill_type == 'vertical-dashes' ||
        this.fill_type == 'large-vertical-dashes'){
       this.fill_object.hatch('vertical');
+      this.active = false;
     }
 
     if(this.fill_type == 'horizontal-dashes' ||
         this.fill_type == 'large-horizontal-dashes'){
       this.fill_object.hatch('horizontal');
+      this.active = false;
     }
 
     if(this.fill_type == 'downwards' || this.fill_type == 'upwards') {
       this.fill_object = new Hatching(this.polygon, 5);
       this.fill_object.hatch(this.fill_type);
+      this.active = false;
     }
 
     civil_statistics[this.fill_type]++;
@@ -244,11 +266,22 @@ class Coffer {
       r -= weights[i];
     }
   }
+
+  update(){
+    if (!this.active) return 0;
+
+    let active;
+    try{ active = this.fill_object.update();} catch(error) { active = 0 }
+
+    if(active < 1) {
+      this.active = false; 
+    }
+
+    return active;
+  }
   
-
-
   draw() {
-    noFill();
+    // if(this.active) { fill(palette.background) } else { noFill() };
     this.polygon.draw();
   }
 

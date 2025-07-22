@@ -1,11 +1,12 @@
 class Group {
-  constructor(n, center, radius, boundaries) {
+  constructor(n, center, radius, boundary) {
     this.center = center.copy();
     this.radius = radius;
     this.n = n;
     this.agents = [];
-    this.boundaries = boundaries || [];
+    this.boundary = boundary;
     this.active = true;
+    this.polygons = [];
   }
   
   initialize() {
@@ -14,36 +15,35 @@ class Group {
     }
   }
 
-  draw(){
+  draw(debug){
     push();
-      for (let boundary of this.boundaries) {
-        boundary.draw();
+      if(debug){
+        for (let boundary of this.boundary) {
+          boundary.draw();
+        }
       }
-      for (let agent of this.agents){
-        agent.draw();
+
+      if(this.polygons.length > 0){
+        for (let polygon of this.polygons) {
+          polygon.draw();
+        }
+      } else {
+        for (let agent of this.agents){
+          agent.draw();
+        }
       }
     pop();
   }
 
   create_polygons(){
     if(this.active) { return []; }
-    let polygons = [];
+    console.log("Creating polygons from agents");
+    this.polygons = [];
 
-    for (let agent of this.agents) {
-      let polygon = new RegularPolygon(
-        agent.pos.x, agent.pos.y,
-        agent.w/2, agent.h/2, POLYGONAL_DETAIL, 
-        agent.angle
-      );
-      polygons.push(polygon);
+    for(let agent of this.agents){
+      let polygon = agent.polygon;
+      let clipped = this.boundary.intersection(polygon)
+      if(clipped && clipped.length > 0) { this.polygons.push(clipped[0]) };
     }
-
-    let results = [];
-    for(let polygon of polygons){
-      let clipped = this.boundaries[0].intersection(polygon)[0]
-      if(clipped) { results.push(clipped) };
-    }
-
-    return results;
   }
 }

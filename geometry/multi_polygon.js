@@ -230,6 +230,11 @@ class MultiPolygon {
     return (maxX - minX) * (maxY - minY);
   }
 
+  bounds_contains(point) {
+    const [minX, minY, maxX, maxY] = this.bounds();
+    return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
+  }
+
   intersects_bounds(other){
     const [minX, minY, maxX, maxY] = this.bounds();
     const [otherMinX, otherMinY, otherMaxX, otherMaxY] = other.bounds();

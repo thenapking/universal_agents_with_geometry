@@ -1,4 +1,4 @@
-class EllipseGroup extends Group {
+class CircularGroup extends Group {
   constructor(n, center, radius, boundary, options) {
     super(n, center, radius, boundary);
     this.noiseScale = options.noiseScale;
@@ -8,7 +8,7 @@ class EllipseGroup extends Group {
   
   initialize() {
     for (let i = 0; i < this.n; i++) {
-      this.agents.push(new EllipseAgent(this.center.copy(), this));
+      this.agents.push(new CircularAgent(this.center.copy(), this));
     }
   }
 
@@ -17,12 +17,9 @@ class EllipseGroup extends Group {
 
     let active = 0;
     for (let agent of this.agents) {
+      agent.set_size();
       let sep = agent.separation(this.agents);
-      let aliDelta = agent.align(this.agents);
-      let radialDelta = agent.radialAlignment(this.center); 
-      let align = aliDelta + radialDelta;
       agent.applyForce(sep);
-      agent.applyAlignment(align);
       agent.update();
       if (agent.active) active++;
       if( agent.outside()) {
@@ -34,37 +31,34 @@ class EllipseGroup extends Group {
       this.active = false; 
       this.create_polygons();
     }
+
     return active;
   }
 }
 
-class EllipseAgent extends Agent {
+class CircularAgent extends Agent {
   constructor(position, group) {
     super(position, group);
-    this.size = random(this.group.minSize, this.group.maxSize);
-    this.w = this.size;
-    this.h = this.size; 
-    this.angle = random(TWO_PI);
-    this.alignmentFactor = 0.05;
-    this.radialAlignmentFactor = 1;
+    this.set_size();
   }
-  
-  radialAlignment(center) {
-    let desired = p5.Vector.sub(this.position, center).heading();
-    let dAngle = desired - this.angle;
-    return this.radialAlignmentFactor * dAngle;
+
+  set_size() {
+    let nz = noise(this.position.x * this.group.noiseScale, this.position.y * this.group.noiseScale);
+    this.size = lerp(this.group.minSize, this.group.maxSize, nz);
+    this.w = this.size;
+    this.h = this.size;
   }
   
   draw() {
     push();
     translate(this.position.x, this.position.y);
     rotate(this.angle);
-    ellipse(0, 0, this.w, this.h);
+    ellipse(0, 0, this.size, this.size);
     pop();
   }
 }
 
-function createEllipseGroups(polygon) {
+function createCircularGroups(polygon) {
   let boundary = polygon;
   let center = polygon.centroid();
 
@@ -84,7 +78,7 @@ function createEllipseGroups(polygon) {
     maxSize: maxSize
   };
 
-  let group = new EllipseGroup(n, center, 100, boundary, OPTIONS);
+  let group = new CircularGroup(n, center, 100, boundary, OPTIONS);
   group.initialize();
   groups.push(group);
 

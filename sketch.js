@@ -68,13 +68,13 @@ function setup(){
 
   scene = new Scene()
   scene.initialize()
-  scene.draw();
-
+  // setup_debug_agents()
 }
 
 let ctx = 0;
 function draw(){
   // debug_fills();
+  // debug_agents()
   // test_draw(scene.lots, ctx);
   accumulative_draw();
   // final_draw();
@@ -86,8 +86,35 @@ function draw_edges(){
   scene.secondary_graph.draw_edges()
 }
 
-let polyCircleA, fill_object;
 
+function setup_debug_agents(){
+  polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 100);  
+  let minSize = int(random(15, 20))
+  let maxSize = minSize*2
+  let avgSize = (minSize + maxSize) / 2;
+  let n =  floor(polyCircleA.bounds_area() / (avgSize ** 2));
+  // n = 30
+  let options = { noiseScale: 0.005, minSize: minSize, maxSize: maxSize };
+  fill_object = new SuperEllipseGroup(n, polyCircleA.bounds_centroid(), 10, polyCircleA, options);
+  fill_object.initialize();
+}
+
+function debug_agents(){
+  let active = fill_object.update();
+  stroke(255,0,0)
+  polyCircleA.draw();
+  stroke(0)
+  fill_object.draw();
+  if(active < 1) { 
+    console.log("No more active agents"); 
+    default_setup();
+    fill_object.boundary.draw();
+    fill_object.draw();
+    
+    noLoop(); }
+}
+
+let polyCircleA, fill_object;
 function debug_fills(){
   let points = [
     createVector(255.40007714091817, 339.0843547),
