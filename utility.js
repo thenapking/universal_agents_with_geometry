@@ -27,6 +27,8 @@ function set_seeds(){
   // seed = 504760
   // seed = 90640
   // seed =  166449
+  // seed =  43430
+  // seed =  414118
   console.log("seed = ", seed);
 
   randomSeed(seed);
@@ -71,15 +73,6 @@ function mousePressed(){
       }
     }
 
-    for(let node of minor_nodes){
-      if(!node) {
-        continue;
-      } 
-      if(p5.Vector.dist(point, node.position) < 5){
-        console.log(`Clicked on node at (${node.position.x}, ${node.position.y})`);
-        console.log(`Node ID: ${node.id}, index: ${scene.secondary_graph.nodes.indexOf(node)}`);
-        console.log(node);
-      }
-    }
+
   }
 }

@@ -253,7 +253,7 @@ class Polyline {
         if (segment === other_segment) continue;
         let intersection = segment.intersection(other_segment, false);
         if (intersection.length > 0) {
-          console.log('Self-intersection found:', segment, other_segment);
+          // console.warn('Self-intersection found:', segment, other_segment);
           has_intersection = true;
           break;
         }

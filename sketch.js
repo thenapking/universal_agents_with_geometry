@@ -1,9 +1,9 @@
 
 let DPI= 96;
-let wi = 7;
-let hi = 10.25;
+let wi = 6.42;
+let hi = 9;
 let bwi = 0.5;
-let mbwi = 0.75
+let mbwi = 0.25
 let W = wi * DPI;
 let H = hi * DPI;
 let BW = bwi * DPI;
@@ -19,8 +19,9 @@ let POLYGONAL_DETAIL = 360;
 let SF = 1
 
 let RIVER = 80;
-let MIN_LOT_SIZE = 600;
+let MIN_LOT_SIZE = 200;
 let MAX_LOT_SIZE = 4000;
+let COUNTRYSIZE_SIZE = 15000
 
 let INTERCITY_ROAD = 18
 let MAJOR_ROAD = 12;
@@ -75,7 +76,8 @@ let ctx = 0;
 function draw(){
   // debug_fills();
   // test_draw(scene.lots, ctx);
-  final_draw();
+  accumulative_draw();
+  // final_draw();
   
 }
 
@@ -140,6 +142,16 @@ function test_draw(collection){
 
 }
 
+function accumulative_draw(){
+  if(scene.state < SCENE_COMPLETE){
+    default_setup()
+    scene.construct();
+    scene.draw();
+  } else {
+    final_draw();
+  }
+}
+
 function final_draw(){
   if(exporting){ 
     let file_name = `output_${seed}.svg`;
@@ -159,7 +171,7 @@ function final_draw(){
 
   pop()
 
-  // draw_borders();
+  draw_borders();
 
   if(exporting) alignment_guide();
   
@@ -167,6 +179,7 @@ function final_draw(){
 
   if(exporting){ endRecordSVG(this); }
   console.log("Finished drawing all groups");
+  noLoop();
 }
 
 function draw_lots(){

@@ -6,10 +6,11 @@
 
 // Set the fill type of each polygon based on its area
 let SMALL =  [ 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
-let TOWN = [ 'park', 'civic', 'trees'] 
+let TOWN = [ 'terraces', 'park', 'civic', 'trees'] 
+let TOWN_WEIGHTS = [100, 1, 20, 3];
 let LARGE =  [ 'large-dots', 'contour-upwards', 'contour-downwards' ];  
-let COUNTRY = [ 'large-dots', 'contour-upwards', 'contour-downwards', 'boustrophedon', 'vertical-contour', 'horizontal-contour', 'vertical-dashes', 'horizontal-dashes',  'dots'];
-let COUNTRY_WEIGHTS = [1, 1, 100, 100, 200, 50, 50, 1, 2, 1];
+let COUNTRY = [ 'large-dots', 'contour-upwards', 'contour-downwards', 'boustrophedon', 'vertical-dashes', 'horizontal-dashes', 'dots'];
+let COUNTRY_WEIGHTS = [1, 100, 100, 20, 50, 50, 10,];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
@@ -25,13 +26,13 @@ let civil_statistics = {
 
 class Coffer {
   static id = 0;
-  constructor(polygon, focus, colour) {
+  constructor(polygon, focus, type) {
     this.id = Coffer.id++;
     this.polygon = polygon;
     this.focus = focus;
     this.ancestor_ids = polygon.ancestor_ids || [];
     this.fill_type = null;
-    this.colour = colour
+    this.type = type || 'countryside'
     this.fill_object = null;
     this.create_fill_object();
   }
@@ -44,12 +45,18 @@ class Coffer {
     let longest_edge = this.polygon.find_longest_edge()[0];  
     let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
 
-    this.fill_type = 'terraces'
+    if(this.type == 'countryside') {
+      this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS);
+    } else if(this.type == 'town') {
+      this.fill_type = this.weighted_random(TOWN, TOWN_WEIGHTS);
+    }
+
     // if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    // if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    // if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
-    // if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
-    // if(this.fill_type == 'civic') { total_civic_count++ }
+    if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    if(area > 1500 && this.fill_type == 'terraces') { this.fill_type = 'civic' }
+    if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
+    if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
+    if(this.fill_type == 'civic') { total_civic_count++ }
 
 
     // if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS)}
@@ -66,16 +73,16 @@ class Coffer {
     // if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     // if(this.fill_type == 'civic') { total_civic_count++ }
 
-    // if(area < 100) { this.fill_type = 'downwards'}
-    // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
+    if(area < 100) { this.fill_type = 'downwards'}
+    if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
-    // if(this.fill_type == 'boustrophedon'){
-    //   if (abs(le_dir) < 0) {
-    //     this.fill_type = 'blank'
-    //   } else if (abs(le_dir - PI) < 0 || abs(le_dir + PI) < 0){
-    //     this.fill_type = 'blank'
-    //   }
-    // }
+    if(this.fill_type == 'boustrophedon'){
+      if (abs(le_dir) < 0) {
+        this.fill_type = 'blank'
+      } else if (abs(le_dir - PI) < 0 || abs(le_dir + PI) < 0){
+        this.fill_type = 'blank'
+      }
+    }
     
 
     // if(area > MAX_LOT_SIZE) { this.fill_type = random(LARGE) }

@@ -350,7 +350,7 @@ class Graph {
   
 
   
-  to_polygons(wd = INTERCITY_ROAD){
+  to_polygons(wd){
     this.polygons = [];
     for(let polyline of this.polylines) {
       let polygon = polyline.to_polygon(wd);
