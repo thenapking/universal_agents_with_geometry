@@ -117,7 +117,7 @@ class Hatching {
     for(let line of this.lines) {
 
       if(this.dash > 0) {
-        line.draw_dashed(this.dash, this.gap, start_dashed);
+        line.draw_dashed(this.dash, this.gap);
         start_dashed = !start_dashed; 
       } else {
         line.draw();

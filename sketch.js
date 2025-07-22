@@ -133,10 +133,15 @@ function debug_fills(){
 
 
   console.log("START")
-  // polyCircleA = new MultiPolygon(new_points);
+  polyCircleA = new MultiPolygon(new_points);
   // polyCircleA = new Oblong(W/4, H/6, 20, 10);
   polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 100);  
-  fill_object = new Boustrophedon(polyCircleA, 'upwards');
+  // fill_object = new Hatching(polyCircleA, 7, 9, 3);
+  // fill_object.hatch('vertical');
+
+  fill_object = new Contour(polyCircleA, 'upwards', 0.025);
+  // fill_object = new Boustrophedon(polyCircleA, 'upwards');
+
   stroke(255,0,0)
   polyCircleA.draw();
   stroke(0)

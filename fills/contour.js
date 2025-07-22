@@ -1,3 +1,4 @@
+const CONTOUR_MIN_WIDTH = 5;
 class Contour {
   constructor(polygon, direction = 'downwards', sf = 0.01, spacing = 5, angle_range = PI / 4) {
     this.polygon = polygon;
@@ -53,15 +54,6 @@ class Contour {
   }
 
   construct(){
-    this.trace();
-    this.distance();
-    this.lines = [];
-    this.trace();
-    this.distance();
-
-  }
-
-  trace(){
     for(let x = this.doubleMinX; x < this.doubleMaxX; x += this.spacing) {
       let points = []
       let x0 = x;
@@ -81,8 +73,33 @@ class Contour {
       }
 
       let clipped_polylines = new Polyline(points).clip(this.polygon);
-      if(clipped_polylines.length > 0) {
-        this.lines.push(clipped_polylines[0])
+      if(clipped_polylines.length == 0) { continue; }
+      let new_line = clipped_polylines[0];
+      
+      if(this.lines.length == 0) { 
+        console.log("Adding first line");
+        this.lines.push(new_line); continue; 
+      }
+
+      let valid = true;
+      let previous_line = this.lines[this.lines.length - 1];
+      let min_dist = 10000000;
+
+      for(let i = 0; i < new_line.points.length; i++){
+        for(let j = 0; j < previous_line.points.length; j++){
+          let p1 = new_line.points[i];
+          let p2 = previous_line.points[j];
+          if(!p1 || !p2) continue; // Skip if points are undefined
+          let d = p5.Vector.dist(p1, p2);
+          if(d < CONTOUR_MIN_WIDTH){ 
+            min_dist = d;
+            valid = false;
+            break;
+          }
+        }
+      }
+      if(valid && min_dist <= 10000000){
+        this.lines.push(new_line)
       }
 
     }
@@ -106,43 +123,40 @@ class Contour {
 
       }
 
+
       let clipped_polylines = new Polyline(points).clip(this.polygon);
-      if(clipped_polylines.length > 0) {
-        this.lines.push(clipped_polylines[0])
+      if(clipped_polylines.length == 0) { continue; }
+      let new_line = clipped_polylines[0];
+      
+      if(this.lines.length == 0) { 
+        console.log("Adding first line");
+        this.lines.push(new_line); continue; 
+      }
+
+      let valid = true;
+      let previous_line = this.lines[this.lines.length - 1];
+      let min_dist = 10000000;
+
+      for(let i = 0; i < new_line.points.length; i++){
+        for(let j = 0; j < previous_line.points.length; j++){
+          let p1 = new_line.points[i];
+          let p2 = previous_line.points[j];
+          if(!p1 || !p2) continue; // Skip if points are undefined
+          let d = p5.Vector.dist(p1, p2);
+          if(d < CONTOUR_MIN_WIDTH){ 
+            min_dist = d;
+            valid = false;
+            break;
+          }
+        }
+      }
+      console.log(`Distance between lines: ${min_dist}`);
+      if(valid && min_dist <= 10000000){
+        this.lines.push(new_line)
       }
     }
-
   }
 
-  distance(){
-    let min_dist = Infinity;
-    let max_dist = 0;
-    for(let i = 0; i < this.lines.length - 1; i++){
-      let l1 = this.lines[i];
-      let l2 = this.lines[i + 1];
-      for(let j = 0; j < l1.points.length; j++){
-        let p1 = l1.points[j];
-        let p2 = l2.points[j];
-        if(!p1 || !p2) continue; // Skip if points are undefined
-        let d = p5.Vector.dist(p1, p2);
-        if(d < min_dist){ 
-          min_dist = d;
-        }
-
-        if(d > max_dist){
-          max_dist = d;
-        }
-      }
-    }
-
-    // console.log(("Desired spacing", this.spacing));
-    
-    let scale_factor = this.spacing / min_dist;
-    this.spacing = this.spacing * scale_factor;
-    this.spacing = constrain(this.spacing, 3, 15); 
-
-    // console.log(`Average spacing: ${min_dist}, Adjusted spacing: ${this.spacing}, max spacing: ${max_dist}`);
-  }
 
   draw(){
     push()

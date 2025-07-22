@@ -340,10 +340,10 @@ class Polyline {
 
     let remaining = dash_length; // Length left in the current dash/gap
     let i = 0;
-    let start = this.points[0].copy();
+    let current = this.points[0].copy();
   
     while (i < this.points.length - 1) {
-      let a = start;
+      let a = current;
       let b = this.points[i + 1];
       let segment = p5.Vector.sub(b, a);
       let segLength = segment.mag();
@@ -353,7 +353,7 @@ class Polyline {
           line(a.x, a.y, b.x, b.y);
         }
         remaining -= segLength;
-        start = b.copy();
+        current = b.copy();
         i++;
       } else {
         let dir = segment.copy().normalize();
@@ -366,7 +366,7 @@ class Polyline {
         // Toggle dash/gap and reset remaining
         drawingDash = !drawingDash;
         remaining = drawingDash ? dash_length : gap_length;
-        start = next.copy();
+        current = next.copy();
         // Stay on same segment
       }
     }
