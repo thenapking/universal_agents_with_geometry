@@ -2,8 +2,8 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 30;
-const CITY_DENSITY = 15;
+const SECONDARY_DENSITY = 0;
+const CITY_DENSITY = 0;
 const CITY_RADIUS = 100;
 const RSF = 0.001
 const RM = 9
@@ -216,6 +216,76 @@ class Scene {
     this.graph = this.graph.relative_neighbours();
 
     this.refine_roads();
+  }
+
+  add_full_line(a, b, at = createVector(0, 0), bt = createVector(0, 0)){
+    let l = this.full_line(a.copy().add(at), b.copy().add(bt));
+    this.offscreen_lines.push(l);
+  }
+  
+  full_line(a, b){
+    // y = mx + c, m = dy / dx
+    let d = p5.Vector.sub(b, a);
+  
+    if(d.x === 0) { 
+      console.warn("Vertical line detected, using x-coordinate for line.");
+      return new Polyline([createVector(a.x, 0), createVector(a.x, height)]);
+    }
+    
+    let m = d.y / d.x;
+    let c = a.y - m * a.x;
+    let x1 = 0;
+    let y1 = m * x1 + c;
+    let x2 = width;
+    let y2 = m * x2 + c;
+    return new Polyline([createVector(x1, y1), createVector(x2, y2)]);
+  }
+  
+  add_crosshairs(a, trans = createVector(0, 0)){
+    let a1 = a.copy().add(trans);
+    let b1 = a.copy().mult(1,0).add(trans);
+    let b2 = a.copy().mult(0,1).add(trans);
+    let l1 = this.full_line(a1, b1);
+    let l2 = this.full_line(a1, b2);
+    this.offscreen_lines.push(l1);
+    this.offscreen_lines.push(l2);
+    return [l1, l2];
+  }
+  
+  add_star(a, n, trans = createVector(0, 0)){
+    let angle = TWO_PI / n;
+    let results = [];
+    for(let i = 0; i < n; i++){
+      let x = a.x + cos(i * angle) * 200;
+      let y = a.y + sin(i * angle) * 200;
+      let p = createVector(x, y).add(trans)
+      let aa = a.copy().add(trans)
+      let l = this.full_line(aa, p);
+      l.draw()
+      results.push(l);
+      this.offscreen_lines.push(l);
+    }
+    return results
+  }
+
+  concentric_circle(x, y, r, w, n){
+    let pieces = [];
+    console.log("Concentric circle")
+  
+    for(let i = 0; i <= n; i++){
+      let dA = i * w
+      if(dA >= r) { break;}
+      let type = i < n ? 'decoration' : 'city';
+  
+      let polyCircle = new RegularPolygon(
+        x, y,
+        r - dA, r - dA, 100, type
+      );
+      
+      pieces.push(polyCircle);
+    }
+  
+    return pieces
   }
 
   grow_cities(){

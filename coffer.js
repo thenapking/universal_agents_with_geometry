@@ -303,6 +303,113 @@ class Coffer {
 }
 
 
+function create_adjacency_map(coffers){
+  let result = [];
+  for(let i = 0; i < coffers.length; i++){
+    result[i] = [];
+    let coffer = coffers[i];
+    for(let j = 0; j < coffers.length; j++){
+      if(i === j) continue;
+      let other = coffers[j];
+      if(coffer.polygon.adjacent(other.polygon)){
+        result[i].push(j);
+      }
+    }
+  }
+  return result;
+}
+
+function find_shared_vertices(coffers, adjacency_map){
+  let result = [];
+  let tolerance = 1e-6; // Tolerance for vertex comparison
+  for(let i = 0; i < coffers.length; i++){
+    result[i] = [];
+    let coffer = coffers[i];
+    for(let j = 0; j < coffers.length; j++){
+      if(i === j) continue;
+      if(adjacency_map[i].includes(j)) continue;
+      let other = coffers[j];
+      let found = false;
+      for(let s of coffer.polygon.segments[0]){
+        for(let t of other.polygon.segments[0]){
+          if(p5.Vector.dist(s.start, t.start) < tolerance || 
+             p5.Vector.dist(s.start, t.end)   < tolerance || 
+             p5.Vector.dist(s.end, t.start)   < tolerance || 
+             p5.Vector.dist(s.end, t.end)     < tolerance){
+            result[i].push(j);
+            found = true; 
+            break;
+          }
+        }
+        if(found) { break; }
+      }
+    }
+  }
+  return result;
+}
+
+function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
+  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
+    results[idx] = 'pink'; // Fallback colour
+    return results; 
+  } 
+
+  if(results[idx] == undefined) {
+    let neighbours = adjacency_map[idx];
+    let unused = [...input_colours];
+
+    for(let n of neighbours){
+      let colour = results[n];
+      if(colour !== undefined){
+        unused = unused.filter(c => c !== colour);
+      }
+    }
+
+    if(shared_map[idx].length > 0){
+      let shared_colours = shared_map[idx].map(s => results[s]).filter(c => c !== undefined);
+      if(shared_colours.length > 0){
+        unused = unused.filter(c => shared_colours.includes(c));
+      }
+    }
+
+    if(unused.length > 0){
+      results[idx] = unused[0];
+    } 
+
+    if(shared_map[idx].length > 0){
+      for(let i of shared_map[idx]){
+        recursive_colour_map(depth++, i, results, input_colours);
+      }
+    }
+
+    
+  }
+
+  return results;
+}
+
+function full_recursive_colour_map(final) {
+  let results = [];
+  // prefil some random colours
+  for(let j = 0; j < 10; j++){
+    let ridx = int(random(final.length));
+    let rc = random(extended_colours)
+    console.log("Prefilling colour", ridx, rc);
+    results[ridx] = rc;
+  }
+
+  for (let i = 0; i < final.length; i++) {
+    if (results[i] === undefined) {
+      recursive_colour_map(0, i, results, colours );
+    }
+  }
+
+  return results;
+}
+
+
+
+
 
 
 
