@@ -70,7 +70,7 @@ function setup(){
   scene = new Scene()
   scene.initialize()
   // setup_debug_agents()
-  // debug_fills();
+  debug_fills();
 
 }
 
@@ -78,7 +78,7 @@ let ctx = 0;
 function draw(){
   // debug_agents()
   // test_draw(scene.lots, ctx);
-  accumulative_draw();
+  // accumulative_draw();
   // final_draw();
   
 }
@@ -137,12 +137,12 @@ function debug_fills(){
   console.log("START")
   polyCircleA = new MultiPolygon(new_points);
   // polyCircleA = new Oblong(W/4, H/6, 20, 10);
-  polyCircleA = new RegularPolygon(W/3, H/3, 200,200, 100);  
+  polyCircleA = new RegularPolygon(W/3, H/3, 100,200, 100);  
   // fill_object = new Hatching(polyCircleA, 7, 9, 3);
   // fill_object.hatch('vertical');
 
   // fill_object = new Contour(polyCircleA, 'upwards', 0.025);
-  fill_object = new Pips(polyCircleA);
+  fill_object = new Radial(polyCircleA, polyCircleA.bounds_centroid(), 48, 200, 50);
   // fill_object = new Boustrophedon(polyCircleA, 'upwards');
 
   stroke(255,0,0)

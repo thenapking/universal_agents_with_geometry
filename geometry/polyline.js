@@ -165,7 +165,7 @@ class Polyline {
     // Duplicate the line so new junctures can be found
     let new_line = new Polyline(this.points);
     const junctures = polygon.intersect_polyline(new_line);
-
+    
     if (junctures.length === 0) {
       return this.points.every(p => polygon.contains(p)) ? [this] : [];
     }
@@ -175,10 +175,12 @@ class Polyline {
       if(inside) {
         let cutoff_index = this.points.indexOf(junctures[0].polyline.start);
         let new_points = this.points.slice(0, cutoff_index + 1);
+        new_points.push(junctures[0].point);
         return [new Polyline(new_points)];
       } else {
         let cutoff_index = this.points.indexOf(junctures[0].polyline.end);
         let new_points = this.points.slice(cutoff_index);
+        new_points.push(junctures[0].point);
         return [new Polyline(new_points)];
       }
     }
