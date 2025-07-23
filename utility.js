@@ -30,6 +30,9 @@ function set_seeds(){
   // seed =  43430
   // seed =  414118
   // seed =  835476
+
+  // seed =  954640
+  seed =  362367
   console.log("seed = ", seed);
 
   randomSeed(seed);

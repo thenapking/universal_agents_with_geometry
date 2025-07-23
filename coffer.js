@@ -8,15 +8,17 @@
 let SMALL =  [ 'downwards', 'upwards', 'dots', 'large-dots', 'large-vertical-dashes', 'large-horizontal-dashes', 'trees', 'park' ]
 let TOWN = [ 'terraces', 'park', 'civic', 'trees'] 
 let TOWN_WEIGHTS = [100, 1, 20, 3];
-let LARGE =  [  'large-dots', 'contour-upwards', 'contour-downwards' ];  
+let LARGE =  [  'pips', 'large-dots', 'contour-upwards', 'contour-downwards' ];  
 let COUNTRY = [ 'large-dots', 'contour-upwards', 'contour-downwards', 'boustrophedon', 'vertical-dashes', 'horizontal-dashes', 'dots'];
 let COUNTRY_WEIGHTS = [1, 100, 100, 20, 50, 50, 10,];
 let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
 let MAX_CIVIC = 20;
+let MAX_AGENTS = 3;
 let CENTRE_DIST = 100;
 let total_civic_count = 0;  
+let total_agent_count = 0;
 let civil_statistics = {
   blank: 0, downwards: 0, upwards: 0, dots: 0, 
   'large-dots': 0, 'vertical-dashes': 0, 'horizontal-dashes': 0, 
@@ -85,10 +87,11 @@ class Coffer {
       }
     }
     
-    if(this.type == 'countryside' && area > 12000 && area < 40000) { this.fill_type = 'agent-circular' }
-    if(area >= 60000) { this.fill_type = random(LARGE) }
+    if(this.type == 'countryside' && total_agent_count < MAX_AGENTS && area > 12000 && area < 40000) { this.fill_type = 'agent-circular' }
+    if(area >= 60000) { this.fill_type = 'pips' }
 
     if(this.fill_type == 'agent-circular'){
+      total_agent_count++;
       let minSize = int(random(7, 15))
       let maxSize = minSize*2
       let avgSize = (minSize + maxSize) / 2;
@@ -98,6 +101,12 @@ class Coffer {
 
       this.fill_object = new SuperEllipseGroup(n, this.polygon.bounds_centroid(), 10, this.polygon, options);
       this.fill_object.initialize();
+    }
+
+    if(this.fill_type == 'pips') {
+      console.log('Creating pips fill for polygon', this.id);
+      this.fill_object = new Pips(this.polygon);
+      this.fill_object.construct();
     }
     
 
@@ -122,7 +131,7 @@ class Coffer {
     }
 
     if(this.fill_type == 'terraces'){
-      this.fill_object = new Terrace(this.polygon);
+      this.fill_object = new Terrace(this.polygon.scale(0.6));
       this.fill_object.construct();
       this.active = false;
     }

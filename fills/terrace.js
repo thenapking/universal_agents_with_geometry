@@ -55,8 +55,9 @@ class Terrace {
 
   draw(){
     push()
+      this.polygon.draw(); 
+
       if(this.set_back) { 
-        this.polygon.draw(); 
         this.garden.draw(false)
       }
       for (let l of this.lines) {

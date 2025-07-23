@@ -54,6 +54,62 @@ class Contour {
   }
 
   construct(){
+    this.construct_horizontally();
+    this.construct_vertically();
+  }
+
+  construct_vertically(){
+    for(let y = this.minY; y < this.doubleMaxY; y += this.spacing) {
+      let points = []
+      let x0 = this.doubleMinX;
+      let y0 = y;
+      let p = createVector(x0, y0);
+
+      let guard = 0;
+      while(this.check(p.x,p.y) && guard < 1000) {
+        points.push(p.copy());
+        let nz = noise(p.x * this.sf, p.y * this.sf);
+        let offset = map(nz, 0, 1, -this.angle_range, this.angle_range);
+        let angle = this.base_angle + offset;
+        let dir = p5.Vector.fromAngle(angle).mult(this.spacing);
+        p.add(dir)
+        guard++
+
+      }
+
+
+      let clipped_polylines = new Polyline(points).clip(this.polygon);
+      if(clipped_polylines.length == 0) { continue; }
+      let new_line = clipped_polylines[0];
+      
+      if(this.lines.length == 0) { 
+        this.lines.push(new_line); continue; 
+      }
+
+      let valid = true;
+      let previous_line = this.lines[this.lines.length - 1];
+      let min_dist = 10000000;
+
+      for(let i = 0; i < new_line.points.length; i++){
+        for(let j = 0; j < previous_line.points.length; j++){
+          let p1 = new_line.points[i];
+          let p2 = previous_line.points[j];
+          if(!p1 || !p2) continue;
+          let d = p5.Vector.dist(p1, p2);
+          if(d < CONTOUR_MIN_WIDTH){ 
+            min_dist = d;
+            valid = false;
+            break;
+          }
+        }
+      }
+      if(valid && min_dist <= 10000000){
+        this.lines.push(new_line)
+      }
+    }
+  }
+
+  construct_horizontally(){
     for(let x = this.doubleMinX; x < this.doubleMaxX; x += this.spacing) {
       let points = []
       let x0 = x;
@@ -89,7 +145,7 @@ class Contour {
         for(let j = 0; j < previous_line.points.length; j++){
           let p1 = new_line.points[i];
           let p2 = previous_line.points[j];
-          if(!p1 || !p2) continue; // Skip if points are undefined
+          if(!p1 || !p2) continue; 
           let d = p5.Vector.dist(p1, p2);
           if(d < CONTOUR_MIN_WIDTH){ 
             min_dist = d;
@@ -102,58 +158,6 @@ class Contour {
         this.lines.push(new_line)
       }
 
-    }
-
-
-    for(let y = this.minY; y < this.doubleMaxY; y += this.spacing) {
-      let points = []
-      let x0 = this.doubleMinX;
-      let y0 = y;
-      let p = createVector(x0, y0);
-
-      let guard = 0;
-      while(this.check(p.x,p.y) && guard < 1000) {
-        points.push(p.copy());
-        let nz = noise(p.x * this.sf, p.y * this.sf);
-        let offset = map(nz, 0, 1, -this.angle_range, this.angle_range);
-        let angle = this.base_angle + offset;
-        let dir = p5.Vector.fromAngle(angle).mult(this.spacing);
-        p.add(dir)
-        guard++
-
-      }
-
-
-      let clipped_polylines = new Polyline(points).clip(this.polygon);
-      if(clipped_polylines.length == 0) { continue; }
-      let new_line = clipped_polylines[0];
-      
-      if(this.lines.length == 0) { 
-        console.log("Adding first line");
-        this.lines.push(new_line); continue; 
-      }
-
-      let valid = true;
-      let previous_line = this.lines[this.lines.length - 1];
-      let min_dist = 10000000;
-
-      for(let i = 0; i < new_line.points.length; i++){
-        for(let j = 0; j < previous_line.points.length; j++){
-          let p1 = new_line.points[i];
-          let p2 = previous_line.points[j];
-          if(!p1 || !p2) continue; // Skip if points are undefined
-          let d = p5.Vector.dist(p1, p2);
-          if(d < CONTOUR_MIN_WIDTH){ 
-            min_dist = d;
-            valid = false;
-            break;
-          }
-        }
-      }
-      console.log(`Distance between lines: ${min_dist}`);
-      if(valid && min_dist <= 10000000){
-        this.lines.push(new_line)
-      }
     }
   }
 

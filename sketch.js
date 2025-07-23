@@ -69,11 +69,12 @@ function setup(){
   scene = new Scene()
   scene.initialize()
   // setup_debug_agents()
+  // debug_fills();
+
 }
 
 let ctx = 0;
 function draw(){
-  // debug_fills();
   // debug_agents()
   // test_draw(scene.lots, ctx);
   accumulative_draw();
@@ -108,7 +109,7 @@ function debug_agents(){
   if(active < 1) { 
     console.log("No more active agents"); 
     default_setup();
-    fill_object.boundary.draw();
+    // fill_object.boundary.draw();
     fill_object.draw();
     
     noLoop(); }
@@ -135,11 +136,12 @@ function debug_fills(){
   console.log("START")
   polyCircleA = new MultiPolygon(new_points);
   // polyCircleA = new Oblong(W/4, H/6, 20, 10);
-  polyCircleA = new RegularPolygon(W/4, H/6, 100,100, 100);  
+  polyCircleA = new RegularPolygon(W/3, H/3, 200,200, 100);  
   // fill_object = new Hatching(polyCircleA, 7, 9, 3);
   // fill_object.hatch('vertical');
 
-  fill_object = new Contour(polyCircleA, 'upwards', 0.025);
+  // fill_object = new Contour(polyCircleA, 'upwards', 0.025);
+  fill_object = new Pips(polyCircleA);
   // fill_object = new Boustrophedon(polyCircleA, 'upwards');
 
   stroke(255,0,0)
@@ -147,7 +149,7 @@ function debug_fills(){
   stroke(0)
   fill_object.construct();
   fill_object.draw();
-  noLoop();
+  // noLoop();
 }
 
 let lo, lp, lr;

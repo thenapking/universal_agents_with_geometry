@@ -24,6 +24,7 @@ class Segment {
 
     this.junctures = [];
     this.contour_id = contour_id || 0;
+    this.midpoint = p5.Vector.add(this.start, this.end).mult(0.5);
   }
 
   bounds() {
