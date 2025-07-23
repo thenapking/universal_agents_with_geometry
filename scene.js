@@ -301,7 +301,10 @@ class Scene {
         r - dA, r - dA, 100, type
       );
       
-      pieces.push(polyCircle);
+      let trimmed_circle = polyCircle.intersection(this.city_limits);
+      if(trimmed_circle.length == 0){ continue; }
+
+      pieces.push(trimmed_circle[0]);
     }
   
     return pieces
@@ -414,10 +417,10 @@ class Scene {
     let l2 = this.full_line(this.secondary_foci[0], this.secondary_foci[1]);
     let l3 = this.full_line(this.secondary_foci[2], this.secondary_foci[3]);
     let l4 = this.full_line(this.secondary_foci[4], this.secondary_foci[5]);
-    let l5 = this.full_line(this.focus, this.secondary_foci[0]);
-    let l6 = this.full_line(this.focus, this.secondary_foci[2]);
-    let l7 = this.full_line(this.focus, this.secondary_foci[4]);
-    let lines = [l1, l2, l3, l4, l5, l6, l7];
+    // let l5 = this.full_line(this.focus, this.secondary_foci[0]);
+    // let l6 = this.full_line(this.focus, this.secondary_foci[2]);
+    // let l7 = this.full_line(this.focus, this.secondary_foci[4]);
+    let lines = [l1, l2,  l3, l4] // l5, l6, l7];
 
     let pieces = [this.city_limits]
     for(let l of lines){
@@ -450,7 +453,9 @@ class Scene {
         v.x, v.y,
         r, r, 100, type
       );
-      this.villages.push(village);
+      let trimmed_village = village.intersection(this.city_limits);
+      if(trimmed_village.length == 0){ continue; }
+      this.villages.push(trimmed_village[0]);
     }
 
     this.unioned_villages = this.villages[0]
@@ -473,7 +478,7 @@ class Scene {
 
     let town = this.concentric_circle(this.secondary_foci[0], CITY_RADIUS*1.5, 30, 3);
     let village = this.concentric_circle(this.secondary_foci[1], CITY_RADIUS, 30, 2);
-    let village2 = this.concentric_circle(this.secondary_foci[2], CITY_RADIUS*2, 20, 4);
+    // let village2 = this.concentric_circle(this.secondary_foci[2], CITY_RADIUS*2, 20, 4);
 
     for(let region of this.regions){
       let trimed_region = region;
@@ -499,10 +504,9 @@ class Scene {
       
       let sectors = trimed_region.concat(new_city)
       // Some combinatins will result in a very large bitmask for disjointin.  Ensure that this mask will be under 26
-      if(sectors.length + city.length < 26) { sectors = sectors.concat(city)}
       if(sectors.length + town.length < 20) { sectors = sectors.concat(town)}
       if(sectors.length + village.length < 20) { sectors = sectors.concat(village)}
-      if(sectors.length + village2.length < 20) { sectors = sectors.concat(village2)}
+      // if(sectors.length + village2.length < 20) { sectors = sectors.concat(village2)}
 
       let pieces = multi_disjoint(sectors);
 

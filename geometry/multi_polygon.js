@@ -131,6 +131,8 @@ class MultiPolygon {
       let b = other.outer[i];
       if (a.x !== b.x || a.y !== b.y) { return false }
     }
+
+    console.warn("Overlapping polygons");
     return true;
   }
 
