@@ -70,7 +70,7 @@ function setup(){
   scene = new Scene()
   scene.initialize()
   // setup_debug_agents()
-  debug_fills();
+  // debug_fills();
 
 }
 
@@ -78,7 +78,7 @@ let ctx = 0;
 function draw(){
   // debug_agents()
   // test_draw(scene.lots, ctx);
-  // accumulative_draw();
+  accumulative_draw();
   // final_draw();
   
 }
@@ -142,7 +142,7 @@ function debug_fills(){
   // fill_object.hatch('vertical');
 
   // fill_object = new Contour(polyCircleA, 'upwards', 0.025);
-  fill_object = new Radial(polyCircleA, polyCircleA.bounds_centroid(), 48, 200, 50);
+  fill_object = new Concentric(polyCircleA, polyCircleA.bounds_centroid(), 200, 20, 12);
   // fill_object = new Boustrophedon(polyCircleA, 'upwards');
 
   stroke(255,0,0)

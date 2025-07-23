@@ -64,23 +64,29 @@ class Coffer {
         } else if (this.colour == 'pink') {
           this.fill_type = 'contour-downwards';
         } else if (this.colour == 'grey') {
-          this.fill_type = 'large-vertical-dashes';
-        } 
+          this.fill_type = 'radial';
+        } else if (this.colour == 'orange') {
+          this.fill_type = 'concentric';
+        }
       } else if (area > 2000) {
         if (this.colour == 'brown') {
-          if(total_agent_count < MAX_AGENTS) { this.fill_type = 'agent-circular' }
+          this.fill_type = 'radial'
         } else if (this.colour == 'yellow') {
-            this.fill_type = 'contour-upwards';  
+            this.fill_type = 'pips';  
         } else if (this.colour == 'pink') {
-          this.fill_type = 'contour-downwards';
+          this.fill_type = 'radial';
          } else if (this.colour == 'grey') {
           if(total_agent_count < MAX_AGENTS) {this.fill_type = 'agent-beans'}
-         }
+         } else if (this.colour == 'orange') {
+          if(total_agent_count < MAX_AGENTS) { this.fill_type = 'agent-circular' }
+        } else if (this.colour == 'blue') {
+          this.fill_type = 'concentric';
+        }
       } else { 
         if (this.colour == 'brown') {
           this.fill_type = 'downwards' 
         } else if (this.colour == 'yellow') {
-          this.fill_type = 'large-vertical-dashes';  
+          // this.fill_type = 'large-vertical-dashes';  
         } else if (this.colour == 'grey') {
           this.fill_type = 'upwards';
         } 
@@ -92,7 +98,9 @@ class Coffer {
         this.fill_type = 'large-vertical-dashes';  
       } else if (this.colour == 'grey') {
         this.fill_type = 'upwards';
-      } 
+      } else if (this.colour == 'pink'){
+        this.fill_type = 'radial'
+      }
     }
 
     // let centroid = this.polygon.centroid();
@@ -130,8 +138,9 @@ class Coffer {
     // if(this.fill_type == 'civic' && total_civic_count >= MAX_CIVIC) { this.fill_type = 'houses' }
     // if(this.fill_type == 'civic') { total_civic_count++ }
 
-    if(area < 100) { this.fill_type = 'downwards'}
-    if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
+    // if(area < 100) { this.fill_type = 'downwards'}
+    if(this.is_thin()) { this.fill_type = 'blank' }
+    // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
     if(this.fill_type == 'boustrophedon'){
       if (abs(le_dir) < 0) {
@@ -174,6 +183,21 @@ class Coffer {
       console.log('Creating pips fill for polygon', this.id);
       this.fill_object = new Pips(this.polygon);
       this.fill_object.construct();
+    }
+
+    if(this.fill_type == 'radial') {
+      console.log('Creating radial fill for polygon', this.id);
+      let ndiv = random([48,96,128,128, 192, 256])
+      this.fill_object = new Radial(this.polygon, scene.focus, ndiv, CITY_RADIUS * 4, CITY_RADIUS );
+      this.fill_object.construct();
+      this.active = false;
+    }
+
+    if(this.fill_type == 'concentric') {
+      console.log('Creating radial fill for polygon', this.id);
+      this.fill_object = new Radial(this.polygon, scene.focus, CITY_RADIUS * 4, 10, 10);
+      this.fill_object.construct();
+      this.active = false;
     }
     
 
@@ -265,6 +289,12 @@ class Coffer {
     }
 
     civil_statistics[this.fill_type]++;
+  }
+
+  is_thin(){
+    let bounding_box_area = this.polygon.bounds_area();
+    let area =  this.polygon.area();
+    return area / bounding_box_area < THINNESS_THRESHOLD;
   }
 
   is_triangular(){

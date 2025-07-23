@@ -5,34 +5,7 @@ class Radial{
     this.centre = centre;
     this.outer_r = outer_r;
     this.inner_r = inner_r;
-    this.set_bounds();
     this.lines = []
-  }
-
-  set_bounds() {
-    this.bounds = this.polygon.bounds();
-    const [minX, minY, maxX, maxY] = this.bounds;
-    this.minX = minX;
-    this.minY = minY;
-    const width = maxX - minX;
-    const height = maxY - minY;
-    
-    // Make the bounding box square, large enough to fit the polygon
-    const size = Math.max(width, height);
-    this.maxX = minX + size;
-    this.maxY = minY + size;
-
-    this.doubleMaxX = this.maxX * 2;
-    this.doubleMaxY = this.maxY * 2;
-    this.doubleMinX = this.minX /2;
-    this.doubleMinY = this.minY /2;
-
-    // Center the square bounding box
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    this.minX = centerX - size / 2;
-    this.minY = centerY - size / 2;
   }
 
   construct(){
@@ -55,8 +28,6 @@ class Radial{
         this.lines.push(result);
       }
     }
-
-
   }
 
   draw(){

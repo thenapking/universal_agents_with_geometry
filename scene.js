@@ -309,7 +309,6 @@ class Scene {
       final.type = type;
       final.parent = null;
       final.ancestor_ids = [];
-      console.log(final)
       pieces.push(final);
     }
   
