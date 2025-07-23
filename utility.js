@@ -65,6 +65,7 @@ function mousePressed(){
       if(coffer.polygon.contains(point)){ 
         console.log(`Clicked on coffer ${coffer.id} with polygon ${coffer.polygon.id}`);
         console.log(`Coffer is: ${coffer.fill_type}`);
+        if(coffer.error_message) { console.log(`Coffer message: ${coffer.error_message}`);}
         console.log(coffer);
         console.log(coffer.polygon);
       }

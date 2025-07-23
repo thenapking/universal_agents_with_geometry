@@ -122,6 +122,18 @@ class MultiPolygon {
 
   is_concave(){ return !this.is_convex() }
 
+  has_same_points(other) {
+    if (this.count() !== other.count()) return false;
+    if (this.bounds_centroid().dist(other.bounds_centroid()) > 1e-6) return false;
+    
+    for (let i = 0; i < this.outer.length; i++) {
+      let a = this.outer[i];
+      let b = other.outer[i];
+      if (a.x !== b.x || a.y !== b.y) { return false }
+    }
+    return true;
+  }
+
   // AREA and other geometry methods
   max_diameter(points = this.outer) {
     let max_dist = 0;

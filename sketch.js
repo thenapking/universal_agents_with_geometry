@@ -12,6 +12,7 @@ let FW = W + 2 * BW + 2 * MBW;
 let FH = H + 2 * BW + 2 * MBW;
 let VW = W + 2 * BW;
 let VH = H + 2 * BW;
+let CELL_SIZE = DPI/2
 
 let MARGIN = 1;
 let BORDER_MARGIN = 5;

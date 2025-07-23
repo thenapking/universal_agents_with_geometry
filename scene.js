@@ -2,8 +2,8 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 18;
-const CITY_DENSITY = 1;
+const SECONDARY_DENSITY = 13;
+const CITY_DENSITY = 2;
 const CITY_RADIUS = 100;
 const RSF = 0.001
 const RM = 9
@@ -18,6 +18,7 @@ const SCENE_CREATE_LOTS = 40;
 const SCENE_SUBDIVIDE_LOTS = 50;
 const SCENE_PREPARE_COFFERS = 60;
 const SCENE_CREATE_COFFERS = 70;
+const SCENE_COLOUR_COFFERS = 71;
 const SCENE_UPDATE_COFFERS = 80;
 const SCENE_COMPLETE = 90;
 
@@ -81,7 +82,8 @@ class Scene {
     this.create_lots();
     this.subdivide_lots();
     this.prepare_coffers();
-    this.create_coffers()
+    this.create_coffers();
+    this.colour_coffers();
     this.update_coffers();
   }
 
@@ -402,14 +404,40 @@ class Scene {
     let points = [top_left, top_right, bottom_right, bottom_left];
     this.city_limits = new MultiPolygon(points, 'countryside');
   }
+
+  divide_city_limits(){
+    this.regions = [];
+    let bottom_half_right = createVector(W/2 + BW + MBW, H + BW + MBW);
+    let top_half_right = createVector(W/2 + BW + MBW, BW + MBW);
     
-  create_lots(){
-    if(this.state != SCENE_CREATE_LOTS){ return }
-    console.log("Creating lots")
+    let l1 =  this.full_line(top_half_right, bottom_half_right);
+    let l2 = this.full_line(this.secondary_foci[0], this.secondary_foci[1]);
+    let l3 = this.full_line(this.secondary_foci[2], this.secondary_foci[3]);
+    let l4 = this.full_line(this.secondary_foci[4], this.secondary_foci[5]);
+    let l5 = this.full_line(this.focus, this.secondary_foci[0]);
+    let l6 = this.full_line(this.focus, this.secondary_foci[2]);
+    let l7 = this.full_line(this.focus, this.secondary_foci[4]);
+    let lines = [l1, l2, l3, l4, l5, l6, l7];
 
-    let villages = []
+    let pieces = [this.city_limits]
+    for(let l of lines){
+      let new_pieces = [];
 
-    let regions = this.city_limits 
+      for(let piece of pieces){
+        let results = piece.split(l);
+        for(let r of results){
+          new_pieces.push(r);
+        }
+      }
+      pieces = new_pieces;
+    }
+
+    this.regions = pieces;
+
+  }
+
+  create_villages(){
+    this.villages = []
 
     // First punch out the villages from the city limits
     // This helps to reduce the size of the bitmask for disjointing
@@ -422,47 +450,76 @@ class Scene {
         v.x, v.y,
         r, r, 100, type
       );
-      villages.push(village);
-      regions = regions.difference(village)[0];
+      this.villages.push(village);
     }
 
-    regions = regions.difference(this.unioned_roads);
+    this.unioned_villages = this.villages[0]
+
+    for(let v of this.villages){
+      this.unioned_villages = this.unioned_villages.union(v)[0];
+    }
+  }
+    
+  create_lots(){
+    if(this.state != SCENE_CREATE_LOTS){ return }
+    console.log("Creating lots")
+
+    this.sectors = [];
+
+    this.divide_city_limits()
+    this.create_villages()
 
     let city = this.concentric_circle(this.focus, CITY_RADIUS*2.5, 30, 6);
-    let unioned_villages = villages[0]
 
-    for(let v of villages){
-      unioned_villages = unioned_villages.union(v)[0];
-    }
-
-    let new_city = []
-    for(let ring of city){
-      let diff = ring.difference(unioned_villages);
-      for(let d of diff){
-        new_city.push(d);
-      }
-    }
-    
     let town = this.concentric_circle(this.secondary_foci[0], CITY_RADIUS*1.5, 30, 3);
     let village = this.concentric_circle(this.secondary_foci[1], CITY_RADIUS, 30, 2);
     let village2 = this.concentric_circle(this.secondary_foci[2], CITY_RADIUS*2, 20, 4);
 
-    let sectors = regions.concat(new_city) 
-    // Some combinatins will result in a very large bitmask for disjointin.  Ensure that this mask will be under 26
-    if(sectors.length + town.length < 26) { sectors = sectors.concat(town)}
-    // if(sectors.length + village.length < 26) { sectors = sectors.concat(village)}
-    // if(sectors.length + village2.length < 26) { sectors = sectors.concat(village2)}
+    for(let region of this.regions){
+      let trimed_region = region;
+      for(let village of this.villages){
+        let new_trimed_region = trimed_region.difference(village);
+        if(new_trimed_region.length == 0){ continue; }
+        trimed_region = new_trimed_region[0];
+      
+      }
 
-    let pieces = multi_disjoint(sectors);
+      trimed_region = trimed_region.difference(this.unioned_roads);
+    
+      let new_city = []
+      for(let ring of city){
+        let rg_diff = region.difference(ring)
+        if(rg_diff.length == 0){ continue; }
+        let new_ring = rg_diff[0];
+        let diff = new_ring.difference(this.unioned_villages);
+        for(let d of diff){
+          new_city.push(d);
+        }
+      }
+      
+      let sectors = trimed_region.concat(new_city)
+      // Some combinatins will result in a very large bitmask for disjointin.  Ensure that this mask will be under 26
+      if(sectors.length + city.length < 26) { sectors = sectors.concat(city)}
+      if(sectors.length + town.length < 20) { sectors = sectors.concat(town)}
+      if(sectors.length + village.length < 20) { sectors = sectors.concat(village)}
+      if(sectors.length + village2.length < 20) { sectors = sectors.concat(village2)}
+
+      let pieces = multi_disjoint(sectors);
+
+      this.sectors.push(...pieces);
+    }
 
     
     // Now the villages back in
-    for(let v of villages){
+    let final_villages = []
+    for(let v of this.villages){
       let diff = v.difference(this.unioned_roads);
       for(let d of diff){
-        pieces.push(d)
+        final_villages.push(d)
       }
     }
+
+    this.villages = final_villages;
 
 
 
@@ -471,10 +528,11 @@ class Scene {
  
     // }
 
-    this.sectors = pieces;
 
 
     this.state = SCENE_SUBDIVIDE_LOTS;
+    console.log("Subdividing lots")
+
   }
 
 
@@ -482,12 +540,53 @@ class Scene {
     if(this.state != SCENE_SUBDIVIDE_LOTS){ return }
     if(this.sectors.length == 0){ this.state = SCENE_PREPARE_COFFERS; return; }
 
+
+    while(this.sectors.length > 0){
+      let p = this.sectors.pop();
     
+      this.add_coffer(p);
+      
+    }
 
-    let p = this.sectors.pop();
+    while(this.villages.length > 0){
+      let p = this.villages.pop();
+    
+      let centroid = p.bounds_centroid();
+      let nearest = this.foci[0];
+      let nearest_dist = Infinity;
+      for (let f of this.secondary_foci) {
+        let d = p5.Vector.dist(centroid, f);
+        if (d < nearest_dist) {
+          nearest_dist = d;
+          nearest = f;
+        }
+      }
 
-   
-    let centroid = p.bounds_centroid();
+      let type = 'town';
+      if(p.area() > COUNTRYSIZE_SIZE || (nearest_dist > CITY_RADIUS/2)) { 
+        type = 'countryside';
+      } 
+
+      if(type == 'countryside'){
+        this.add_coffer(p, type);
+      } else {
+        let results = this.subdivide(p, MIN_LOT_SIZE);
+        for(let r of results){
+          this.lots.push(r);
+        }
+      }
+    }
+
+
+  }
+  
+
+  add_coffer(polygon, type) {
+    for(let other of coffers){
+      if(other.polygon.has_same_points(polygon)){ return; }
+    }
+
+    let centroid = polygon.bounds_centroid();
     let nearest = this.foci[0];
     let nearest_dist = Infinity;
     for (let f of this.secondary_foci) {
@@ -498,29 +597,16 @@ class Scene {
       }
     }
 
-    if(p.area() > COUNTRYSIZE_SIZE) {
-      let coffer = new Coffer(p, nearest, 'countryside');
-      coffers.push(coffer);
-      return  
-    }
+    let final_type = 'town';
+    if(polygon.area() > COUNTRYSIZE_SIZE || (nearest_dist > CITY_RADIUS/2)) { 
+      final_type = 'countryside';
+    } 
 
+    if(!type) { type = final_type; }
 
-    if(nearest_dist > CITY_RADIUS/2) { 
-      let coffer = new Coffer(p, nearest, 'countryside');
-      coffers.push(coffer);
-      return  
-    }
-
-    let coffer = new Coffer(p, nearest, 'town');
+    let coffer = new Coffer(polygon, nearest, type);
+    coffer_grid.add(coffer);
     coffers.push(coffer);
-    return  
-
-    // TEMP don't subdivide
-    // let results = this.subdivide(p, MIN_LOT_SIZE);
-    // for(let r of results){
-    //   this.lots.push(r);
-    // }
-
   }
 
   subdivide(polygon, min_area, counter = 0, hierarchy_counter = 0) {
@@ -715,49 +801,66 @@ class Scene {
 
   create_coffers(){
     if(this.state != SCENE_CREATE_COFFERS){ return }
-    if(this.potential_coffers.length == 0){ 
-      console.log("Finished creating coffers");
-      console.log("Updating coffers")
-      this.state = SCENE_UPDATE_COFFERS; 
-      return; 
-    }
 
-    let p = this.potential_coffers.pop();
-    
-    let centroid = p.centroid();
-    let nearest = this.foci[0];
-    let nearest_dist = Infinity;
-    for (let f of this.secondary_foci) {
-      let d = p5.Vector.dist(centroid, f);
-      if (d < nearest_dist) {
-        nearest_dist = d;
-        nearest = f;
+    while(this.potential_coffers.length > 0){
+      let p = this.potential_coffers.pop();
+      
+      let centroid = p.centroid();
+      let nearest = this.foci[0];
+      let nearest_dist = Infinity;
+      for (let f of this.secondary_foci) {
+        let d = p5.Vector.dist(centroid, f);
+        if (d < nearest_dist) {
+          nearest_dist = d;
+          nearest = f;
+        }
       }
+      this.add_coffer(p, 'town');
     }
-    let coffer = new Coffer(p, nearest, 'town')
-    
-    coffers.push(coffer);
 
+    console.log("Finished creating coffers");
+    console.log("Updating coffers")
+    this.state = SCENE_COLOUR_COFFERS; 
+    return; 
   }
 
   colour_coffers(){
+    if(this.state != SCENE_COLOUR_COFFERS){ return } 
+
+    console.log("Colouring coffers", coffers.length);
     let adjacency_map = create_adjacency_map(coffers)
-    let shared_vertices = find_shared_vertices(coffers, adjacency_map)
+    console.log("Adjacency map created", adjacency_map);
+    let shared_map = find_shared_vertices(coffers, adjacency_map);
+    console.log("Shared vertices map created", shared_map);
+    let colour_map = full_recursive_colour_map(adjacency_map, shared_map, coffers);
+    console.log("Colour map created", colour_map);
+
+    for(let i = 0; i < colour_map.length; i++){
+      let coffer = coffers[i];
+      let colour = colour_map[i];
+      if(!colour){ continue; }
+      coffer.colour = colour
+    }
+
+    console.log("Coffers coloured", coffers.length);
+    this.state = SCENE_UPDATE_COFFERS;
+
   }
 
   update_coffers(){
     if(this.state != SCENE_UPDATE_COFFERS){ return }
-    let coffer = coffers[this.current_coffer_id];
-    let active = coffer.update();
+    noLoop()
+    // let coffer = coffers[this.current_coffer_id];
+    // let active = coffer.update();
 
-    if(active < 1){ 
-      this.current_coffer_id++;
-    }
+    // if(active < 1){ 
+    //   this.current_coffer_id++;
+    // }
     
-    if(this.current_coffer_id >= coffers.length){
-      console.log("Finished updating coffers");
+    // if(this.current_coffer_id >= coffers.length){
+    //   console.log("Finished updating coffers");
       this.state = SCENE_COMPLETE; 
-    }
+    // }
   }
 
   draw(){
@@ -807,8 +910,9 @@ class Scene {
       }
 
       for(let coffer of coffers){
-        coffer.draw();
-        coffer.fill()
+        coffer.draw_coloured()
+        // coffer.draw();
+        // coffer.fill()
       }
 
       strokeWeight(2);

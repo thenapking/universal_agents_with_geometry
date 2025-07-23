@@ -11,7 +11,7 @@ let TOWN_WEIGHTS = [100, 1, 20, 3];
 let LARGE =  [  'pips', 'large-dots', 'contour-upwards', 'contour-downwards' ];  
 let COUNTRY = [ 'large-dots', 'contour-upwards', 'contour-downwards', 'boustrophedon', 'vertical-dashes', 'horizontal-dashes', 'dots'];
 let COUNTRY_WEIGHTS = [1, 100, 100, 20, 50, 50, 10,];
-let colours = ['brown', 'yellow', 'grey', 'pink', 'orange'] 
+let colours = ['brown', 'yellow', 'grey', 'orange', 'blue', 'red', 'green', 'purple',  'cyan', 'magenta', 'white', 'lightblue', 'lightgreen', 'lightgrey', 'lightyellow', 'lightorange', 'lightpurple', 'lightcyan', 'lightmagenta']; 
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
 let MAX_CIVIC = 20;
@@ -26,6 +26,8 @@ let civil_statistics = {
   trees: 0, park: 0, civic: 0, houses: 0  
 }
 
+let coffer_grid = new Grid()
+
 class Coffer {
   static id = 0;
   constructor(polygon, focus, type) {
@@ -36,8 +38,17 @@ class Coffer {
     this.fill_type = null;
     this.type = type || 'countryside'
     this.fill_object = null;
+    this.colour = null;
     this.create_fill_object();
     this.active = true;
+    this.position = this.polygon.bounds_centroid(); 
+    this.col = Math.floor(this.position.x / CELL_SIZE);
+    this.row = Math.floor(this.position.y / CELL_SIZE);
+    this.error_message = null;  
+  }
+
+  neighbours() {
+    return coffer_grid.neighbours(this.col, this.row);
   }
 
   create_fill_object(){
@@ -297,6 +308,15 @@ class Coffer {
     this.polygon.draw();
   }
 
+  draw_coloured(){
+    push();
+      if(this.colour) {
+        fill(this.colour);
+      } else { noFill(); }
+      this.polygon.draw();
+    pop();
+  }
+
   fill(){
     if(this.fill_object) {
       this.fill_object.draw();
@@ -309,15 +329,21 @@ class Coffer {
 function create_adjacency_map(coffers){
   let result = [];
   for(let i = 0; i < coffers.length; i++){
-    result[i] = [];
+    if(result[i] === undefined) { result[i] = []; }
     let coffer = coffers[i];
-    for(let j = 0; j < coffers.length; j++){
-      if(i === j) continue;
-      let other = coffers[j];
-      if(coffer.polygon.adjacent(other.polygon)){
+    if(coffer.polygon.area() < 2) { continue; } 
+    let neighbours = coffer.neighbours();
+    for(let other of neighbours){
+      if(other.polygon.area() < 2) { continue; } 
+      let j = coffers.indexOf(other);
+      if(j === i) continue; 
+      if(!result[i].includes(j) && coffer.polygon.adjacent(other.polygon)){
         result[i].push(j);
+        if(result[j] === undefined) { result[j] = []; }
+        result[j].push(i); 
       }
     }
+    
   }
   return result;
 }
@@ -328,10 +354,15 @@ function find_shared_vertices(coffers, adjacency_map){
   for(let i = 0; i < coffers.length; i++){
     result[i] = [];
     let coffer = coffers[i];
-    for(let j = 0; j < coffers.length; j++){
-      if(i === j) continue;
-      if(adjacency_map[i].includes(j)) continue;
-      let other = coffers[j];
+    if(coffer.polygon.area() < 2) { continue; } 
+    let neighbours = coffer.neighbours();
+
+    for(let other of neighbours){
+      if(other.polygon.area() < 2) { continue; } 
+      let j = coffers.indexOf(other);
+      if(j === i) continue; // Skip self
+      if(adjacency_map[i].length == 0) { continue; } 
+      if(adjacency_map[i].includes(j)) { continue; }
       let found = false;
       for(let s of coffer.polygon.segments[0]){
         for(let t of other.polygon.segments[0]){
@@ -351,59 +382,90 @@ function find_shared_vertices(coffers, adjacency_map){
   return result;
 }
 
-function recursive_colour_map(depth = 0, idx = 0, results = [], input_colours){
-  if(depth > 100) { console.log("Recursion depth exceeded for piece", idx);
-    results[idx] = 'pink'; // Fallback colour
-    return results; 
-  } 
+function recursive_colour_map(adjacency_map, shared_map, depth = 0, idx = 0, results = [], input_colours) {
+  let early_exit = false;
+  let coffer = coffers[idx];
+  if (depth > 100) {
+    console.log("Recursion depth exceeded for piece", idx);
+    coffer.error_message = "Recursion depth exceeded";
+    early_exit = true;
+  }
+  if (input_colours.length == 0) {
+    console.log("No input colours available for piece", idx);
+    coffer.error_message = "No colours";
+    early_exit = true;
+  }
+  if(coffers[idx].polygon.area() < 2) {
+    console.log("Piece", idx, "is too small to colour");
+    coffer.error_message = "Too small";
+    early_exit = true;
+  }
 
-  if(results[idx] == undefined) {
+  if (adjacency_map[idx].length == 0) {
+    console.log("No neighbours for piece", idx);
+    coffer.error_message = "No neighbours"
+    early_exit = true;
+  }
+ 
+
+  if (early_exit) {
+    results[idx] = 'pink'; // fallback
+    return results;
+  }
+
+  if (results[idx] === undefined) {
     let neighbours = adjacency_map[idx];
     let unused = [...input_colours];
 
-    for(let n of neighbours){
+    for (let n of neighbours) {
       let colour = results[n];
-      if(colour !== undefined){
+      if (colour !== undefined) {
         unused = unused.filter(c => c !== colour);
       }
     }
 
-    if(shared_map[idx].length > 0){
+    if (shared_map[idx].length > 0) {
       let shared_colours = shared_map[idx].map(s => results[s]).filter(c => c !== undefined);
-      if(shared_colours.length > 0){
-        unused = unused.filter(c => shared_colours.includes(c));
+      if (shared_colours.length > 0) {
+        unused = unused.filter(c => !shared_colours.includes(c));
       }
     }
 
-    if(unused.length > 0){
+    if (unused.length > 0) {
       results[idx] = unused[0];
-    } 
+    } else {
+      console.log("No colours left for", idx, "at depth", depth);
+      results[idx] = 'pink'; // fallback
+    }
+  }
 
-    if(shared_map[idx].length > 0){
-      for(let i of shared_map[idx]){
-        recursive_colour_map(depth++, i, results, input_colours);
+  if (shared_map[idx].length > 0) {
+    for (let i of shared_map[idx]) {
+      if (results[i] === undefined) {
+        recursive_colour_map(adjacency_map, shared_map, depth + 1, i, results, input_colours);
       }
     }
-
-    
   }
 
   return results;
 }
 
-function full_recursive_colour_map(final) {
+
+function full_recursive_colour_map(adjacency_map, shared_map, final) {
   let results = [];
   // prefil some random colours
-  for(let j = 0; j < 10; j++){
-    let ridx = int(random(final.length));
-    let rc = random(extended_colours)
-    console.log("Prefilling colour", ridx, rc);
-    results[ridx] = rc;
-  }
+  // for(let j = 0; j < 10; j++){
+  //   let ridx = int(random(final.length));
+  //   let rc = random(extended_colours)
+  //   console.log("Prefilling colour", ridx, rc);
+  //   results[ridx] = rc;
+  // }
+
+  // final = final.sort((a, b) => b.polygon.area() - a.polygon.area()); // Ensure final is sorted
 
   for (let i = 0; i < final.length; i++) {
     if (results[i] === undefined) {
-      recursive_colour_map(0, i, results, colours );
+      recursive_colour_map(adjacency_map, shared_map, 0, i, results, colours );
     }
   }
 
