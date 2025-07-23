@@ -44,7 +44,6 @@ class Pips {
     if( !this.active ) { return  }
     if (this.count >= this.max_count) {
       this.active = false;
-      console.log("Pips construction complete");
       return 0;
     }
     

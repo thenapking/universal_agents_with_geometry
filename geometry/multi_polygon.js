@@ -443,6 +443,52 @@ class MultiPolygon {
     return clipper(this, other, 'difference');
   }
 
+  first_difference(other){
+    let diff = this.difference(other);
+    if(diff.length === 1) { return diff[0]; }
+  }
+
+  first_difference_or_original(other){
+    let diff = this.difference(other);
+    if(!diff || diff.length === 0) { return this; }
+    if(diff.length === 1) { return diff[0]; }
+  }
+
+  first_intersection(other){
+    let intersection = this.intersection(other);
+    if(intersection.length === 1) { return intersection[0]; }
+  }
+
+  first_intersection_or_original(other){
+    let intersection = this.intersection(other);
+    if(!intersection || intersection.length === 0) { return this; }
+    if(intersection.length === 1) { return intersection[0]; }
+  }
+
+  first_xor(other){
+    let xor = this.xor(other);
+    if(xor.length === 1) { return xor[0]; }
+  }
+
+  first_xor_or_original(other){
+    let xor = this.xor(other);
+    if(!xor || xor.length === 0) { return this; }
+    if(xor.length === 1) { return xor[0]; }
+  }
+
+  first_union(other){
+    let union = this.union(other);
+    if(union.length === 1) { return union[0]; }
+  }
+
+  first_union_or_original(other){
+    let union = this.union(other);
+    if(!union || union.length === 0) { return this; }
+    if(union.length === 1) { return union[0]; }
+  }
+
+
+
   // MUTATION
   scale(sf){
     if(sf <= 0) { return [this]; }

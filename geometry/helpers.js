@@ -123,7 +123,20 @@ function clipper(poly, other, op) {
     return [];
   }
 
-  const results = from_clipper_paths(solution, poly, other);
+  // TODO move error checking to the class; 
+  // TODO should we return empty array or what?
+  const epsilon = 0.5 * SCALE;
+  let cleaned = ClipperLib.Clipper.CleanPolygons(solution, epsilon);
+  if(!cleaned || cleaned.length == 0 || cleaned.some(p => p.length < 3)) {
+    // console.error("Clipper cleaning failed:", op);
+    return [];
+  }
+
+  let simplified = ClipperLib.Clipper.SimplifyPolygons(cleaned, ClipperLib.PolyFillType.pftEvenOdd);
+  if(!simplified || simplified.length == 0 || simplified.some( p => p.length < 3)) {
+    return [];
+  }
+  const results = from_clipper_paths(cleaned, poly, other);
   return results;
 }
 

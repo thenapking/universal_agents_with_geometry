@@ -15,7 +15,7 @@ let colours = ['brown', 'yellow', 'grey', 'orange', 'blue', 'red', 'green', 'pur
 let extended_colours = ['blue', 'red', 'green', 'purple',  'cyan', 'magenta'];
 let all_colours = [...colours, ...extended_colours];
 let MAX_CIVIC = 20;
-let MAX_AGENTS = 3;
+let MAX_AGENTS = 5;
 let CENTRE_DIST = 100;
 let total_civic_count = 0;  
 let total_agent_count = 0;
@@ -44,6 +44,8 @@ class Coffer {
     this.col = Math.floor(this.position.x / CELL_SIZE);
     this.row = Math.floor(this.position.y / CELL_SIZE);
     this.error_message = null;  
+    this.area = this.polygon.area();
+    this.centroid = this.polygon.bounds_centroid();
   }
 
   neighbours() {
@@ -54,6 +56,7 @@ class Coffer {
     if(!this.polygon || !this.focus || !this.colour) { return; } 
 
     let area = this.polygon.area();
+    if(!this.error_message) { this.fill_type = 'radial'; }
 
     if(this.type == 'countryside') {
       if(area > 20000) {
@@ -140,6 +143,7 @@ class Coffer {
 
     // if(area < 100) { this.fill_type = 'downwards'}
     if(this.is_thin()) { this.fill_type = 'blank' }
+    if(this.error_message == "No neighbours") { this.fill_type = 'blank' }
     // if(this.is_triangular()) { this.fill_type = this.set_triangular_hatch()}
 
     if(this.fill_type == 'boustrophedon'){
@@ -188,14 +192,18 @@ class Coffer {
     if(this.fill_type == 'radial') {
       console.log('Creating radial fill for polygon', this.id);
       let ndiv = random([48,96,128,128, 192, 256])
-      this.fill_object = new Radial(this.polygon, scene.focus, ndiv, CITY_RADIUS * 4, CITY_RADIUS );
+      let d = p5.Vector.dist(this.centroid, scene.focus);
+      let centre = d < CITY_RADIUS * 4 ? scene.focus :  scene.secondary_foci[0]
+      this.fill_object = new Radial(this.polygon, centre, ndiv, CITY_RADIUS * 4, CITY_RADIUS );
       this.fill_object.construct();
       this.active = false;
     }
 
     if(this.fill_type == 'concentric') {
       console.log('Creating radial fill for polygon', this.id);
-      this.fill_object = new Radial(this.polygon, scene.focus, CITY_RADIUS * 4, 10, 10);
+      let d = p5.Vector.dist(this.centroid, scene.focus);
+      let centre = d < CITY_RADIUS * 4 ? scene.focus :  scene.secondary_foci[0]
+      this.fill_object = new Radial(this.polygon, centre, CITY_RADIUS * 4, 10, 10);
       this.fill_object.construct();
       this.active = false;
     }
@@ -287,6 +295,8 @@ class Coffer {
       this.fill_object.hatch(this.fill_type);
       this.active = false;
     }
+
+    if(!this.fill_type || this.fill_type == 'blank') { this.active = false; }
 
     civil_statistics[this.fill_type]++;
   }
@@ -380,6 +390,7 @@ class Coffer {
     try{ active = this.fill_object.update();} catch(error) { active = 0 }
 
     if(active < 1) {
+      console.log(`Coffer ${this.id} finished with`, this.fill_type);
       this.active = false; 
     }
 
@@ -388,7 +399,12 @@ class Coffer {
   
   draw() {
     // if(this.active) { fill(palette.background) } else { noFill() };
-    this.polygon.draw();
+    push();
+      fill(palette.background)
+      this.polygon.draw();
+      noFill();
+      this.fill()
+    pop();
   }
 
   draw_coloured(){
@@ -401,10 +417,11 @@ class Coffer {
   }
 
   fill(){
-    if(this.fill_object) {
-      this.fill_object.draw();
-    }
-    noFill()
+    push();
+      if(this.fill_object) {
+        this.fill_object.draw();
+      }
+    pop();
   }
 }
 

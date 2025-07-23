@@ -3,7 +3,7 @@
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
 const SECONDARY_DENSITY = 13;
-const CITY_DENSITY = 2;
+const CITY_DENSITY = 5;
 const CITY_RADIUS = 100;
 const RSF = 0.001
 const RM = 9
@@ -396,7 +396,7 @@ class Scene {
       if(this.roads.length === 1){
         this.unioned_roads = road;
       } else if(this.roads.length > 1){
-        this.unioned_roads = this.unioned_roads.union(road)[0];
+        this.unioned_roads = this.unioned_roads.first_union(road);
       }
 
     }
@@ -466,7 +466,7 @@ class Scene {
     this.unioned_villages = this.villages[0]
 
     for(let v of this.villages){
-      this.unioned_villages = this.unioned_villages.union(v)[0];
+      this.unioned_villages = this.unioned_villages.first_union(v);
     }
   }
     
@@ -531,14 +531,6 @@ class Scene {
     this.villages = final_villages;
 
 
-
-
-
- 
-    // }
-
-
-
     this.state = SCENE_SUBDIVIDE_LOTS;
     console.log("Subdividing lots")
 
@@ -591,6 +583,7 @@ class Scene {
   
 
   add_coffer(polygon, type) {
+    if(polygon.area() < 10) { return;}
     for(let other of coffers){
       if(other.polygon.has_same_points(polygon)){ return; }
     }
@@ -860,15 +853,25 @@ class Scene {
 
   update_coffers(){
     if(this.state != SCENE_UPDATE_COFFERS){ return }
-    let coffer = coffers[this.current_coffer_id];
 
+    let coffer = coffers[this.current_coffer_id];
+    
     let active = coffer.update();
+    let active_coffers = coffers.filter(c => c.active); 
 
     if(active < 1){ 
-      this.current_coffer_id++;
+      
+      for(let c of active_coffers){
+        if(c.id > this.current_coffer_id){
+          this.current_coffer_id = c.id;
+          console.log("Updating coffer", this.current_coffer_id, "active:", active);
+
+          break;
+        }
+      }
     }
     
-    if(this.current_coffer_id >= coffers.length){
+    if(active_coffers.length == 0 || this.current_coffer_id >= coffers.length){
       console.log("Finished updating coffers");
       this.state = SCENE_COMPLETE; 
     }
@@ -903,12 +906,12 @@ class Scene {
         }
 
         
+        for(let l of this.lines){
+          l.draw();
+        }
 
       }
 
-      for(let l of this.lines){
-        l.draw();
-      }
 
       stroke(palette.black);
 
@@ -929,7 +932,6 @@ class Scene {
       for(let coffer of coffers){
         // coffer.draw_coloured()
         coffer.draw();
-        coffer.fill()
       }
 
       strokeWeight(2);

@@ -47,7 +47,7 @@ const CIVIC_PROBABILITY = 0.3;
 
 
 let PHI;
-let exporting = false;
+let exporting = true;
 
 let coffers = [];
 
@@ -178,12 +178,18 @@ function test_draw(collection){
 }
 
 function accumulative_draw(){
-  if(scene.state < SCENE_COMPLETE){
+  if(scene.state < SCENE_UPDATE_COFFERS){
     default_setup()
     scene.construct();
     scene.draw();
-  } else {
+  } else if(scene.state == SCENE_COMPLETE) {
     final_draw();
+  } else if(scene.state == SCENE_UPDATE_COFFERS){
+    scene.construct();
+
+    let idx = scene.current_coffer_id;
+    coffers[idx].draw();
+    coffers[idx].fill();
   }
 }
 
@@ -201,7 +207,6 @@ function final_draw(){
     if(!exporting) { scene.draw(); }
 
     draw_coffers();
-    draw_lots();
     draw_road_lines()
 
   pop()
@@ -231,7 +236,7 @@ function draw_coffers(){
   push();
     stroke(palette.black);
     for(let coffer of coffers){
-      coffer.fill();
+      coffer.draw();
     }
   pop();
 }
