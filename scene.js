@@ -389,7 +389,10 @@ class Scene {
   create_lots(){
     if(this.state != SCENE_CREATE_LOTS){ return }
     console.log("Creating lots")
-    this.sectors = this.city_limits.difference(this.unioned_roads);
+    let city = this.concentric_circle(this.focus.x, this.focus.y, CITY_RADIUS*4, 20, 6);
+    let regions = this.city_limits.difference(this.unioned_roads);
+    let pieces = multi_disjoint(regions.concat(city));
+    this.sectors = pieces;
     this.state = SCENE_SUBDIVIDE_LOTS;
   }
 
