@@ -2,8 +2,8 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 0;
-const CITY_DENSITY = 0;
+const SECONDARY_DENSITY = 18;
+const CITY_DENSITY = 1;
 const CITY_RADIUS = 100;
 const RSF = 0.001
 const RM = 9
@@ -121,16 +121,33 @@ class Scene {
     let rc = createVector(0, FH);
     let rd = createVector(FW, FH);
 
-    this.secondary_foci.push(ra);
-    this.secondary_foci.push(rb);
-    this.secondary_foci.push(rc);
-    this.secondary_foci.push(rd);
+    this.offscreen_foci.push(ra);
+    this.offscreen_foci.push(rb);
+    this.offscreen_foci.push(rc);
+    this.offscreen_foci.push(rd);
+
+    this.foci.push(ra);
+    this.foci.push(ra);
+    this.foci.push(ra);
+    this.foci.push(ra);
 
     // this.secondary_density  = random(3, SECONDARY_DENSITY);
     this.secondary_density = SECONDARY_DENSITY;
-    for(let i = 0; i < this.secondary_density; i++){
+    
+    while(this.secondary_foci.length < this.secondary_density){
       let rra = createVector(random(W) + BW + MBW, random(H) + BW + MBW);
-      this.secondary_foci.push(rra);
+      let valid = true
+      let all_points = this.foci.concat(this.offscreen_foci).concat(this.secondary_foci);
+      for(let f of all_points){
+        let d = p5.Vector.dist(rra, f);
+        if(d < CITY_RADIUS + 20){
+          valid = false;
+          break;
+        }
+      }
+      if(valid){ 
+        this.secondary_foci.push(rra);
+      }
     }
 
     this.city_points = []; 
@@ -268,7 +285,7 @@ class Scene {
     return results
   }
 
-  concentric_circle(x, y, r, w, n){
+  concentric_circle(v, r, w, n){
     let pieces = [];
     console.log("Concentric circle")
   
@@ -278,7 +295,7 @@ class Scene {
       let type = i < n ? 'decoration' : 'city';
   
       let polyCircle = new RegularPolygon(
-        x, y,
+        v.x, v.y,
         r - dA, r - dA, 100, type
       );
       
@@ -389,10 +406,76 @@ class Scene {
   create_lots(){
     if(this.state != SCENE_CREATE_LOTS){ return }
     console.log("Creating lots")
-    let city = this.concentric_circle(this.focus.x, this.focus.y, CITY_RADIUS*4, 20, 6);
-    let regions = this.city_limits.difference(this.unioned_roads);
-    let pieces = multi_disjoint(regions.concat(city));
+
+    let villages = []
+
+    let city_outer = new RegularPolygon(this.focus.x, this.focus.y, CITY_RADIUS*2.5, CITY_RADIUS*2.5, 100, 'city');
+
+    let regions = this.city_limits //.difference(city_outer)[0];
+
+    // First punch out the villages from the city limits
+    // This helps to reduce the size of the bitmask for disjointing
+
+    for(let i = 1; i < SECONDARY_DENSITY; i++){
+      let v = this.secondary_foci[i];
+      let type = 'city'
+      let r = CITY_RADIUS * random(0.5, 1);
+      let village = new RegularPolygon(
+        v.x, v.y,
+        r, r, 100, type
+      );
+      villages.push(village);
+      regions = regions.difference(village)[0];
+    }
+
+    regions = regions.difference(this.unioned_roads);
+
+    let city = this.concentric_circle(this.focus, CITY_RADIUS*2.5, 30, 6);
+    let unioned_villages = villages[0]
+
+    for(let v of villages){
+      unioned_villages = unioned_villages.union(v)[0];
+    }
+
+    let new_city = []
+    for(let ring of city){
+      let diff = ring.difference(unioned_villages);
+      for(let d of diff){
+        new_city.push(d);
+      }
+    }
+    
+    let town = this.concentric_circle(this.secondary_foci[0], CITY_RADIUS*1.5, 30, 3);
+    let village = this.concentric_circle(this.secondary_foci[1], CITY_RADIUS, 30, 2);
+    let village2 = this.concentric_circle(this.secondary_foci[2], CITY_RADIUS*2, 20, 4);
+
+    let sectors = regions.concat(new_city) 
+    // Some combinatins will result in a very large bitmask for disjointin.  Ensure that this mask will be under 26
+    if(sectors.length + town.length < 26) { sectors = sectors.concat(town)}
+    // if(sectors.length + village.length < 26) { sectors = sectors.concat(village)}
+    // if(sectors.length + village2.length < 26) { sectors = sectors.concat(village2)}
+
+    let pieces = multi_disjoint(sectors);
+
+    
+    // Now the villages back in
+    for(let v of villages){
+      let diff = v.difference(this.unioned_roads);
+      for(let d of diff){
+        pieces.push(d)
+      }
+    }
+
+
+
+
+
+ 
+    // }
+
     this.sectors = pieces;
+
+
     this.state = SCENE_SUBDIVIDE_LOTS;
   }
 
@@ -420,7 +503,6 @@ class Scene {
     if(p.area() > COUNTRYSIZE_SIZE) {
       let coffer = new Coffer(p, nearest, 'countryside');
       coffers.push(coffer);
-      // this.lots.push(p); 
       return  
     }
 
@@ -428,14 +510,18 @@ class Scene {
     if(nearest_dist > CITY_RADIUS/2) { 
       let coffer = new Coffer(p, nearest, 'countryside');
       coffers.push(coffer);
-      // this.lots.push(p); 
       return  
     }
 
-    let results = this.subdivide(p, MIN_LOT_SIZE);
-    for(let r of results){
-      this.lots.push(r);
-    }
+    let coffer = new Coffer(p, nearest, 'town');
+    coffers.push(coffer);
+    return  
+
+    // TEMP don't subdivide
+    // let results = this.subdivide(p, MIN_LOT_SIZE);
+    // for(let r of results){
+    //   this.lots.push(r);
+    // }
 
   }
 

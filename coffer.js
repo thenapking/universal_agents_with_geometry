@@ -41,25 +41,28 @@ class Coffer {
   }
 
   create_fill_object(){
-    let centroid = this.polygon.centroid();
+    if(!this.polygon || !this.focus) { return; } //WHY?
+
+    // let centroid = this.polygon.centroid();
     let area = this.polygon.area();
-    let d = p5.Vector.dist(centroid, this.focus);
-    let near_centre = random() < 1 - (d / CENTRE_DIST)
-    let longest_edge = this.polygon.find_longest_edge()[0];  
-    let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
+    // let d = p5.Vector.dist(centroid, this.focus);
+    // let near_centre = random() < 1 - (d / CENTRE_DIST)
+    // let longest_edge = this.polygon.find_longest_edge()[0];  
+    // let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
 
-    if(this.type == 'countryside') {
-      this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS);
-    } else if(this.type == 'town') {
-      this.fill_type = this.weighted_random(TOWN, TOWN_WEIGHTS);
-    }
+    this.fill_type = 'blank'; // Default fill type
+    // if(this.type == 'countryside') {
+    //   this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS);
+    // } else if(this.type == 'town') {
+    //   this.fill_type = this.weighted_random(TOWN, TOWN_WEIGHTS);
+    // }
 
-    // if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
-    if(area > 1500 && this.fill_type == 'terraces') { this.fill_type = 'civic' }
-    if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
-    if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
-    if(this.fill_type == 'civic') { total_civic_count++ }
+    // // if(d < CENTRE_DIST / 2 && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    // if(d < CENTRE_DIST && near_centre && this.is_trapezoid()) { this.fill_type = 'terraces'}
+    // if(area > 1500 && this.fill_type == 'terraces') { this.fill_type = 'civic' }
+    // if(d < CENTRE_DIST && area > CIVIC && this.is_trapezoid() && this.fill_type == 'blank'){ this.fill_type = random(TOWN)}
+    // if(d < CENTRE_DIST && area > CIVIC && this.is_not_curved() && this.fill_type == 'blank' && total_civic_count < MAX_CIVIC){ this.fill_type = 'civic'}
+    // if(this.fill_type == 'civic') { total_civic_count++ }
 
 
     // if(d > CENTRE_DIST * 1.5|| area > MAX_LOT_SIZE){ this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS)}
@@ -87,7 +90,7 @@ class Coffer {
       }
     }
     
-    if(this.type == 'countryside' && total_agent_count < MAX_AGENTS && area > 12000 && area < 40000) { this.fill_type = 'agent-circular' }
+    // if(this.type == 'countryside' && total_agent_count < MAX_AGENTS && area > 12000 && area < 40000) { this.fill_type = 'agent-circular' }
     if(area >= 60000) { this.fill_type = 'pips' }
 
     if(this.fill_type == 'agent-circular'){

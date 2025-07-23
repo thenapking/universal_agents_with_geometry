@@ -649,38 +649,75 @@ class MultiPolygon {
   }
 }
 
+function build_intersection_groups(polygons) {
+  const n = polygons.length;
+  const groups = [];
+  const visited = new Array(n).fill(false);
+
+  function dfs(i, group) {
+    visited[i] = true;
+    group.push(i);
+
+    for (let j = 0; j < n; j++) {
+      if (!visited[j]) {
+        const a = polygons[i];
+        const b = polygons[j];
+
+        // Cheap bounding box test first
+        if (!a.intersects_bounds(b)) continue;
+
+        // Use ClipperJS intersection — true overlap if result is non-empty
+        const result = a.intersection(b);
+        if (result && result.length > 0) {
+          dfs(j, group);
+        }
+      }
+    }
+  }
+
+  for (let i = 0; i < n; i++) {
+    if (!visited[i]) {
+      const group = [];
+      dfs(i, group);
+      groups.push(group);
+    }
+  }
+
+  return groups;
+}
+
+
 
 function multi_disjoint(polygons) {
   const n = polygons.length;
   const pieces = [];
   const piece_cache = new Map();
-  
 
-  for (let i = 1; i < (1 << n); i++) {
-    const k = lowest_index(i);
-    const j = i & ~(1 << k);
+  const total = (1n << BigInt(n)) - 1n;
+  console.log("Polygons:", n, "Iterations:", total.toString());
 
-    let cached_fragments = j === 0 ? [polygons[k]] : piece_cache.get(j);
+  for (let i = 1n; i <= total; i++) {
+    const k = lowest_index_bigint(i);  // needs to work with BigInts
+    const j = i & ~(1n << BigInt(k));
+
+    let cached_fragments = j === 0n ? [polygons[k]] : piece_cache.get(j.toString());
     if (!cached_fragments || cached_fragments.length === 0) continue;
 
     let new_fragments = [];
-
     const polygon = polygons[k];
 
     for (let fragment of cached_fragments) {
       if (!polygon.intersects_bounds(fragment)) continue;
-
       const result = fragment.intersection(polygon);
       if (result) new_fragments.push(...result);
     }
 
     if (new_fragments.length > 0) {
-      piece_cache.set(i, new_fragments);
+      piece_cache.set(i.toString(), new_fragments);
 
-      // subtract excluded polygons
       let excluded = [];
       for (let m = 0; m < n; m++) {
-        if ((i & (1 << m)) === 0) excluded.push(polygons[m]);
+        if ((i & (1n << BigInt(m))) === 0n) excluded.push(polygons[m]);
       }
 
       for (let piece of excluded) {
@@ -696,11 +733,25 @@ function multi_disjoint(polygons) {
         new_fragments = differences;
       }
 
-      pieces.push(...new_fragments.filter(f => !f.is_zero_area?.()));
+      let final = new_fragments.filter(f => !f.is_zero_area?.());
+      pieces.push(...final);
     }
   }
 
   return pieces;
 }
 
+function lowest_index_bigint(mask) {
+  let i = 0;
+  while (((mask >> BigInt(i)) & 1n) === 0n) i++;
+  return i;
+}
+
+
+
+function lowest_index(mask) {
+  let i = 0;
+  while (((mask >> BigInt(i)) & 1n) === 0n) i++;
+  return i;
+}
 
