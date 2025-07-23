@@ -39,7 +39,6 @@ class Coffer {
     this.type = type || 'countryside'
     this.fill_object = null;
     this.colour = null;
-    this.create_fill_object();
     this.active = true;
     this.position = this.polygon.bounds_centroid(); 
     this.col = Math.floor(this.position.x / CELL_SIZE);
@@ -52,16 +51,57 @@ class Coffer {
   }
 
   create_fill_object(){
-    if(!this.polygon || !this.focus) { return; } //WHY?
+    if(!this.polygon || !this.focus || !this.colour) { return; } 
+
+    let area = this.polygon.area();
+
+    if(this.type == 'countryside') {
+      if(area > 20000) {
+        if (this.colour == 'brown') {
+          this.fill_type = 'pips' 
+        } else if (this.colour == 'yellow') {
+          this.fill_type = 'contour-upwards';  
+        } else if (this.colour == 'pink') {
+          this.fill_type = 'contour-downwards';
+        } else if (this.colour == 'grey') {
+          this.fill_type = 'large-vertical-dashes';
+        } 
+      } else if (area > 2000) {
+        if (this.colour == 'brown') {
+          if(total_agent_count < MAX_AGENTS) { this.fill_type = 'agent-circular' }
+        } else if (this.colour == 'yellow') {
+            this.fill_type = 'contour-upwards';  
+        } else if (this.colour == 'pink') {
+          this.fill_type = 'contour-downwards';
+         } else if (this.colour == 'grey') {
+          if(total_agent_count < MAX_AGENTS) {this.fill_type = 'agent-beans'}
+         }
+      } else { 
+        if (this.colour == 'brown') {
+          this.fill_type = 'downwards' 
+        } else if (this.colour == 'yellow') {
+          this.fill_type = 'large-vertical-dashes';  
+        } else if (this.colour == 'grey') {
+          this.fill_type = 'upwards';
+        } 
+      }
+    } else {
+      if (this.colour == 'brown') {
+        this.fill_type = 'downwards'
+      } else if (this.colour == 'yellow') {
+        this.fill_type = 'large-vertical-dashes';  
+      } else if (this.colour == 'grey') {
+        this.fill_type = 'upwards';
+      } 
+    }
 
     // let centroid = this.polygon.centroid();
-    let area = this.polygon.area();
     // let d = p5.Vector.dist(centroid, this.focus);
     // let near_centre = random() < 1 - (d / CENTRE_DIST)
     // let longest_edge = this.polygon.find_longest_edge()[0];  
     // let le_dir = p5.Vector.sub(longest_edge.end, longest_edge.start).heading();
 
-    this.fill_type = 'blank'; // Default fill type
+    // this.fill_type = 'blank'; // Default fill type
     // if(this.type == 'countryside') {
     //   this.fill_type = this.weighted_random(COUNTRY, COUNTRY_WEIGHTS);
     // } else if(this.type == 'town') {
@@ -102,7 +142,7 @@ class Coffer {
     }
     
     // if(this.type == 'countryside' && total_agent_count < MAX_AGENTS && area > 12000 && area < 40000) { this.fill_type = 'agent-circular' }
-    if(area >= 60000) { this.fill_type = 'pips' }
+    // if(area >= 60000) { this.fill_type = 'pips' }
 
     if(this.fill_type == 'agent-circular'){
       total_agent_count++;
@@ -112,6 +152,19 @@ class Coffer {
       let n = floor(this.polygon.bounds_area() / (avgSize * avgSize));
       let options = { noiseScale: 0.005, a: minSize, sf: 0.5, squareness: 0.5 };
       console.log('Creating agent circular fill for polygon', options);
+
+      this.fill_object = new SuperEllipseGroup(n, this.polygon.bounds_centroid(), 10, this.polygon, options);
+      this.fill_object.initialize();
+    }
+
+    if(this.fill_type == 'agent-beans'){
+      total_agent_count++;
+      let minSize = int(random(6, 12))
+      let maxSize = minSize*2
+      let avgSize = (minSize + maxSize) / 2;
+      let n = floor(this.polygon.bounds_area() / (avgSize * avgSize));
+      let options = { noiseScale: 0.005, a: minSize, sf: 0.8, squareness: 0.9 };
+      console.log('Creating BEANS fill for polygon', options);
 
       this.fill_object = new SuperEllipseGroup(n, this.polygon.bounds_centroid(), 10, this.polygon, options);
       this.fill_object.initialize();
@@ -310,7 +363,7 @@ class Coffer {
 
   draw_coloured(){
     push();
-      if(this.colour) {
+      if(this.colour && !this.fill_object) {
         fill(this.colour);
       } else { noFill(); }
       this.polygon.draw();

@@ -73,7 +73,7 @@ class Polyline {
     }
   }
 
-  to_polygon(stroke_width_start, stroke_width_end) {
+  to_polygon(stroke_width_start, stroke_width_end, type) {
     let tops = [];
     let bottoms = [];
     stroke_width_end = stroke_width_end || stroke_width_start;
@@ -119,7 +119,7 @@ class Polyline {
     let bottomline = new Polyline(bottoms).remove_self_intersections().simplify(0.001).filter(4);
     // Concatenate tops and bottoms to form the polygon
     let points = topline.points.concat(bottomline.points.reverse());
-    return new MultiPolygon(points);
+    return new MultiPolygon(points, type);
   }
 
   // TODO: do we need to resample the interpolated points to make sure they are even?

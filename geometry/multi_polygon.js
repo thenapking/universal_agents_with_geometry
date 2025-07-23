@@ -1,4 +1,5 @@
 const SCALE = 10000000; // precision scale factor for integer coords
+let multi_polygons = []
 // TODO: remove types
 class MultiPolygon {
   static next_id = 1;
@@ -11,6 +12,10 @@ class MultiPolygon {
     this.ancestor_ids = [this.id];
     if(parent) {
       this.ancestor_ids = [...parent.ancestor_ids, this.id];
+      this.origin = parent.origin || parent;
+    } else {
+      this.origin = null;
+      this.children = [];
     }
 
     if(this.is_contour_array(points)) {
@@ -30,6 +35,7 @@ class MultiPolygon {
     }
 
     this.outer = this.contours[0];
+    multi_polygons.push(this);
   }
 
   is_raw_array(points) {
@@ -401,6 +407,7 @@ class MultiPolygon {
   contains_polygon(other) {
     for(let other_point of other.outer) {
       if (!this.contains(other_point)) {
+        console.log(`MultiPolygon ${this.id} does not contain point ${other_point}`);
         return false;
       }
     }

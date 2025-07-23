@@ -31,6 +31,7 @@ class Scene {
     this.focus = this.foci[0] 
     this.points = [];
     this.polylines = [];
+    this.lines = []
     this.sectors = [];
     this.potential_coffers = [];
 
@@ -247,7 +248,7 @@ class Scene {
     let d = p5.Vector.sub(b, a);
   
     if(d.x === 0) { 
-      console.warn("Vertical line detected, using x-coordinate for line.");
+      // console.warn("Vertical line detected, using x-coordinate for line.");
       return new Polyline([createVector(a.x, 0), createVector(a.x, height)]);
     }
     
@@ -294,17 +295,22 @@ class Scene {
     for(let i = 0; i <= n; i++){
       let dA = i * w
       if(dA >= r) { break;}
-      let type = i < n ? 'decoration' : 'city';
+      let type = i < n ? 'decoration' : 'town';
   
       let polyCircle = new RegularPolygon(
         v.x, v.y,
         r - dA, r - dA, 100, type
       );
+
       
       let trimmed_circle = polyCircle.intersection(this.city_limits);
       if(trimmed_circle.length == 0){ continue; }
-
-      pieces.push(trimmed_circle[0]);
+      let final = trimmed_circle[0]
+      final.type = type;
+      final.parent = null;
+      final.ancestor_ids = [];
+      console.log(final)
+      pieces.push(final);
     }
   
     return pieces
@@ -384,7 +390,7 @@ class Scene {
       this.road_lines.push(polyline);
       this.minor_road_lines.push(polyline);
 
-      let road = polyline.to_polygon(MINOR_ROAD);
+      let road = polyline.to_polygon(MINOR_ROAD, MINOR_ROAD, 'road');
       this.roads.push(road);
       this.minor_roads.push(road);
 
@@ -417,13 +423,13 @@ class Scene {
     let l2 = this.full_line(this.secondary_foci[0], this.secondary_foci[1]);
     let l3 = this.full_line(this.secondary_foci[2], this.secondary_foci[3]);
     let l4 = this.full_line(this.secondary_foci[4], this.secondary_foci[5]);
-    // let l5 = this.full_line(this.focus, this.secondary_foci[0]);
-    // let l6 = this.full_line(this.focus, this.secondary_foci[2]);
-    // let l7 = this.full_line(this.focus, this.secondary_foci[4]);
-    let lines = [l1, l2,  l3, l4] // l5, l6, l7];
+    let l5 = this.full_line(this.focus, this.secondary_foci[0]);
+    let l6 = this.full_line(this.focus, this.secondary_foci[2]);
+    let l7 = this.full_line(this.focus, this.secondary_foci[4]);
+    this.lines = [l1, l2,  l3, l4, l5, l6, l7];
 
     let pieces = [this.city_limits]
-    for(let l of lines){
+    for(let l of this.lines){
       let new_pieces = [];
 
       for(let piece of pieces){
@@ -844,6 +850,8 @@ class Scene {
       let colour = colour_map[i];
       if(!colour){ continue; }
       coffer.colour = colour
+      coffer.create_fill_object();
+
     }
 
     console.log("Coffers coloured", coffers.length);
@@ -853,18 +861,18 @@ class Scene {
 
   update_coffers(){
     if(this.state != SCENE_UPDATE_COFFERS){ return }
-    noLoop()
-    // let coffer = coffers[this.current_coffer_id];
-    // let active = coffer.update();
+    let coffer = coffers[this.current_coffer_id];
 
-    // if(active < 1){ 
-    //   this.current_coffer_id++;
-    // }
+    let active = coffer.update();
+
+    if(active < 1){ 
+      this.current_coffer_id++;
+    }
     
-    // if(this.current_coffer_id >= coffers.length){
-    //   console.log("Finished updating coffers");
+    if(this.current_coffer_id >= coffers.length){
+      console.log("Finished updating coffers");
       this.state = SCENE_COMPLETE; 
-    // }
+    }
   }
 
   draw(){
@@ -895,6 +903,12 @@ class Scene {
           circle(f.x, f.y, CITY_RADIUS);
         }
 
+        
+
+      }
+
+      for(let l of this.lines){
+        l.draw();
       }
 
       stroke(palette.black);
@@ -914,9 +928,9 @@ class Scene {
       }
 
       for(let coffer of coffers){
-        coffer.draw_coloured()
-        // coffer.draw();
-        // coffer.fill()
+        // coffer.draw_coloured()
+        coffer.draw();
+        coffer.fill()
       }
 
       strokeWeight(2);
