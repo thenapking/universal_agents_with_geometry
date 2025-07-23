@@ -409,9 +409,7 @@ class Scene {
 
     let villages = []
 
-    let city_outer = new RegularPolygon(this.focus.x, this.focus.y, CITY_RADIUS*2.5, CITY_RADIUS*2.5, 100, 'city');
-
-    let regions = this.city_limits //.difference(city_outer)[0];
+    let regions = this.city_limits 
 
     // First punch out the villages from the city limits
     // This helps to reduce the size of the bitmask for disjointing
@@ -740,6 +738,11 @@ class Scene {
     
     coffers.push(coffer);
 
+  }
+
+  colour_coffers(){
+    let adjacency_map = create_adjacency_map(coffers)
+    let shared_vertices = find_shared_vertices(coffers, adjacency_map)
   }
 
   update_coffers(){
