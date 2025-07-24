@@ -54,6 +54,26 @@ class Polyline {
     return [minX, minY, maxX, maxY];
   }
 
+  point_at(d) {
+    if (d <= 0) return this.segments[0].start.copy();
+  
+    let total_distance = 0;
+  
+    for (let i = 0; i < this.segments.length; i++) {
+      const segment = this.segments[i];
+      const segment_length = segment.length();
+  
+      if (total_distance + segment_length >= d) {
+        const t = (d - total_distance) / segment_length;
+        return p5.Vector.lerp(segment.start, segment.end, t);
+      }
+  
+      total_distance += segment_length;
+    }
+  
+    return this.segments[this.segments.length - 1].end.copy();
+  }
+
   find_segments() {
     this.segments = [];
 
@@ -153,6 +173,16 @@ class Polyline {
   
     return new Polyline(points);
   }
+
+  resample(spacing) {
+    const samples = [];
+    const total = this.length();
+    for (let d = 0; d <= total; d += spacing) {
+      samples.push(this.point_at(d));
+    }
+    return new Polyline(samples);
+  }
+  
 
   // apply a moving average filter 
   filter(windowSize) {

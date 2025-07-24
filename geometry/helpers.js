@@ -118,6 +118,7 @@ function clipper(poly, other, op) {
   );
 
 
+
   if (!succeeded){ 
     // console.error("Clipper operation failed:", op);
     return [];
@@ -135,9 +136,63 @@ function clipper(poly, other, op) {
   if(!simplified || simplified.length == 0 || simplified.some( p => p.length < 3)) {
     return [];
   }
+
+  console.log("---NUMBER OF PATHS", simplified.length);
   const results = from_clipper_paths(simplified, poly, other);
+
   return results;
 }
+
+
+// THE BELOW WAS AN ATTEMPT TO USE MORE SOPHISTICATED POLYTREE STRUCTURE
+// THIS WOULD DEAL WITH POLYGONS CONNECTED BY THIN STIPS
+// const solution_tree = new ClipperLib.PolyTree();
+// const succeeded = clipper.Execute(clipType, 
+//   solution_tree, 
+//   ClipperLib.PolyFillType.pftEvenOdd, 
+//   ClipperLib.PolyFillType.pftEvenOdd);
+
+//   console.log("Succeeded:", succeeded);
+//   console.log("Number of top-level children:", solution_tree.ChildCount());
+//   console.log("First child (if any):", solution_tree.Childs()?.[0]);
+  
+
+// results = from_clipper_polytree(solution_tree, poly, other);
+
+
+function from_clipper_polytree(polyTree, parent, other) {
+  const polygons = [];
+
+  const stack = polyTree.m_Childs || [];
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+
+    if (!node.m_polygon || node.m_polygon.length < 3) {
+      console.warn("Skipping node with invalid or too-short polygon");
+      continue;
+    }
+
+    const outer = node.m_polygon.map(pt => [pt.X / SCALE, pt.Y / SCALE]);
+
+    const holes = (node.m_Childs || [])
+      .filter(child => child.IsHole && child.m_polygon.length >= 3)
+      .map(hole => hole.m_polygon.map(pt => [pt.X / SCALE, pt.Y / SCALE]));
+
+    polygons.push(new MultiPolygon([outer, ...holes], parent.type, parent));
+
+    for (const child of node.m_Childs || []) {
+      stack.push(child);
+    }
+  }
+
+  console.log("Converted Clipper PolyTree to MultiPolygons:", polygons.length);
+  return polygons;
+}
+
+
+
+
 
 // TODO remove type overriding
 function from_clipper_paths(paths, parent, other) {
@@ -179,7 +234,7 @@ function from_clipper_paths(paths, parent, other) {
       // console.warn("Unclaimed ring at index", i, "with area", area(new_paths[i].outer, true));
     }
   }
-  
+
   return polygons;
 }
 
@@ -207,5 +262,6 @@ function mergeDisjointPolygons(polygonArray) {
   }
   return result;
 }
+
 
 

@@ -7,6 +7,7 @@ const CITY_DENSITY = 2;
 const CITY_RADIUS = 100;
 const CONCENTRIC_CIRCLE_RING_WIDTH = 30;
 const RSF = 0.001
+const MAX_ROAD_BEND = 3.141 * 0.25
 const RM = 9
 const RD = 40
 const RFOCI = 50
@@ -86,7 +87,7 @@ class Scene {
     this.prepare_coffers();
     this.create_coffers();
     this.colour_coffers();
-    // this.update_coffers();
+    this.update_coffers();
     // if(this.state === SCENE_SUBDIVIDE_LOTS) { this.state = SCENE_COMPLETE }
   }
 
@@ -217,8 +218,6 @@ class Scene {
     }
     this.graph = new Graph([], intercity_nodes).relative_neighbours();
     this.major_roads = this.graph.find_chains()
-    
-    
   }
 
   add_points(){
@@ -344,8 +343,11 @@ class Scene {
       let mid = p5.Vector.lerp(a.position, b.position, perc);
 
 
-      let noiseAngle = noise(mid.x * RSF, mid.y * RSF) * TWO_PI;
-      let curvedOffset = p5.Vector.fromAngle(noiseAngle).mult(RM);
+      let dir = p5.Vector.sub(b.position, a.position).heading(); // original segment angle
+      let deviation = (noise(mid.x * RSF, mid.y * RSF) - 0.5) * MAX_ROAD_BEND; // deviation around 0
+      let angle = dir + deviation;
+      let curvedOffset = p5.Vector.fromAngle(angle).mult(RM);
+
       mid.add(curvedOffset);
 
       let new_node = new Node(mid.x, mid.y);
@@ -395,7 +397,7 @@ class Scene {
         points.push(node.position);
       }
       
-      let polyline = new Polyline(points, false).to_bezier(60)
+      let polyline = new Polyline(points, false) //.to_bezier(60)
       let road = polyline.to_polygon(MINOR_ROAD, MINOR_ROAD, 'road');
       
       let valid = false;
@@ -478,10 +480,17 @@ class Scene {
   }
 
   create_villages(){
-    this.villages = []
+    
 
     // First punch out the villages from the city limits
     // This helps to reduce the size of the bitmask for disjointing
+
+    let city =  new RegularPolygon(
+      this.focus.x, this.focus.y,
+      CITY_RADIUS * 2.5, CITY_RADIUS * 2.5, 100, 'city'
+    );
+
+    this.villages = []
 
     for(let i = 3; i < SECONDARY_DENSITY; i++){
       let v = this.secondary_foci[i];
@@ -497,8 +506,10 @@ class Scene {
     }
     
     // We do not remove the roads at this stage, as we want to punch a hole in the region for the entire village
-    // However we do need to deal with the fact that the villages may overlap
+    // However we do need to deal with the fact that the villages may overlap, as this will break clipper
     this.villages = multi_disjoint(this.villages);
+
+    
   }
     
   create_lots(){
@@ -531,11 +542,8 @@ class Scene {
 
       for(let piece of trimmed_region){
         for(let village of this.villages){
-          let new_trimmed_region = piece.difference(village);
-          if(new_trimmed_region.length == 0){ continue; }
-          // console.log("Trimmed region:", new_trimmed_region)
-          if(new_trimmed_region.length > 1){ continue; }
-          piece = new_trimmed_region[0];
+          console.log("Village:", village.id)
+          piece = piece.first_difference_or_original(village);
         }
         trimmed_pieces.push(piece);
       }
@@ -572,7 +580,7 @@ class Scene {
 
       // new_city = city_without_villages;
       
-      let sectors = trimmed_region //.concat(new_city)
+      let sectors = trimmed_region.concat(new_city)
       // Some combinatins will result in a very large bitmask for disjointin.  Ensure that this mask will be under 26
       // for(let settlement of settlements){
       //   if(sectors.length + settlement.length < 20) { sectors = sectors.concat(settlement)}
@@ -583,6 +591,8 @@ class Scene {
       this.sectors.push(...pieces);
     }
 
+
+    
     
     // Now the villages back in
     let final_villages = []
@@ -593,7 +603,7 @@ class Scene {
       }
     }
 
-    this.villages = final_villages;
+    // this.villages = final_villages;
 
 
     this.state = SCENE_SUBDIVIDE_LOTS;
@@ -957,9 +967,12 @@ class Scene {
       noFill();
       this.bounding_box.draw();
 
-      if(this.unioned_roads) { this.unioned_roads.draw(); }
 
-      // if(this.state <= SCENE_SUBDIVIDE_LOTS ){
+      if(this.state <= SCENE_SUBDIVIDE_LOTS ){
+        stroke(palette.black)
+        if(this.unioned_roads) { this.unioned_roads.draw(); }
+        
+        stroke(light_pen)
         this.graph.draw_edges();
         this.graph.draw_chains();
         this.graph.draw_nodes();
@@ -979,7 +992,7 @@ class Scene {
           l.draw();
         }
 
-      // }
+      }
 
 
       stroke(palette.black);

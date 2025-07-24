@@ -100,6 +100,16 @@ function mousePressed(){
       }
     }
 
+    for(let road of scene.roads){
+      if(road.contains(point)){
+        console.log(`Clicked on road ${road.id}`);
+        console.log(road);
+        stroke(0,255,0);
+        noFill();
+        road.draw();
+      }
+    }
+
 
   }
 }

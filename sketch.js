@@ -80,6 +80,8 @@ function draw(){
   // test_draw(scene.lots, ctx);
   accumulative_draw();
   // final_draw();
+
+  // test_lines();
   
 }
 
@@ -100,6 +102,58 @@ function setup_debug_agents(){
   fill_object = new SuperEllipseGroup(n, polyCircleA.bounds_centroid(), 10, polyCircleA, options);
   fill_object.initialize();
 }
+
+let test_line, resampled;
+
+function test_lines(){
+  default_setup();
+
+  let p1 = createVector(100, 200);
+  let sf = 0.4; // Increased scale to get better noise variation
+  let stepSize = 14.3;
+
+  let points = [p1.copy()];
+  let current = p1.copy();
+
+  for (let i = 0; i < 30; i++) {
+    let noiseVal = noise(current.x * sf, current.y * sf);
+    let noiseAngle = map(noiseVal, 0, 1, -PI/3, PI/3); // full angle map range
+
+    let offset = p5.Vector.fromAngle(noiseAngle).mult(stepSize);
+
+    let next = p5.Vector.add(current, offset); // this does NOT mutate `current`
+    points.push(next.copy());
+
+    current = next.copy(); // advance
+  }
+
+  test_line = new Polyline(points).to_bezier(60);
+  test_line.draw();
+
+  // Optional: draw points to confirm
+  // stroke(255, 0, 0);
+  // strokeWeight(6);
+  // for (let pt of points) {
+  //   point(pt.x, pt.y);
+  // }
+
+  resampled = test_line.resample(10);
+  stroke(0, 255, 0);
+  strokeWeight(4);
+  for (let pt of resampled.points) {
+    point(pt.x, pt.y);
+  }
+
+  stroke(0, 0, 255);
+  strokeWeight(1);
+  noFill()
+
+  let polygon = resampled.to_polygon(70);
+  polygon.draw();
+
+  noLoop();
+}
+
 
 function debug_agents(){
   let active = fill_object.update();
