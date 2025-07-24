@@ -2,9 +2,10 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 15;
+const SECONDARY_DENSITY = 18;
 const CITY_DENSITY = 2;
 const CITY_RADIUS = 100;
+const CONCENTRIC_CIRCLE_RING_WIDTH = 30;
 const RSF = 0.001
 const RM = 9
 const RD = 40
@@ -54,7 +55,7 @@ class Scene {
     
     this.roads = [];
     this.lots = []
-    this.farms = [];
+    this.villages = [];
     this.state = SCENE_INIT;
     this.current_coffer_id = 0;
   }
@@ -81,11 +82,12 @@ class Scene {
     this.grow_cities();
     this.create_roads_in_order();
     this.create_lots();
-    this.subdivide_lots();
-    this.prepare_coffers();
-    this.create_coffers();
-    this.colour_coffers();
-    this.update_coffers();
+    // this.subdivide_lots();
+    // this.prepare_coffers();
+    // this.create_coffers();
+    // this.colour_coffers();
+    // this.update_coffers();
+    if(this.state === SCENE_SUBDIVIDE_LOTS) { this.state = SCENE_COMPLETE }
   }
 
   onscreen(position){
@@ -134,10 +136,7 @@ class Scene {
     this.foci.push(ra);
     this.foci.push(ra);
 
-    // this.secondary_density  = random(3, SECONDARY_DENSITY);
-    this.secondary_density = SECONDARY_DENSITY;
-    
-    while(this.secondary_foci.length < this.secondary_density){
+    while(this.secondary_foci.length < SECONDARY_DENSITY){
       let rra = createVector(random(W) + BW + MBW, random(H) + BW + MBW);
       let valid = true
       let all_points = this.foci.concat(this.offscreen_foci).concat(this.secondary_foci);
@@ -363,20 +362,33 @@ class Scene {
     this.graph.create_chains()
     this.road_lines = []; 
     this.roads = [];
+
+    // TODO: even though we order the chains here so they are connected in an order
+    // which should allow for the union to be created without gaps,
+    // sometimes things go wrong.  So we attempt to add the roads, and if the union
+    // has more than one part we don't add it
     let potential_roads = this.graph.order_chains()
     this.unioned_roads = [];
 
-    for(let chain of potential_roads){
-      // remove dangling roads
-      let start = chain[0];
-      let end = chain[chain.length - 1];
-      let start_connections = this.graph.find_edges(start.id).length
-      let end_connections = this.graph.find_edges(end.id).length
-      let start_onscreen = this.onscreen(start.position); 
-      let end_onscreen = this.onscreen(end.position);
-      if(start_onscreen && start_connections < 2 ) { continue; }
-      if(end_onscreen && end_connections < 2 ) { continue; }
+    
       
+    let failures = 0;
+    while(potential_roads.length > 0 && failures < 10){
+      let chain = potential_roads.shift();
+
+      // TODO is this necessary?
+
+      // remove dangling roads
+      // let start = chain[0];
+      // let end = chain[chain.length - 1];
+      // let start_connections = this.graph.find_edges(start.id).length
+      // let end_connections = this.graph.find_edges(end.id).length
+      // let start_onscreen = this.onscreen(start.position); 
+      // let end_onscreen = this.onscreen(end.position);
+      // if(start_onscreen && start_connections < 2 ) { continue; }
+      // if(end_onscreen && end_connections < 2 ) { continue; }
+
+
       let points = []
 
       for(let node of chain) {
@@ -384,21 +396,35 @@ class Scene {
       }
       
       let polyline = new Polyline(points, false).to_bezier(60)
-   
+      let road = polyline.to_polygon(MINOR_ROAD, MINOR_ROAD, 'road');
+      
+      let valid = false;
+      let new_roads;
+      if(this.unioned_roads.length === 0){
+        new_roads = [road];
+        valid = true
+      } else {
+        new_roads = this.unioned_roads.union(road);
+        valid =  new_roads.length == 1
+        // console.log("New roads:", new_roads.length) 
+      }
 
-      this.road_lines.push(polyline);
-      this.minor_road_lines.push(polyline);
-
-      let road = polyline.to_polygon(MAJOR_ROAD, MAJOR_ROAD, 'road');
-      this.roads.push(road);
-      this.minor_roads.push(road);
-
-      if(this.roads.length === 1){
-        this.unioned_roads = road;
-      } else if(this.roads.length > 1){
-        let new_roads = this.unioned_roads.union(road);
-        if(!new_roads || new_roads.length == 0){ continue; }
+      if(valid){
+        // console.log("Valid road found, adding to roads")
         this.unioned_roads = new_roads[0];
+        this.road_lines.push(polyline);
+        this.minor_road_lines.push(polyline);
+        this.roads.push(road);
+        this.minor_roads.push(road);
+        failures = 0;
+      } else {
+        if(new_roads && new_roads.length > 1){
+          potential_roads.push(chain)
+          failures++;
+          console.log("Invalid road, re-adding to potential roads", failures);
+        } else {
+          // console.log("Discarding road");
+        }
       }
 
     }
@@ -420,14 +446,17 @@ class Scene {
     let bottom_half_right = createVector(W/2 + BW + MBW, H + BW + MBW);
     let top_half_right = createVector(W/2 + BW + MBW, BW + MBW);
     
-    let l1 =  this.full_line(top_half_right, bottom_half_right);
-    let l2 = this.full_line(this.secondary_foci[0], this.secondary_foci[1]);
-    let l3 = this.full_line(this.secondary_foci[2], this.secondary_foci[3]);
-    let l4 = this.full_line(this.secondary_foci[4], this.secondary_foci[5]);
-    let l5 = this.full_line(this.focus, this.secondary_foci[0]);
-    let l6 = this.full_line(this.focus, this.secondary_foci[2]);
-    let l7 = this.full_line(this.focus, this.secondary_foci[4]);
-    this.lines = [l1, l2,  l3, l4, l5, l6, l7];
+    let l1 = this.full_line(top_half_right, bottom_half_right);
+    this.lines = [l1];
+
+    let number_of_lines = Math.floor(min(6, SECONDARY_DENSITY) / 2);
+    number_of_lines = 0;
+    for(let i = 0; i < number_of_lines; i+=2){
+      let li = this.full_line(this.secondary_foci[i], this.secondary_foci[i+1]);
+      let lj = this.full_line(this.focus, this.secondary_foci[i]);
+      this.lines.push(li);
+      this.lines.push(lj);
+    }
 
     let pieces = [this.city_limits]
     for(let l of this.lines){
@@ -452,7 +481,7 @@ class Scene {
     // First punch out the villages from the city limits
     // This helps to reduce the size of the bitmask for disjointing
 
-    for(let i = 1; i < SECONDARY_DENSITY; i++){
+    for(let i = 3; i < SECONDARY_DENSITY; i++){
       let v = this.secondary_foci[i];
       let type = 'city'
       let r = CITY_RADIUS * random(0.5, 1);
@@ -460,16 +489,14 @@ class Scene {
         v.x, v.y,
         r, r, 100, type
       );
-      let trimmed_village = village.intersection(this.city_limits);
-      if(trimmed_village.length == 0){ continue; }
-      this.villages.push(trimmed_village[0]);
+      let trimmed_village = village.first_intersection(this.city_limits);
+      if(!trimmed_village){ continue; }
+      this.villages.push(trimmed_village);
     }
-
-    this.unioned_villages = this.villages[0]
-
-    for(let v of this.villages){
-      this.unioned_villages = this.unioned_villages.union(v)[0];
-    }
+    
+    // We do not remove the roads at this stage, as we want to punch a hole in the region for the entire village
+    // However we do need to deal with the fact that the villages may overlap
+    this.villages = multi_disjoint(this.villages);
   }
     
   create_lots(){
@@ -483,38 +510,50 @@ class Scene {
 
     let city = this.concentric_circle(this.focus, CITY_RADIUS*2.5, 30, 6);
 
-    let town = this.concentric_circle(this.secondary_foci[0], CITY_RADIUS*1.5, 30, 3);
-    let village = this.concentric_circle(this.secondary_foci[1], CITY_RADIUS, 30, 2);
-    // let village2 = this.concentric_circle(this.secondary_foci[2], CITY_RADIUS*2, 20, 4);
+    let number_of_settlements = min(3, SECONDARY_DENSITY);
+    number_of_settlements = 0;
+    let settlements = [];
+    for(let i = 0; i < number_of_settlements; i++){
+      let v = this.secondary_foci[i];
+      let r = CITY_RADIUS * random(1, 2);
+      let rings = 4 - i;
+      let settlement = this.concentric_circle(v, r, CONCENTRIC_CIRCLE_RING_WIDTH, rings);
+      settlements.push(settlement);
+    }
 
     for(let region of this.regions){
-      let trimed_region = region;
-      for(let village of this.villages){
-        let new_trimed_region = trimed_region.difference(village);
-        if(new_trimed_region.length == 0){ continue; }
-        trimed_region = new_trimed_region[0];
-      
+      let trimmed_region = region;
+
+     
+
+      trimmed_region = trimmed_region.difference(this.unioned_roads);
+      let trimmed_pieces = []
+      for(let piece of trimmed_region){
+        for(let village of this.villages){
+          let new_trimmed_region = piece.difference(village);
+          if(new_trimmed_region.length == 0){ continue; }
+          piece = new_trimmed_region[0];
+        }
+        trimmed_pieces.push(piece);
       }
 
-      trimed_region = trimed_region.difference(this.unioned_roads);
-    
+      trimmed_region = trimmed_pieces;
+
       let new_city = []
       for(let ring of city){
-        let rg_diff = region.difference(ring)
-        if(rg_diff.length == 0){ continue; }
-        let new_ring = rg_diff[0];
-        let diff = new_ring.difference(this.unioned_villages);
-        for(let d of diff){
-          new_city.push(d);
+        let diffs = region.difference(ring)
+        
+        for(let diff of diffs){
+          new_city.push(diff);
         }
       }
       
-      let sectors = trimed_region.concat(new_city)
+      let sectors = trimmed_region //.concat(new_city)
       // Some combinatins will result in a very large bitmask for disjointin.  Ensure that this mask will be under 26
-      if(sectors.length + town.length < 20) { sectors = sectors.concat(town)}
-      if(sectors.length + village.length < 20) { sectors = sectors.concat(village)}
-      // if(sectors.length + village2.length < 20) { sectors = sectors.concat(village2)}
-
+      // for(let settlement of settlements){
+      //   if(sectors.length + settlement.length < 20) { sectors = sectors.concat(settlement)}
+      // }
+        
       let pieces = multi_disjoint(sectors);
 
       this.sectors.push(...pieces);
@@ -551,34 +590,36 @@ class Scene {
       
     }
 
-    while(this.villages.length > 0){
-      let p = this.villages.pop();
+    // WE HAVE MANAGED TO REMOVE THE VILLAGES, BUT NOT WITH THE ROADS
+    // WE DON'T NEED TO ADD THEM BACK IN HERE, THIS IS THE PROBLEM<
+    // while(this.villages.length > 0){
+    //   let p = this.villages.pop();
     
-      let centroid = p.bounds_centroid();
-      let nearest = this.foci[0];
-      let nearest_dist = Infinity;
-      for (let f of this.secondary_foci) {
-        let d = p5.Vector.dist(centroid, f);
-        if (d < nearest_dist) {
-          nearest_dist = d;
-          nearest = f;
-        }
-      }
+    //   let centroid = p.bounds_centroid();
+    //   let nearest = this.foci[0];
+    //   let nearest_dist = Infinity;
+    //   for (let f of this.secondary_foci) {
+    //     let d = p5.Vector.dist(centroid, f);
+    //     if (d < nearest_dist) {
+    //       nearest_dist = d;
+    //       nearest = f;
+    //     }
+    //   }
 
-      let type = 'town';
-      if(p.area() > COUNTRYSIZE_SIZE || (nearest_dist > CITY_RADIUS/2)) { 
-        type = 'countryside';
-      } 
+    //   let type = 'town';
+    //   if(p.area() > COUNTRYSIZE_SIZE || (nearest_dist > CITY_RADIUS/2)) { 
+    //     type = 'countryside';
+    //   } 
 
-      if(type == 'countryside'){
-        this.add_coffer(p, type);
-      } else {
-        let results = this.subdivide(p, MIN_LOT_SIZE);
-        for(let r of results){
-          this.lots.push(r);
-        }
-      }
-    }
+    //   if(type == 'countryside'){
+    //     this.add_coffer(p, type);
+    //   } else {
+    //     let results = this.subdivide(p, MIN_LOT_SIZE);
+    //     for(let r of results){
+    //       this.lots.push(r);
+    //     }
+    //   }
+    // }
 
 
   }
@@ -892,7 +933,9 @@ class Scene {
       noFill();
       this.bounding_box.draw();
 
-      if(this.state <= SCENE_SUBDIVIDE_LOTS ){
+      if(this.unioned_roads) { this.unioned_roads.draw(); }
+
+      // if(this.state <= SCENE_SUBDIVIDE_LOTS ){
         this.graph.draw_edges();
         this.graph.draw_chains();
         this.graph.draw_nodes();
@@ -912,7 +955,7 @@ class Scene {
           l.draw();
         }
 
-      }
+      // }
 
 
       stroke(palette.black);
@@ -927,8 +970,8 @@ class Scene {
         lot.draw();
       }
 
-      for(let farm of this.farms){
-        farm.draw();
+      for(let village of this.villages){
+        village.draw();
       }
 
       for(let coffer of coffers){
@@ -936,18 +979,18 @@ class Scene {
         coffer.draw();
       }
 
-      strokeWeight(4);
-      for(let r of scene.minor_road_lines){
-        r.draw()
-      }
-      strokeWeight(4);
-      for(let r of scene.major_road_lines){
-        r.draw()
-      }
-      strokeWeight(4);
-      for(let r of scene.intercity_road_lines){
-        r.draw()
-    }
+    //   strokeWeight(4);
+    //   for(let r of scene.minor_road_lines){
+    //     r.draw()
+    //   }
+    //   strokeWeight(4);
+    //   for(let r of scene.major_road_lines){
+    //     r.draw()
+    //   }
+    //   strokeWeight(4);
+    //   for(let r of scene.intercity_road_lines){
+    //     r.draw()
+    // }
 
       
     pop();

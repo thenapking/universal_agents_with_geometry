@@ -207,7 +207,7 @@ function final_draw(){
     if(!exporting) { scene.draw(); }
 
     draw_coffers();
-    draw_roads();
+    // draw_roads();
   pop()
 
   draw_borders();

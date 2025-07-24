@@ -69,6 +69,8 @@ function mousePressed(){
         if(coffer.error_message) { console.log(`Coffer message: ${coffer.error_message}`);}
         console.log(coffer);
         console.log(coffer.polygon);
+        stroke(255,0,0);
+        coffer.polygon.draw();
       }
     }
 
@@ -77,6 +79,24 @@ function mousePressed(){
         console.log(`Clicked on node at (${node.position.x}, ${node.position.y})`);
         console.log(`Node ID: ${node.id}, index: ${scene.graph.nodes.indexOf(node)}`);
         console.log(node);
+      }
+    }
+
+    for(let sector of scene.sectors){
+      if(sector.contains(point)){
+        console.log(`Clicked on sector polygon ${sector.id}`);
+        console.log(sector);
+        stroke(255,0,0);
+        sector.draw()
+      }
+    }
+
+    for(let village of scene.villages){
+      if(village.contains(point)){
+        console.log(`Clicked on village ${village.id}`);
+        console.log(village);
+        stroke(0,0,255);
+        village.draw();
       }
     }
 

@@ -56,7 +56,6 @@ class Coffer {
     if(!this.polygon || !this.focus || !this.colour) { return; } 
 
     let area = this.polygon.area();
-    if(!this.error_message) { this.fill_type = 'radial'; }
 
     if(this.type == 'countryside') {
       if(area > 20000) {
