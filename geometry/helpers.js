@@ -119,14 +119,13 @@ function clipper(poly, other, op) {
 
 
   if (!succeeded){ 
-    console.error("Clipper operation failed:", op);
+    // console.error("Clipper operation failed:", op);
     return [];
   }
 
   // TODO move error checking to the class; 
   // TODO should we return empty array or what?
-  const epsilon = 0.5 * SCALE;
-  let cleaned = ClipperLib.Clipper.CleanPolygons(solution, epsilon);
+  let cleaned = ClipperLib.Clipper.CleanPolygons(solution, 0.5 * SCALE);
   if(!cleaned || cleaned.length == 0 || cleaned.some(p => p.length < 3)) {
     // console.error("Clipper cleaning failed:", op);
     return [];
@@ -136,7 +135,7 @@ function clipper(poly, other, op) {
   if(!simplified || simplified.length == 0 || simplified.some( p => p.length < 3)) {
     return [];
   }
-  const results = from_clipper_paths(cleaned, poly, other);
+  const results = from_clipper_paths(simplified, poly, other);
   return results;
 }
 

@@ -34,7 +34,7 @@ function set_seeds(){
   // seed =  954640
   // seed =  362367
   // seed =  491539
-  seed =  30924
+  // seed =  30924
   console.log("seed = ", seed);
 
   randomSeed(seed);

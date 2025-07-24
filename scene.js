@@ -2,8 +2,8 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 13;
-const CITY_DENSITY = 5;
+const SECONDARY_DENSITY = 15;
+const CITY_DENSITY = 2;
 const CITY_RADIUS = 100;
 const RSF = 0.001
 const RM = 9
@@ -389,14 +389,16 @@ class Scene {
       this.road_lines.push(polyline);
       this.minor_road_lines.push(polyline);
 
-      let road = polyline.to_polygon(MINOR_ROAD, MINOR_ROAD, 'road');
+      let road = polyline.to_polygon(MAJOR_ROAD, MAJOR_ROAD, 'road');
       this.roads.push(road);
       this.minor_roads.push(road);
 
       if(this.roads.length === 1){
         this.unioned_roads = road;
       } else if(this.roads.length > 1){
-        this.unioned_roads = this.unioned_roads.first_union(road);
+        let new_roads = this.unioned_roads.union(road);
+        if(!new_roads || new_roads.length == 0){ continue; }
+        this.unioned_roads = new_roads[0];
       }
 
     }
@@ -466,7 +468,7 @@ class Scene {
     this.unioned_villages = this.villages[0]
 
     for(let v of this.villages){
-      this.unioned_villages = this.unioned_villages.first_union(v);
+      this.unioned_villages = this.unioned_villages.union(v)[0];
     }
   }
     
@@ -934,15 +936,15 @@ class Scene {
         coffer.draw();
       }
 
-      strokeWeight(2);
+      strokeWeight(4);
       for(let r of scene.minor_road_lines){
         r.draw()
       }
-      strokeWeight(6);
+      strokeWeight(4);
       for(let r of scene.major_road_lines){
         r.draw()
       }
-      strokeWeight(10);
+      strokeWeight(4);
       for(let r of scene.intercity_road_lines){
         r.draw()
     }

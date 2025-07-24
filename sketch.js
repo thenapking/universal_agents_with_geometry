@@ -47,7 +47,7 @@ const CIVIC_PROBABILITY = 0.3;
 
 
 let PHI;
-let exporting = true;
+let exporting = false;
 
 let coffers = [];
 
@@ -207,8 +207,7 @@ function final_draw(){
     if(!exporting) { scene.draw(); }
 
     draw_coffers();
-    draw_road_lines()
-
+    draw_roads();
   pop()
 
   draw_borders();
