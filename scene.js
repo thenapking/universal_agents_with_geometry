@@ -2,7 +2,7 @@
 ////////////////////////////////////////////////////////////////
 // SCENE CREATION
 const THINNESS_THRESHOLD = 0.26;
-const SECONDARY_DENSITY = 13;
+const SECONDARY_DENSITY = 20;
 const CITY_DENSITY = 2;
 const CITY_RADIUS = 100;
 const CONCENTRIC_CIRCLE_RING_WIDTH = 30;
